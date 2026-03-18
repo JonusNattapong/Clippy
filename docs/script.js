@@ -75,6 +75,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Handle in-page docs links (data-src) to load into docs iframe
+  const docsLinks = document.querySelectorAll('#window-docs a[data-src]');
+  const docsWindow = document.getElementById('window-docs');
+  const docsIframe = document.getElementById('docs-iframe');
+
+  docsLinks.forEach((link) => {
+    link.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      const src = link.getAttribute('data-src');
+      if (docsIframe && src) {
+        docsIframe.setAttribute('src', src);
+      }
+      if (docsWindow) focusWindow(docsWindow);
+    });
+  });
+
   // Only attach window drag handlers on desktop
   if (window.innerWidth > 768) {
     windows.forEach((fakeWindow) => {

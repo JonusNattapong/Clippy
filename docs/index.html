@@ -31,11 +31,11 @@
         <img src="./images/icon_github.png" alt="GitHub" />
         <span>GitHub</span>
       </a>
-      <a href="page/arch.html" class="desktop-icon" id="icon-arch" onclick="window.open('page/arch.html','ClippyArch','width=1000,height=700'); return false;">
+      <a href="#window-arch" class="desktop-icon" id="icon-arch">
         <img src="./images/icon_about.png" alt="Architecture" />
         <span>Architecture</span>
       </a>
-       <a href="getting-started.html" class="desktop-icon" id="icon-docs" onclick="window.open('getting-started.html','ClippyDocs','width=900,height=700'); return false;">
+       <a href="#window-docs" class="desktop-icon" id="icon-docs">
          <img src="./images/icon_help.png" alt="Docs" />
          <span>Docs</span>
        </a>
@@ -81,18 +81,23 @@
               </div>
               <div class="window-body">
                 <h3>Documentation</h3>
-                <ul>
-                  <li><a href="getting-started.html" target="_blank">Getting Started</a></li>
-                  <li><a href="install.html" target="_blank">Installation</a></li>
-                  <li><a href="quick-start.html" target="_blank">Quick Start</a></li>
-                  <li><a href="api.html" target="_blank">API / IPC</a></li>
-                  <li><a href="contributing.html" target="_blank">Contributing</a></li>
-                  <li><a href="faq.html" target="_blank">FAQ</a></li>
-                  <li><a href="releases.html" target="_blank">Releases</a></li>
-                  <li><a href="licenses.html" target="_blank">Licenses & Assets</a></li>
-                  <li><a href="gallery.html" target="_blank">Gallery</a></li>
-                  <li><a href="page/arch.html" target="_blank">Architecture</a></li>
-                </ul>
+                <div class="docs-list-and-frame">
+                  <ul class="docs-list">
+                    <li><a href="#window-docs" data-src="page/getting-started.html">Getting Started</a></li>
+                    <li><a href="#window-docs" data-src="page/install.html">Installation</a></li>
+                    <li><a href="#window-docs" data-src="page/quick-start.html">Quick Start</a></li>
+                    <li><a href="#window-docs" data-src="page/api.html">API / IPC</a></li>
+                    <li><a href="#window-docs" data-src="page/contributing.html">Contributing</a></li>
+                    <li><a href="#window-docs" data-src="page/faq.html">FAQ</a></li>
+                    <li><a href="#window-docs" data-src="page/releases.html">Releases</a></li>
+                    <li><a href="#window-docs" data-src="page/licenses.html">Licenses & Assets</a></li>
+                    <li><a href="#window-docs" data-src="page/gallery.html">Gallery</a></li>
+                    <li><a href="#window-arch">Architecture</a></li>
+                  </ul>
+                  <div class="docs-frame">
+                    <iframe id="docs-iframe" src="" style="width:100%;height:420px;border:0;" title="Docs Viewer"></iframe>
+                  </div>
+                </div>
               </div>
             </div>
         </div>
@@ -157,6 +162,20 @@
               for squeezing llama.cpp into Node.js
             </li>
           </ul>
+        </div>
+      </div>
+
+      <div class="window arch-container" id="window-arch" style="display: none">
+        <div class="title-bar">
+          <div class="title-bar-text">System Flow Architecture</div>
+          <div class="title-bar-controls">
+            <button aria-label="Minimize"></button>
+            <button aria-label="Maximize"></button>
+            <button aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="window-body">
+          <iframe src="page/arch.html" style="width:100%;height:600px;border:0;" title="Architecture"></iframe>
         </div>
       </div>
 
