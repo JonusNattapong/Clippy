@@ -17,6 +17,7 @@ const CLOUD_PROVIDERS: ApiProvider[] = [
   "openai",
   "anthropic",
   "openrouter",
+  "kilo",
 ];
 
 export const SettingsModel: React.FC = () => {
@@ -262,6 +263,8 @@ export const SettingsModel: React.FC = () => {
         return "Paste your Anthropic API key here...";
       case "openrouter":
         return "Paste your OpenRouter API key here...";
+      case "kilo":
+        return "Paste your Kilo AI API key here...";
       case "ollama":
         return "No API key needed for local Ollama";
       case "gemini":
