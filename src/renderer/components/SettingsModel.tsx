@@ -121,6 +121,53 @@ export const SettingsModel: React.FC = () => {
     };
   }, []);
 
+  // Auto-fetch models when provider or API key changes
+  useEffect(() => {
+    const currentProvider = useGeminiApi ? apiProvider : "ollama";
+    const hasApiKey = apiKey.trim().length > 0;
+    const isLocalProvider = currentProvider === "ollama";
+
+    // Only auto-fetch for cloud providers with API key, or Ollama
+    if (!isLocalProvider && !hasApiKey) {
+      setModelsList(null);
+      return;
+    }
+
+    let mounted = true;
+    async function fetchModels() {
+      setModelsLoading(true);
+      try {
+        const res = await clippyApi.listProviderModels(
+          currentProvider,
+          isLocalProvider ? { host: ollamaHost } : { apiKey },
+        );
+        if (!mounted) return;
+
+        if (res && res.ok && Array.isArray(res.models)) {
+          const normalized = res.models
+            .map((m: any) =>
+              typeof m === "string" ? m : m.id || m.name || JSON.stringify(m),
+            )
+            .filter(Boolean);
+          setModelsList(normalized as string[]);
+        } else {
+          setModelsList(null); // Will show static list as fallback
+        }
+      } catch {
+        if (mounted) setModelsList(null);
+      } finally {
+        if (mounted) setModelsLoading(false);
+      }
+    }
+
+    // Small delay to avoid rapid fetches
+    const timeout = setTimeout(fetchModels, 300);
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, [apiProvider, apiKey, ollamaHost, useGeminiApi]);
+
   useEffect(() => {
     // Auto-check Ollama on mount or when saved host changes
     let mounted = true;
