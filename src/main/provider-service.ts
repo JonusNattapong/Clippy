@@ -121,6 +121,41 @@ export async function checkOllama(host?: string): Promise<ProviderTestResult> {
   }
 }
 
+export async function getOllamaModels(): Promise<ProviderTestResult> {
+  try {
+    const { exec } = await import("child_process");
+    const { promisify } = await import("util");
+    const execAsync = promisify(exec);
+
+    const { stdout } = await execAsync("ollama list", {
+      encoding: "utf8",
+      timeout: 30000,
+    });
+
+    const lines = stdout.split("\n").filter((line) => line.trim());
+    if (lines.length <= 1) {
+      return { ok: true, models: [] };
+    }
+
+    const models: string[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const parts = line.split(/\s+/);
+      if (parts.length >= 1) {
+        const name = parts[0];
+        if (name && !name.includes("---") && !name.includes("NAME")) {
+          models.push(name);
+        }
+      }
+    }
+
+    return { ok: true, models: models.sort() };
+  } catch (err) {
+    return { ok: false, message: String(err) };
+  }
+}
+
 export async function testProviderConnection(
   provider: ApiProvider,
   opts?: ProviderOptions,

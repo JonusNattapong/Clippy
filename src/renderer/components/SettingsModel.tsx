@@ -137,10 +137,13 @@ export const SettingsModel: React.FC = () => {
     async function fetchModels() {
       setModelsLoading(true);
       try {
-        const res = await clippyApi.listProviderModels(
-          currentProvider,
-          isLocalProvider ? { host: ollamaHost } : { apiKey },
-        );
+        let res: { ok: boolean; models?: string[]; message?: string } | null =
+          null;
+        if (isLocalProvider) {
+          res = await clippyApi.getOllamaModels();
+        } else {
+          res = await clippyApi.listProviderModels(currentProvider, { apiKey });
+        }
         if (!mounted) return;
 
         if (res && res.ok && Array.isArray(res.models)) {

@@ -88,6 +88,7 @@ export const IpcMessages = {
   FETCH_URL: "clippy_fetch_url",
   // Ollama
   CHECK_OLLAMA: "clippy_check_ollama",
+  GET_OLLAMA_MODELS: "clippy_get_ollama_models",
   // Provider helpers
   TEST_PROVIDER_CONNECTION: "clippy_test_provider_connection",
   LIST_PROVIDER_MODELS: "clippy_list_provider_models",

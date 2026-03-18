@@ -44,6 +44,7 @@ import {
 import { getNotificationManager } from "./notification-service";
 import {
   checkOllama,
+  getOllamaModels,
   testProviderConnection,
   listProviderModels,
   isProviderSupported,
@@ -331,6 +332,11 @@ export function setupIpcListeners() {
   // Check Ollama availability (local server)
   ipcMain.handle(IpcMessages.CHECK_OLLAMA, async (_, hostOverride?: string) => {
     return checkOllama(hostOverride);
+  });
+
+  // Get Ollama models using ollama list CLI
+  ipcMain.handle(IpcMessages.GET_OLLAMA_MODELS, async () => {
+    return getOllamaModels();
   });
 
   // Test generic provider connection (openai, openrouter, ollama)

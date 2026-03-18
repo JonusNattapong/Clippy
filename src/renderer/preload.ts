@@ -260,6 +260,7 @@ const clippyApi: ClippyApi = {
   // Ollama
   checkOllama: (host?: string) =>
     ipcRenderer.invoke(IpcMessages.CHECK_OLLAMA, host),
+  getOllamaModels: () => ipcRenderer.invoke(IpcMessages.GET_OLLAMA_MODELS),
 
   // Provider helpers
   testProviderConnection: (
