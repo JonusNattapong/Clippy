@@ -15,7 +15,7 @@ dotenv.config();
 const config = {
   packagerConfig: {
     asar: true,
-    executableName: "Clippy",
+    executableName: "clippy",
     appBundleId: "com.felixrieseberg.clippy",
     appCategoryType: "public.app-category.productivity",
     win32metadata: {
