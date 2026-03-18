@@ -3,334 +3,690 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Clippy Desktop Assistant</title>
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=2" />
+    <title>Clippy | The AI Assistant with 90s Soul</title>
+    <meta
+      name="description"
+      content="Meet Clippy: A local-first, privacy-focused AI desktop assistant. Bringing nostalgia into the future with tools, memory, and personality."
+    />
+    <link rel="stylesheet" href="styles.css?v=4" />
   </head>
 
   <body>
-    <div class="desktop-icons">
-      <a href="#window-video" class="desktop-icon" id="icon-video">
-        <img src="./images/icon_video.png" alt="video" />
-        <span>Clippy in Action</span>
-      </a>
-      <a href="#window-download" class="desktop-icon" id="icon-download">
-        <img src="./images/icon_download.png" alt="Download" />
-        <span>Download</span>
-      </a>
-      <a href="#window-about" class="desktop-icon" id="icon-about">
-        <img src="./images/icon_about.png" alt="About" />
-        <span>About</span>
-      </a>
-      <a
-        href="https://github.com/JonusNattapong/Clippy"
-        target="_blank"
-        class="desktop-icon"
-        id="icon-github"
-      >
-        <img src="./images/icon_github.png" alt="GitHub" />
-        <span>GitHub</span>
-      </a>
-      <a href="#window-arch" class="desktop-icon" id="icon-arch">
-        <img src="./images/icon_about.png" alt="Architecture" />
-        <span>Architecture</span>
-      </a>
-      <a href="#window-docs" class="desktop-icon" id="icon-docs">
-        <img src="./images/icon_help.png" alt="Docs" />
-        <span>Docs</span>
-      </a>
-    </div>
-    <div class="main-content">
-      <div class="window video-container" id="window-video">
-        <div class="title-bar">
-          <div class="title-bar-text">Clippy in Action</div>
-          <div class="title-bar-controls">
-            <button aria-label="Minimize"></button>
-            <button aria-label="Maximize"></button>
-            <button aria-label="Close"></button>
-          </div>
+    <div class="page-shell">
+      <aside class="desktop-sidebar">
+        <div class="brand-panel">
+          <span class="brand-kicker">System v2.0</span>
+          <h1>Clippy Desktop AI</h1>
+          <p>
+            A playful local-first assistant with desktop tools, memory, and a
+            nostalgic interface built for the modern era.
+          </p>
         </div>
-        <div class="window-body">
-          <video autoplay loop muted controls width="640">
-            <source src="./video.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      </div>
 
-      <div
-        class="window about-container"
-        id="window-about"
-        style="display: none"
-      >
-        <div class="title-bar">
-          <div class="title-bar-text">About Clippy</div>
-          <div class="title-bar-controls">
-            <button aria-label="Minimize"></button>
-            <button aria-label="Maximize"></button>
-            <button aria-label="Close"></button>
+        <nav class="desktop-icons" aria-label="Desktop Icons">
+          <a href="#window-video" class="desktop-icon" id="icon-video">
+            <img src="./images/icon_video.png" alt="Video Icon" />
+            <span>Showcase</span>
+          </a>
+          <a href="#window-download" class="desktop-icon" id="icon-download">
+            <img src="./images/icon_download.png" alt="Download Icon" />
+            <span>Install</span>
+          </a>
+          <a href="#window-about" class="desktop-icon" id="icon-about">
+            <img src="./images/icon_about.png" alt="About Icon" />
+            <span>About</span>
+          </a>
+          <a href="#window-arch" class="desktop-icon" id="icon-arch">
+            <img src="./images/icon_about.png" alt="Architecture Icon" />
+            <span>System</span>
+          </a>
+          <a href="#window-docs" class="desktop-icon" id="icon-docs">
+            <img src="./images/icon_help.png" alt="Docs Icon" />
+            <span>Guides</span>
+          </a>
+          <a
+            href="https://github.com/JonusNattapong/Clippy"
+            target="_blank"
+            rel="noreferrer"
+            class="desktop-icon"
+            id="icon-github"
+          >
+            <img src="./images/icon_github.png" alt="GitHub Icon" />
+            <span>Source</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="workspace">
+        <!-- Hero Window -->
+        <section class="content-card hero-card" id="window-video">
+          <div class="card-header">
+            <h2>clippy_action.mp4</h2>
+          </div>
+          <div class="card-body">
+            <div class="hero-grid">
+              <div class="hero-copy">
+                <div class="section-label">Clippy Desktop Assistant</div>
+                <h2>Local AI, <br />zero compromise.</h2>
+                <p>
+                  Clippy blends desktop automation, long-term memory, and
+                  multiple AI providers into a playful companion that actually
+                  lives on your machine.
+                </p>
+                <p>
+                  Use it as a desktop helper, a nostalgic AI friend, a
+                  local-first experimentation environment, or a lightweight
+                  control layer for models running through Ollama and cloud
+                  APIs.
+                </p>
+                <div class="hero-actions">
+                  <a class="hero-button primary" href="#window-download">
+                    Download Builds
+                  </a>
+                  <a class="hero-button secondary" href="#window-docs">
+                    Open Help Guide
+                  </a>
+                </div>
+                <ul style="margin-top: 22px">
+                  <li>
+                    Local-first memory and settings stored on your machine
+                  </li>
+                  <li>
+                    Supports Gemini, OpenAI, Anthropic, OpenRouter, and Ollama
+                  </li>
+                  <li>
+                    Desktop tools, screenshots, clipboard, file search, and web
+                    fetch
+                  </li>
+                  <li>
+                    Classic retro character style with modern TypeScript +
+                    Electron stack
+                  </li>
+                </ul>
+              </div>
+              <div class="hero-video">
+                <video autoplay loop muted controls playsinline>
+                  <source src="./video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Main Content Sections -->
+        <div class="content-grid">
+          <section class="content-card about-container" id="window-about">
+            <div class="card-header">
+              <h2>About_Project.txt</h2>
+            </div>
+            <div class="card-body prose">
+              <p>
+                Clippy is equal parts useful desktop assistant and nostalgic art
+                project. It exists because building a friendly AI companion is
+                fun, and because software should feel warm and personal.
+              </p>
+              <p>
+                This version focuses on local-first workflows, desktop tooling,
+                and a personality layer missing from generic chat boxes.
+              </p>
+              <h3 style="margin-top: 24px; font-size: 16px">
+                What Makes It Different
+              </h3>
+              <ul style="font-size: 14px; line-height: 1.7">
+                <li>
+                  <strong>Desktop-native workflow:</strong> Clippy is designed
+                  for your machine, not just a browser tab. It can assist with
+                  local files, processes, screenshots, and system context.
+                </li>
+                <li>
+                  <strong>Local-first AI:</strong> If you want privacy and
+                  offline usage, you can pair it with Ollama and run models
+                  entirely on-device.
+                </li>
+                <li>
+                  <strong>Character and tone:</strong> Instead of feeling like a
+                  sterile assistant, Clippy leans into personality, memory, and
+                  a friendlier conversational style.
+                </li>
+                <li>
+                  <strong>Hackable foundation:</strong> Built with Electron,
+                  React, and TypeScript, so contributors can actually extend it
+                  without reverse-engineering a giant black box.
+                </li>
+              </ul>
+              <h3 style="margin-top: 24px; font-size: 16px">Best For</h3>
+              <ul style="font-size: 14px; line-height: 1.7">
+                <li>
+                  People who want an AI companion that feels playful and
+                  personal
+                </li>
+                <li>
+                  Developers who want one interface for cloud and local models
+                </li>
+                <li>
+                  Users who care about privacy, local configuration, and offline
+                  options
+                </li>
+                <li>
+                  Anyone who misses old-school desktop software with charm
+                </li>
+              </ul>
+              <h3 style="margin-top: 24px; font-size: 16px">
+                Credits & Inspiration
+              </h3>
+              <ul
+                style="
+                  font-size: 13px;
+                  color: var(--text-muted);
+                  line-height: 1.6;
+                "
+              >
+                <li>Microsoft, for the 90s magic</li>
+                <li>Kevan Atteberry, original Clippy creator</li>
+                <li>Jordan Scales, Windows 98 design inspiration</li>
+                <li>Pooya Parsa, sprite-sheet animation work</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="content-card download-container" id="window-download">
+            <div class="card-header">
+              <h2>Installer_Wizard.exe</h2>
+            </div>
+            <div class="card-body prose">
+              <p>
+                Get the latest version of Clippy and start with either local
+                models, cloud providers, or a hybrid setup. The app is built to
+                be approachable for casual users but still configurable for
+                power users.
+              </p>
+              <p style="font-size: 14px; font-weight: bold">
+                Latest:
+                <span
+                  id="latest-release-version"
+                  style="color: var(--accent-blue)"
+                  >v0.4.4</span
+                >
+              </p>
+              <h3 style="font-size: 16px; margin-top: 24px">
+                Recommended Setup Path
+              </h3>
+              <ol>
+                <li>Download the build for your platform</li>
+                <li>Launch Clippy and open Settings</li>
+                <li>
+                  Choose an AI provider: Ollama for local, or a cloud API
+                  provider
+                </li>
+                <li>Configure voice, memory, prompts, and appearance</li>
+                <li>
+                  Start chatting and test desktop commands like
+                  <code>/sysinfo</code> or <code>/screenshot</code>
+                </li>
+              </ol>
+              <h3 style="font-size: 16px; margin-top: 24px">Platform Notes</h3>
+              <ul>
+                <li>
+                  <strong>Windows:</strong> Best fit if you want the full
+                  nostalgic desktop vibe
+                </li>
+                <li>
+                  <strong>macOS:</strong> Great for local Ollama workflows and
+                  Apple Silicon performance
+                </li>
+                <li>
+                  <strong>Linux:</strong> Best for tinkerers who want maximum
+                  control and customization
+                </li>
+              </ul>
+              <p>
+                If you plan to stay fully offline, install Ollama first and pull
+                at least one model before opening the app. If you want the
+                fastest setup, start with a cloud provider and add local models
+                later.
+              </p>
+
+              <div class="download-buttons">
+                <a id="download-windows-x64" class="button" href="#">
+                  <img src="images/windows.png" alt="Windows" />
+                  <span>Download for Windows</span>
+                </a>
+                <a id="download-macos-arm64" class="button" href="#">
+                  <img src="images/macos.png" alt="macOS" />
+                  <span>macOS (Apple Silicon)</span>
+                </a>
+                <a id="download-linux-deb-x64" class="button" href="#">
+                  <img src="images/linux.png" alt="Linux" />
+                  <span>Linux (Debian/Ubuntu)</span>
+                </a>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Architecture Window -->
+        <section class="content-card arch-container" id="window-arch">
+          <div class="card-header">
+            <h2>system_architecture.png</h2>
+          </div>
+          <div class="card-body">
+            <img
+              src="images/arch.png"
+              alt="System flow architecture diagram"
+              class="arch-image"
+            />
+          </div>
+        </section>
+
+        <!-- Documentation Window -->
+        <section class="content-card docs-container" id="window-docs">
+          <div class="card-header">
+            <h2>Help_and_Support.chm</h2>
           </div>
           <div
-            class="window docs-container"
-            id="window-docs"
-            style="display: none"
+            class="card-body prose"
+            style="padding: 40px; max-width: 840px; margin: 0 auto"
           >
-            <div class="title-bar">
-              <div class="title-bar-text">Documentation</div>
-              <div class="title-bar-controls">
-                <button aria-label="Minimize"></button>
-                <button aria-label="Maximize"></button>
-                <button aria-label="Close"></button>
-              </div>
-            </div>
-            <div class="window-body">
-              <h3>Documentation</h3>
-              <div class="docs-list-and-frame">
-                <ul class="docs-list">
-                  <li>
-                    <a href="#window-docs" data-src="page/getting-started.html"
-                      >Getting Started</a
-                    >
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/install.html"
-                      >Installation</a
-                    >
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/quick-start.html"
-                      >Quick Start</a
-                    >
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/api.html"
-                      >API / IPC</a
-                    >
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/contributing.html"
-                      >Contributing</a
-                    >
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/faq.html">FAQ</a>
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/releases.html"
-                      >Releases</a
-                    >
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/licenses.html"
-                      >Licenses & Assets</a
-                    >
-                  </li>
-                  <li>
-                    <a href="#window-docs" data-src="page/gallery.html"
-                      >Gallery</a
-                    >
-                  </li>
-                  <li><a href="#window-arch">Architecture</a></li>
-                </ul>
-                <div class="docs-frame">
-                  <iframe
-                    id="docs-iframe"
-                    src=""
-                    style="width: 100%; height: 420px; border: 0"
-                    title="Docs Viewer"
-                  ></iframe>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="window-body">
-          <p>
-            You might be wondering: What’s the point of all this? Why? Clippy is
-            basically art. Don’t get me wrong, I don’t think that this little
-            app is all that magnificent or something that belongs in a museum, I
-            mean “art” in the sense that I’ve made it like other people do
-            watercolors or pottery - I made it because building it was fun for
-            me. If you get as little as a small chuckle out of it, I’m happy to
-            hear it.
-          </p>
-          <p>
-            You can find me on
-            <a href="https://www.felixrieseberg.com" target="_blank"
-              >felixrieseberg.com</a
-            >,
-            <a
-              href="https://bsky.app/profile/felixrieseberg.bsky.social"
-              target="_blank"
-              >Blue.sky</a
-            >, or
-            <a href="http://github.com/felixrieseberg" target="_blank">GitHub</a
-            >.
-          </p>
-          <h3>Clippy</h3>
-          <p>
-            You can find the source code for this app on
-            <a href="https://github.com/JonusNattapong/Clippy" target="_blank"
-              >GitHub</a
-            >.
-          </p>
-          <h3>Acknowledgments</h3>
-          <p>
-            I am so grateful to Microsoft - not only for everything they've done
-            for Electron, but also for giving us one of the most iconic
-            characters and designs of computing history.
-          </p>
-          <ul>
-            <li>
-              The entire <a href="https://electronjs.org">Electron team</a> for
-              continuing to be wonderful people to build open source with
-            </li>
-            <li>
-              <a href="https://www.kevanatteberry.com/">Kevan Atteberry</a> for
-              Clippy
-            </li>
-            <li>
-              <a href="https://github.com/jdan">Jordan Scales (@jdan)</a> for
-              the Windows 98 design
-            </li>
-            <li>
-              <a href="https://github.com/pi0">Pooya Parsa (@pi0)</a> for being
-              the (as far as I know) person to extract the length of each frame
-              from the Clippy spritesheet.
-            </li>
-            <li>
-              <a href="https://github.com/withcatai/node-llama-cpp"
-                >node-llama-cpp</a
-              >
-              for squeezing llama.cpp into Node.js
-            </li>
-          </ul>
-        </div>
-      </div>
+            <!-- Getting Started -->
+            <h2 id="docs-getting-started" style="margin-top: 0">
+              1. Getting Started
+            </h2>
+            <img
+              src="images/diagram_getting_started_sketch.png"
+              alt="Getting Started Flowchart"
+              style="
+                margin: 24px 0;
+                max-height: 260px;
+                width: auto;
+                max-width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                display: block;
+              "
+            />
+            <p>
+              This guide helps you get Clippy running for the first time,
+              whether you want to use it as a local AI companion, a desktop
+              command assistant, or a configurable interface for multiple model
+              providers.
+            </p>
+            <h3 style="font-size: 16px; margin-top: 24px">Prerequisites</h3>
+            <ul>
+              <li>Node.js (>=18)</li>
+              <li>npm or pnpm</li>
+              <li>Operating system: Windows/macOS/Linux</li>
+            </ul>
+            <h3 style="font-size: 16px; margin-top: 24px">
+              What You Can Configure
+            </h3>
+            <ul>
+              <li>AI provider and default model</li>
+              <li>System prompt and response behavior</li>
+              <li>Voice and text-to-speech output</li>
+              <li>
+                Memory approval, relationship stats, and long-term profile data
+              </li>
+              <li>Desktop tools, web tools, and notification integrations</li>
+            </ul>
+            <h3 style="font-size: 16px; margin-top: 24px">Development</h3>
+            <pre
+              style="
+                background: #f1f5f9;
+                padding: 16px;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                font-family: &quot;JetBrains Mono&quot;, monospace;
+                font-size: 13px;
+                overflow-x: auto;
+              "
+            ><code>git clone https://github.com/JonusNattapong/Clippy.git
+cd Clippy
+npm ci
+cp .env.example .env
+npm run start</code></pre>
+            <p>
+              After launch, use the Settings panel to select your model
+              provider. If no API key is configured, you can still prepare the
+              app shell and switch to Ollama later.
+            </p>
 
-      <div class="window arch-container" id="window-arch" style="display: none">
-        <div class="title-bar">
-          <div class="title-bar-text">System Flow Architecture</div>
-          <div class="title-bar-controls">
-            <button aria-label="Minimize"></button>
-            <button aria-label="Maximize"></button>
-            <button aria-label="Close"></button>
-          </div>
-        </div>
-        <div class="window-body">
-          <iframe
-            src="page/arch.html"
-            style="width: 100%; height: 600px; border: 0"
-            title="Architecture"
-          ></iframe>
-        </div>
-      </div>
+            <hr
+              style="
+                margin: 60px 0;
+                border: 0;
+                border-top: 1px dashed var(--border-dark);
+              "
+            />
 
-      <div class="window download-container" id="window-download">
-        <div class="title-bar">
-          <div class="title-bar-text">Download Clippy today!</div>
-          <div class="title-bar-controls">
-            <button aria-label="Minimize"></button>
-            <button aria-label="Maximize"></button>
-            <button aria-label="Close"></button>
+            <!-- Installation -->
+            <h2 id="docs-installation">2. Installation</h2>
+            <img
+              src="images/diagram_install_sketch.png"
+              alt="Installation Outline"
+              style="
+                margin: 24px 0;
+                max-height: 260px;
+                width: auto;
+                max-width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                display: block;
+              "
+            />
+            <p>
+              Download prebuilt releases from the project's
+              <a href="https://github.com/JonusNattapong/Clippy/releases"
+                >GitHub Releases</a
+              >
+              page. If you prefer building from source, clone the repository and
+              run the development scripts locally.
+            </p>
+            <h3 style="font-size: 16px; margin-top: 24px">Installation Flow</h3>
+            <ol>
+              <li>
+                Fetch the installer or zip package for your operating system
+              </li>
+              <li>Extract files if needed and run the packaged app</li>
+              <li>Complete first-run setup and choose your AI provider</li>
+              <li>
+                Open Settings to fine-tune memory, theme, TTS, and provider
+                defaults
+              </li>
+            </ol>
+            <h3 style="font-size: 16px; margin-top: 24px">
+              Environment Variables
+            </h3>
+            <ul>
+              <li><code>GEMINI_API_KEY</code> - Google Gemini</li>
+              <li><code>OPENAI_API_KEY</code> - OpenAI</li>
+              <li><code>ANTHROPIC_API_KEY</code> - Anthropic Claude</li>
+              <li><code>OPENROUTER_API_KEY</code> - OpenRouter</li>
+              <li>
+                <code>TAVILY_API_KEY</code> - Tavily Search API (for Web Skills)
+              </li>
+              <li>
+                <code>OLLAMA_HOST</code> - Ollama URL (default:
+                http://localhost:11434)
+              </li>
+            </ul>
+            <p>
+              You do not need every variable. Use only the providers you care
+              about. Ollama does not require an API key, which makes it the
+              easiest route for privacy-focused local usage.
+            </p>
+
+            <hr
+              style="
+                margin: 60px 0;
+                border: 0;
+                border-top: 1px dashed var(--border-dark);
+              "
+            />
+
+            <!-- Quick Start -->
+            <h2 id="docs-quick-start">3. Quick Start</h2>
+            <img
+              src="images/diagram_quick_start_sketch.png"
+              alt="Quick Start Diagram"
+              style="
+                margin: 24px 0;
+                max-height: 260px;
+                width: auto;
+                max-width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                display: block;
+              "
+            />
+            <p>
+              If you want the shortest path from install to useful interaction,
+              start here. This section is designed for testing the app quickly
+              before you fully customize it.
+            </p>
+            <h3 style="font-size: 16px; margin-top: 24px">Development Mode</h3>
+            <pre
+              style="
+                background: #f1f5f9;
+                padding: 16px;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+                font-family: &quot;JetBrains Mono&quot;, monospace;
+                font-size: 13px;
+                overflow-x: auto;
+              "
+            ><code>npm ci
+cp .env.example .env
+npm run start</code></pre>
+            <h3 style="font-size: 16px; margin-top: 24px">
+              First Commands To Try
+            </h3>
+            <ul>
+              <li>
+                <code>Hello Clippy</code> to confirm the model is responding
+              </li>
+              <li><code>/sysinfo</code> to test desktop tools</li>
+              <li><code>/ps 10</code> to list active processes</li>
+              <li><code>/clipboard</code> to confirm system integration</li>
+              <li>
+                <code>/search latest AI news</code> if Tavily is configured
+              </li>
+            </ul>
+            <p>
+              Once these basics work, move into settings and configure TTS,
+              memory, prompts, identity, and any notification features you want
+              enabled.
+            </p>
+
+            <hr
+              style="
+                margin: 60px 0;
+                border: 0;
+                border-top: 1px dashed var(--border-dark);
+              "
+            />
+
+            <!-- API -->
+            <h2 id="docs-api">4. API / IPC</h2>
+            <img
+              src="images/diagram_api_ipc_sketch.png"
+              alt="IPC Architecture Diagram"
+              style="
+                margin: 24px 0;
+                max-height: 260px;
+                width: auto;
+                max-width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                display: block;
+              "
+            />
+            <p>
+              Clippy is split between a Renderer process for the UI and a Main
+              process for Electron-native capabilities. IPC bridges those two
+              layers so the interface can request tools, state updates, chat
+              streaming, and system actions.
+            </p>
+            <h3 style="font-size: 16px; margin-top: 24px">Desktop Commands</h3>
+            <p>Available via <code>/</code> in chat:</p>
+            <ul>
+              <li>
+                <code>/run &lt;cmd&gt;</code> - Run PowerShell command (Safe
+                mode prevents destructive commands)
+              </li>
+              <li><code>/ls [path]</code> - List directory contents</li>
+              <li><code>/read &lt;file&gt;</code> - Read file content</li>
+              <li><code>/search &lt;query&gt;</code> - Search files locally</li>
+              <li><code>/sysinfo</code> - System information</li>
+              <li><code>/ps</code> - List active processes</li>
+              <li><code>/screenshot</code> - Take desktop screenshot</li>
+              <li><code>/clipboard</code> - Read clipboard</li>
+            </ul>
+            <h3 style="font-size: 16px; margin-top: 24px">Web & Skills</h3>
+            <ul>
+              <li>
+                <code>/search &lt;query&gt;</code> - Web search via Tavily
+              </li>
+              <li><code>/fetch &lt;url&gt;</code> - Scrape webpage content</li>
+            </ul>
+            <h3 style="font-size: 16px; margin-top: 24px">
+              Message Parsing Directives
+            </h3>
+            <p>
+              Clippy's AI can output special syntax to trigger internal actions
+              invisibly. These directives let the model update memory, adjust
+              mood, or call tools without exposing raw implementation details to
+              the user.
+            </p>
+            <ul>
+              <li>
+                <code>[MEMORY_UPDATE:...]</code> - Save to local Vector Store
+              </li>
+              <li>
+                <code>[TOOL_CALL:...]</code> - Execute Modular Skills/Plugins
+              </li>
+              <li>
+                <code>[STATS_UPDATE:...]</code> - Modify Bond and Happiness
+                variables
+              </li>
+              <li>
+                <code>[Wave]</code>, <code>[Think]</code> - Play spritesheet
+                animation
+              </li>
+            </ul>
+            <p>
+              This architecture makes Clippy feel more interactive than a plain
+              chat app: it can respond, remember, act, and adapt, all within the
+              same conversation loop.
+            </p>
+
+            <hr
+              style="
+                margin: 60px 0;
+                border: 0;
+                border-top: 1px dashed var(--border-dark);
+              "
+            />
+
+            <!-- FAQ -->
+            <h2 id="docs-faq">5. FAQ / Troubleshooting</h2>
+            <img
+              src="images/diagram_faq_sketch.png"
+              alt="FAQ Concept"
+              style="
+                margin: 24px 0;
+                max-height: 260px;
+                width: auto;
+                max-width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                display: block;
+              "
+            />
+            <p>
+              <strong>App doesn't start</strong>: Check Node version and run
+              <code>npm ci</code> then <code>npm run start</code>.
+            </p>
+            <p>
+              <strong>API key not working</strong>: Make sure your API key is
+              correct. Check the <code>.env</code> file or Settings in the app.
+            </p>
+            <p>
+              <strong>Ollama not connecting</strong>: Ensure Ollama is running
+              with <code>ollama serve</code> and that your host matches the app
+              setting.
+            </p>
+            <p>
+              <strong>TTS not speaking</strong>: Verify your voice settings in
+              the app and test with a shorter response first.
+            </p>
+            <p>
+              <strong>Desktop commands are blocked</strong>: Safe mode
+              intentionally blocks destructive actions. Switch modes carefully
+              in Advanced settings.
+            </p>
+            <p>
+              <strong>Where is user data stored?</strong> Windows:
+              <code>%APPDATA%\Clippy\</code>, macOS:
+              <code>~/Library/Application Support/Clippy/</code>
+            </p>
+            <p>
+              <strong>Notifications not sending</strong>: Double-check your
+              provider keys, toggles, and any allowlist or chat ID configuration
+              if you enabled notification integrations.
+            </p>
+
+            <hr
+              style="
+                margin: 60px 0;
+                border: 0;
+                border-top: 1px dashed var(--border-dark);
+              "
+            />
+
+            <!-- Releases -->
+            <h2 id="docs-releases">6. Version History</h2>
+            <img
+              src="images/diagram_releases_sketch.png"
+              alt="Releases Timeline"
+              style="
+                margin: 24px 0;
+                max-height: 260px;
+                width: auto;
+                max-width: 100%;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+                display: block;
+              "
+            />
+            <h3 style="font-size: 16px; margin-top: 24px">v0.4.4</h3>
+            <ul>
+              <li>Modular Skills/Plugins system</li>
+              <li>Multi-language UI support (English and Thai localization)</li>
+              <li>Desktop AI commands (/run, /screenshot, /ps, /sysinfo)</li>
+              <li>Web Search & Fetch via Tavily API</li>
+              <li>Ollama support for 100% offline Local Models</li>
+              <li>
+                Multiple Cloud AI providers (Gemini, OpenAI, Anthropic,
+                OpenRouter)
+              </li>
+              <li>Emotion/Style-aware responses with internal Mood Engine</li>
+              <li>Local memory using persistent Vector Store</li>
+              <li>Responsive Edge-TTS voice generation</li>
+              <li>Windows 98 themed UI with translucent features</li>
+            </ul>
+            <p>
+              Future iterations can continue expanding integrations, skills,
+              documentation, model routing, local automation, and
+              quality-of-life improvements around onboarding and memory
+              controls.
+            </p>
           </div>
-        </div>
-        <div class="window-body">
-          <p>
-            Clippy lets you run a variety of large language models (LLMs)
-            locally on your computer while sticking with a user interface of the
-            1990s. It's a love letter and homage to the late, great Clippy - and
-            the visual design created by Microsoft in that era.
-          </p>
-          <ul>
-            <li>
-              <strong>Simple, familiar, and classic chat interface</strong>.
-              Send messages to your models, get a response.
-            </li>
-            <li>
-              <strong>Batteries included: No complicated setup</strong>. Just
-              open the app and chat away. Thanks to llama.cpp and
-              <code>node-llama-cpp</code>, the app will automatically discover
-              the most efficient way to run your models (Metal, CUDA, Vulkan,
-              etc).
-            </li>
-            <li>
-              <strong>Custom models, prompts, and parameters</strong>: Load your
-              own downloaded models and play with the settings.
-            </li>
-            <li>
-              <strong>Offline, local, free</strong>: Everything runs on your
-              computers. The only network request Clippy makes is to check for
-              updates (which you can disable).
-            </li>
-          </ul>
-          <p>
-            This app is not affiliated, approved, or supported by Microsoft.
-            This project isn't trying to be your best chat bot. I'd like you to
-            enjoy a weird mix of nostalgia for 1990s technology paired with one
-            the most magical technologies we can run on our computers in 2025.
-          </p>
-          <p>
-            Do you want to download Clippy for your computer? Latest release:
-            <span id="latest-release-version">v0.6.0</span>
-          </p>
-          <div class="download-buttons">
-            <div>
-              <a
-                id="download-macos-arm64"
-                class="button"
-                href="https://github.com/felixrieseberg/clippy/releases/download/v0.4.3/Clippy-darwin-arm64-0.4.3.zip"
-              >
-                <img src="images/macos.png" alt="macOS Icon" />
-                <span>macOS (Apple Silicon)</span>
-              </a>
-              <a
-                id="download-macos-x64"
-                class="button"
-                href="https://github.com/felixrieseberg/clippy/releases/download/v0.4.3/Clippy-darwin-x64-0.4.3.zip"
-              >
-                <img src="images/macos.png" alt="macOS Icon" />
-                <span>macOS (Intel)</span>
-              </a>
-            </div>
-            <div>
-              <a
-                id="download-windows-x64"
-                class="button"
-                href="https://github.com/felixrieseberg/clippy/releases/download/v0.4.3/Clippy-win32-x64-0.4.3.zip"
-              >
-                <img src="images/windows.png" alt="Windows Icon" />
-                <span>Windows</span>
-              </a>
-            </div>
-            <div>
-              <a
-                id="download-linux-rpm-x64"
-                class="button"
-                href="https://github.com/felixrieseberg/clippy/releases/download/v0.4.3/Clippy-0.4.3-1.x86_64.rpm"
-              >
-                <img src="images/linux.png" alt="Linux Icon" />
-                <span>Linux (RPM, x64)</span>
-              </a>
-              <a
-                id="download-linux-deb-x64"
-                class="button"
-                href="https://github.com/felixrieseberg/clippy/releases/download/v0.4.3/clippy_0.4.3_amd64.deb"
-              >
-                <img src="images/linux.png" alt="Linux Icon" />
-                <span>Linux (Debian, x64)</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+        </section>
+      </main>
     </div>
+
     <footer>
       <p>
-        <a href="https://felixrieseberg.com">Made with ❤️ in San Francisco</a>
+        Clippy is an open-source project. Made with ❤️ and caffeine.
+        <br />
+        <a
+          href="https://github.com/JonusNattapong/Clippy"
+          target="_blank"
+          rel="noreferrer"
+          style="opacity: 0.6"
+        >
+          GitHub Repository
+        </a>
       </p>
     </footer>
+
     <script src="script.js"></script>
   </body>
 </html>

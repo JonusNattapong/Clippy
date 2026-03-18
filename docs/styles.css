@@ -1,73 +1,371 @@
-:root{
-  --bg: #f6f8fb;
-  --card: #ffffff;
-  --muted: #6b7280;
-  --accent: #2563eb;
-  --accent-600: #1e40af;
-  --radius: 10px;
-  --max-width: 1100px;
+:root {
+  --bg-color: #f2efe3;
+  --page-line: #d7d0bb;
+  --window-bg: #fffdf6;
+  --window-surface: #fffef9;
+  --header-bg: #e7dec2;
+  --header-border: #a79b78;
+  --accent-blue: #204a87;
+  --accent-olive: #6b7b3a;
+  --text-main: #222018;
+  --text-muted: #5e5a4d;
+  --border-light: #f9f6ea;
+  --border-dark: #a59b82;
+  --shadow-sm: 1px 1px 0 rgba(0, 0, 0, 0.08);
+  --shadow-window: 2px 2px 0 rgba(0, 0, 0, 0.14);
+  --radius-window: 0;
+  --max-width: 1180px;
 }
 
-*{box-sizing:border-box}
-body{
-  margin:0;
-  min-height:100vh;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background:var(--bg);
-  color:#111827;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  padding:40px 20px;
+* {
+  box-sizing: border-box;
 }
 
-.main-content{
-  width:100%;
-  max-width:var(--max-width);
-  display:grid;
-  grid-template-columns: 1fr 360px;
-  gap:28px;
-  align-items:start;
+html {
+  scroll-behavior: smooth;
 }
 
-.hero-card{
-  background:var(--card);
-  border-radius:var(--radius);
-  padding:28px;
-  box-shadow: 0 6px 20px rgba(16,24,40,0.06), 0 2px 6px rgba(16,24,40,0.04);
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Verdana, Geneva, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-main);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 31px,
+      rgba(215, 208, 187, 0.35) 32px
+    ),
+    var(--bg-color);
 }
 
-.site-title{font-size:1.6rem;margin:0 0 8px 0;font-weight:700}
-.site-lead{color:var(--muted);margin:0 0 16px}
-
-.video-container video{width:100%;height:auto;border-radius:8px}
-
-.right-column{display:flex;flex-direction:column;gap:20px}
-.card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 4px 14px rgba(2,6,23,0.06)}
-
-.download-buttons{display:flex;flex-direction:column;gap:10px;margin-top:8px}
-.download-buttons a.button{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(180deg,var(--accent),var(--accent-600));color:white;text-decoration:none;border-radius:8px;font-weight:600}
-.download-buttons a.button img{width:18px;height:18px}
-
-.docs-list{list-style:none;padding:0;margin:8px 0 0 0;display:grid;gap:8px}
-.docs-list a{text-decoration:none;color:var(--accent);font-weight:600}
-
-footer{width:100%;text-align:center;margin-top:36px;color:var(--muted)}
-
-/* Responsive */
-@media (max-width:1000px){
-  .main-content{grid-template-columns:1fr;}
-  .right-column{order:2}
+a {
+  color: var(--accent-blue);
 }
 
-@media (max-width:480px){
-  body{padding:20px}
-  .site-title{font-size:1.25rem}
+.page-shell {
+  width: min(calc(100% - 32px), var(--max-width));
+  margin: 18px auto 28px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
 }
 
-/* Keep some utility classes used by existing markup */
-.window{background:transparent;border:0;padding:0}
-.title-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.title-bar-text{font-weight:700}
-.window-body{color:inherit}
+.desktop-sidebar {
+  position: sticky;
+  top: 16px;
+  display: grid;
+  gap: 14px;
+}
 
+.brand-panel,
+.desktop-icons,
+.content-card {
+  background: var(--window-bg);
+  border: 1px solid var(--border-dark);
+  box-shadow: var(--shadow-window);
+}
+
+.brand-panel {
+  padding: 16px;
+}
+
+.brand-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--accent-olive);
+  font-family: "Courier New", Courier, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.brand-panel h1 {
+  margin: 0 0 10px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 700;
+}
+
+.brand-panel p {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.desktop-icons {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  padding: 8px;
+}
+
+.desktop-icon {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 42px;
+  padding: 8px;
+  text-decoration: none;
+  color: var(--text-main);
+  border: 1px solid transparent;
+}
+
+.desktop-icon:hover,
+.desktop-icon:focus-visible {
+  background: #f5f1e3;
+  border-color: var(--header-border);
+  outline: none;
+}
+
+.desktop-icon img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.desktop-icon span {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.workspace {
+  display: grid;
+  gap: 20px;
+}
+
+.content-card {
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 10px 14px;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+}
+
+.card-header h2,
+.section-label {
+  margin: 0;
+  color: #3b372b;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.card-body {
+  padding: 18px;
+  background: var(--window-surface);
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+  gap: 24px;
+  align-items: start;
+}
+
+.hero-copy h2 {
+  margin: 10px 0 16px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(34px, 5vw, 56px);
+  line-height: 0.96;
+  font-weight: 700;
+}
+
+.hero-copy p {
+  margin: 0 0 14px;
+  max-width: 62ch;
+  color: var(--text-muted);
+}
+
+.hero-copy ul {
+  margin: 18px 0 0 18px;
+  padding: 0;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.hero-button {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px solid var(--header-border);
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-button.primary {
+  color: #fff;
+  background: var(--accent-blue);
+  border-color: #17365f;
+}
+
+.hero-button.secondary {
+  color: var(--text-main);
+  background: #f3edd7;
+}
+
+.hero-video video {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--border-dark);
+  background: #000;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  gap: 20px;
+  align-items: start;
+}
+
+.prose p:first-child {
+  margin-top: 0;
+}
+
+.prose h3 {
+  margin-bottom: 8px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 20px;
+}
+
+.docs-container .card-body {
+  max-width: 920px;
+}
+
+.docs-container .prose img {
+  margin: 20px 0;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  border: 1px solid var(--border-dark);
+  background: #fff;
+}
+
+.docs-container hr {
+  margin: 42px 0;
+  border: 0;
+  border-top: 1px dashed var(--border-dark);
+}
+
+.arch-image {
+  width: 100%;
+  display: block;
+  border: 1px solid var(--border-dark);
+  background: #fff;
+}
+
+.download-buttons {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.download-buttons .button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 8px 12px;
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 700;
+  background: #f5f1e3;
+  border: 1px solid var(--header-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.download-buttons .button:hover,
+.download-buttons .button:focus-visible {
+  background: #ede4c8;
+  outline: none;
+}
+
+.download-buttons .button img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+pre {
+  margin: 14px 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  border: 1px solid var(--border-dark);
+  background: #f5f2e8;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+code {
+  font-family: "Courier New", Courier, monospace;
+}
+
+footer {
+  width: min(calc(100% - 32px), var(--max-width));
+  margin: 0 auto 26px;
+  padding-top: 8px;
+  border-top: 1px solid var(--page-line);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+footer a {
+  color: var(--accent-blue);
+}
+
+@media (max-width: 980px) {
+  .page-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .desktop-sidebar {
+    position: static;
+  }
+
+  .content-grid,
+  .hero-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    width: min(calc(100% - 20px), var(--max-width));
+    margin: 10px auto 20px;
+    gap: 12px;
+  }
+
+  .brand-panel,
+  .card-body {
+    padding: 14px;
+  }
+
+  .card-header {
+    padding: 9px 12px;
+  }
+
+  .hero-copy h2 {
+    font-size: 38px;
+  }
+}

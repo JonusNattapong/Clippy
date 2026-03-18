@@ -83,7 +83,7 @@ src/
 ## Architecture
 
 <p align="center">
-  <a href="docs/page/arch.html" target="_blank">
+  <a href="docs/images/arch.png" target="_blank">
     <img src="docs/images/arch.png" alt="Architecture diagram" style="max-width:100%;height:auto;border:1px solid #ddd;background:#fff" />
   </a>
 </p>

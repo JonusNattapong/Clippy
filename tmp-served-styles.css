@@ -1,0 +1,73 @@
+:root{
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-600: #1e40af;
+  --radius: 10px;
+  --max-width: 1100px;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background:var(--bg);
+  color:#111827;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:40px 20px;
+}
+
+.main-content{
+  width:100%;
+  max-width:var(--max-width);
+  display:grid;
+  grid-template-columns: 1fr 360px;
+  gap:28px;
+  align-items:start;
+}
+
+.hero-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  padding:28px;
+  box-shadow: 0 6px 20px rgba(16,24,40,0.06), 0 2px 6px rgba(16,24,40,0.04);
+}
+
+.site-title{font-size:1.6rem;margin:0 0 8px 0;font-weight:700}
+.site-lead{color:var(--muted);margin:0 0 16px}
+
+.video-container video{width:100%;height:auto;border-radius:8px}
+
+.right-column{display:flex;flex-direction:column;gap:20px}
+.card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 4px 14px rgba(2,6,23,0.06)}
+
+.download-buttons{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.download-buttons a.button{display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(180deg,var(--accent),var(--accent-600));color:white;text-decoration:none;border-radius:8px;font-weight:600}
+.download-buttons a.button img{width:18px;height:18px}
+
+.docs-list{list-style:none;padding:0;margin:8px 0 0 0;display:grid;gap:8px}
+.docs-list a{text-decoration:none;color:var(--accent);font-weight:600}
+
+footer{width:100%;text-align:center;margin-top:36px;color:var(--muted)}
+
+/* Responsive */
+@media (max-width:1000px){
+  .main-content{grid-template-columns:1fr;}
+  .right-column{order:2}
+}
+
+@media (max-width:480px){
+  body{padding:20px}
+  .site-title{font-size:1.25rem}
+}
+
+/* Keep some utility classes used by existing markup */
+.window{background:transparent;border:0;padding:0}
+.title-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.title-bar-text{font-weight:700}
+.window-body{color:inherit}
+
