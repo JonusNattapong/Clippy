@@ -71,25 +71,25 @@ src/
 
 ```mermaid
 flowchart LR
-  U[User] -->|interacts| R(Renderer\nReact UI)
-  R -->|IPC: send message| IPC[Preload / contextBridge]
-  IPC --> M(Main Process\nElectron)
+  U["User"] -->|interacts| R["Renderer<br>React UI"]
+  R -->|IPC: send message| IPC["Preload / contextBridge"]
+  IPC --> M["Main Process<br>Electron"]
 
   subgraph MAIN["Main Process (Electron)"]
-    M --> Skills[Skills / Plugins]
-    M --> Tools[Desktop & Web Tools]
-    M --> Router[Request Router / Provider Selector]
-    M --> Memory[Local Memory Store\n%APPDATA% / files]
-    M --> TTS[Text-to-Speech (edge-tts / node-edge-tts)]
-    M --> Windows[Windows / App lifecycle]
+    M --> Skills["Skills / Plugins"]
+    M --> Tools["Desktop & Web Tools"]
+    M --> Router["Request Router / Provider Selector"]
+    M --> Memory["Local Memory Store<br>%APPDATA% / files"]
+    M --> TTS["Text-to-Speech (edge-tts / node-edge-tts)"]
+    M --> Windows["Windows / App lifecycle"]
   end
 
   subgraph PROVIDERS["Model Providers"]
-    L[Local Models\n(ollama / llama.cpp / GGUF)]
-    G[Gemini / Google]
-    O[OpenAI]
-    A[Anthropic]
-    OR[OpenRouter]
+    L["Local Models<br>(ollama / llama.cpp / GGUF)"]
+    G["Gemini / Google"]
+    O["OpenAI"]
+    A["Anthropic"]
+    OR["OpenRouter"]
   end
 
   Router -->|choose provider| L
@@ -100,7 +100,7 @@ flowchart LR
 
   Skills -->|call provider| Router
   Skills -->|use| Tools
-  Tools -->|system commands / screenshots| OS[Operating System]
+  Tools -->|system commands / screenshots| OS["Operating System"]
 
   Router -->|response| Memory
   Skills --> Memory
@@ -109,9 +109,9 @@ flowchart LR
   IPC --> R
   R -->|render message| U
 
-  M -->|send text| TTS --> Audio[Speakers]
+  M -->|send text| TTS --> Audio["Speakers"]
 
-  Tools --> Fetch[Web fetcher\nTavily / fetch_url]
+  Tools --> Fetch["Web fetcher<br>Tavily / fetch_url"]
   Fetch --> PROVIDERS
 
   classDef main fill:#f9f,stroke:#333,stroke-width:1px;
