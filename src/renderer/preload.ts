@@ -124,6 +124,8 @@ const clippyApi: ClippyApi = {
   },
   transcribeAudio: (payload) =>
     ipcRenderer.invoke(IpcMessages.CHAT_TRANSCRIBE_AUDIO, payload),
+  generateBubbleText: (payload) =>
+    ipcRenderer.invoke(IpcMessages.CHAT_GENERATE_BUBBLE_TEXT, payload),
 
   // App
   getVersions: () => ipcRenderer.invoke(IpcMessages.APP_GET_VERSIONS),
@@ -154,6 +156,17 @@ const clippyApi: ClippyApi = {
       category,
       importance,
       source,
+    ),
+  submitMemoryCandidate: (
+    input,
+    source?: string,
+    options?: { autoApprove?: boolean },
+  ) =>
+    ipcRenderer.invoke(
+      IpcMessages.MEMORY_SUBMIT_CANDIDATE,
+      input,
+      source,
+      options,
     ),
   updateMemory: (
     id: string,

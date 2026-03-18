@@ -148,7 +148,11 @@ body,
   min-height: 28px;
   padding: 0 10px !important;
   border-radius: 8px !important;
-  background: linear-gradient(180deg, #fbf9ef, #d8d2bb) !important;
+  background: linear-gradient(
+    180deg,
+    var(--premium-surface),
+    var(--premium-border-soft)
+  ) !important;
   font-weight: 700;
 }
 
@@ -183,9 +187,13 @@ body,
 }
 
 button {
-  background: linear-gradient(180deg, #fbf9ef, #d8d2bb) !important;
-  border-top: 1px solid #fffdf2 !important;
-  border-left: 1px solid #fffdf2 !important;
+  background: linear-gradient(
+    180deg,
+    var(--premium-surface),
+    var(--premium-border-soft)
+  ) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.45) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.45) !important;
   border-right: 1px solid var(--premium-border) !important;
   border-bottom: 1px solid var(--premium-border) !important;
   border-radius: 10px !important;
@@ -201,20 +209,30 @@ button {
 }
 
 button:hover {
-  background: linear-gradient(180deg, #fffdf5, #e6dfc7) !important;
+  background: linear-gradient(
+    180deg,
+    var(--premium-panel-soft),
+    var(--premium-surface)
+  ) !important;
   color: var(--premium-text) !important;
   transform: translateY(-1px);
 }
 
 button:active {
   transform: translateY(0);
-  background: linear-gradient(180deg, #d8d2bb, #fbf9ef) !important;
+  background: linear-gradient(
+    180deg,
+    var(--premium-border-soft),
+    var(--premium-surface)
+  ) !important;
 }
 
 textarea,
 input[type="text"],
-input[type="password"] {
-  background: #fffef7 !important;
+input[type="number"],
+input[type="password"],
+select {
+  background: var(--premium-bg) !important;
   border: 1px solid var(--premium-border-soft) !important;
   border-radius: 12px !important;
   color: var(--premium-text) !important;
@@ -224,10 +242,23 @@ input[type="password"] {
 
 textarea:focus,
 input[type="text"]:focus,
-input[type="password"]:focus {
+input[type="number"]:focus,
+input[type="password"]:focus,
+select:focus {
   border-color: var(--premium-accent) !important;
   outline: none !important;
   box-shadow: 0 0 0 2px var(--premium-accent-glow) !important;
+}
+
+@keyframes messageEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message {
@@ -237,6 +268,8 @@ input[type="password"]:focus {
   padding: 0 !important;
   margin-bottom: 14px !important;
   background: transparent !important;
+  animation: messageEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
 
 .message:not(:last-child) {
@@ -311,12 +344,12 @@ input[type="password"]:focus {
 }
 
 .message-user .message-content {
-  background: #f7f3e0 !important;
-  border-color: #d6cfaf;
+  background: var(--premium-border-soft) !important;
+  border-color: var(--premium-border);
 }
 
 .message-assistant .message-content {
-  background: #fffdf0 !important;
+  background: var(--premium-panel) !important;
 }
 
 .message-content p:first-child {
@@ -465,6 +498,7 @@ input[type="password"]:focus {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   scroll-behavior: smooth;
   padding: 16px 16px 12px !important;
 }
@@ -572,7 +606,11 @@ input[type="password"]:focus {
 }
 
 .chat-input-button.voice-button:hover:not(:disabled) {
-  background: linear-gradient(180deg, #f4eed0, #d8d2bb);
+  background: linear-gradient(
+    180deg,
+    var(--premium-panel-soft),
+    var(--premium-surface)
+  );
 }
 
 .chat-input-button.voice-button.recording,
@@ -779,11 +817,15 @@ input[type="password"]:focus {
   min-height: 34px;
   padding: 0 12px;
   border-radius: 10px;
-  border-top: 1px solid #fffdf2;
-  border-left: 1px solid #fffdf2;
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  border-left: 1px solid rgba(255, 255, 255, 0.45);
   border-right: 1px solid var(--premium-border);
   border-bottom: 1px solid var(--premium-border);
-  background: linear-gradient(180deg, #fbf9ef, #d8d2bb);
+  background: linear-gradient(
+    180deg,
+    var(--premium-surface),
+    var(--premium-border-soft)
+  );
   color: var(--premium-text);
   text-decoration: none;
   font-weight: 700;
@@ -791,14 +833,18 @@ input[type="password"]:focus {
 }
 
 .settings-tab[aria-selected="true"] {
-  background: linear-gradient(180deg, #fffdf5, #e6dfc7);
+  background: linear-gradient(
+    180deg,
+    var(--premium-panel-soft),
+    var(--premium-surface)
+  );
 }
 
 .settings-panel {
   background: linear-gradient(
     180deg,
-    rgba(255, 251, 238, 0.98),
-    rgba(241, 235, 205, 0.98)
+    var(--premium-panel),
+    var(--premium-panel-soft)
   ) !important;
   border-radius: 14px !important;
 }
@@ -881,7 +927,7 @@ input[type="password"]:focus {
 .settings-panel input,
 .settings-panel select,
 .settings-panel textarea {
-  background: #fffef7 !important;
+  background: var(--premium-bg) !important;
   border-color: var(--premium-border-soft) !important;
 }
 
@@ -972,7 +1018,7 @@ input[type="password"]:focus {
   padding: 2px !important;
   border-radius: 8px !important;
   border: 1px solid var(--premium-border-soft) !important;
-  background: #fffef7 !important;
+  background: var(--premium-bg) !important;
   flex: 0 0 auto !important;
   cursor: pointer;
 }
@@ -1124,4 +1170,84 @@ input[type="password"]:focus {
   display: flex;
   justify-content: flex-end;
   padding: 0 14px 14px;
+}
+
+/* ─── Speech Bubble (Classic Win98 Style) ─── */
+
+.speech-bubble {
+  position: absolute;
+  bottom: 100px;
+  right: -30px;
+  max-width: 240px;
+  min-width: 140px;
+  z-index: 200;
+  pointer-events: auto;
+  filter: drop-shadow(2px 3px 2px rgba(0, 0, 0, 0.25));
+}
+
+.speech-bubble-text {
+  background: #ffffe1;
+  border: 1px solid #000000;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-family: "Tahoma", "MS Sans Serif", "Arial", sans-serif;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #000000;
+  position: relative;
+  box-shadow: none;
+}
+
+.speech-bubble-tail {
+  position: absolute;
+  bottom: -14px;
+  right: 36px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 14px solid #000000;
+}
+
+.speech-bubble-tail::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: -7px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 12px solid #ffffe1;
+}
+
+@keyframes speechBubbleFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes speechBubbleFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.speech-bubble-fadein {
+  animation: speechBubbleFadeIn 0.25s ease-out forwards;
+}
+
+.speech-bubble-fadeout {
+  animation: speechBubbleFadeOut 0.2s ease-in forwards;
+  pointer-events: none;
 }

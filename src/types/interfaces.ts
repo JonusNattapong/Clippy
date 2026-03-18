@@ -57,6 +57,8 @@ export interface MoodState {
 // Memory System Types
 export type MemoryCategory = "fact" | "preference" | "event" | "relationship";
 
+export type MemoryStatus = "candidate" | "active" | "superseded";
+
 export interface Memory {
   id: string;
   content: string;
@@ -65,10 +67,21 @@ export interface Memory {
   key?: string;
   retention?: "short_term" | "long_term";
   pinned?: boolean;
+  status: MemoryStatus;
+  supersededBy?: string; // ID of the memory that superseded this one
   pendingApproval?: boolean;
   createdAt: number;
   updatedAt: number;
   source?: string; // chat ID that created this memory
+  expiresAt?: number;
+}
+
+export interface MemoryCandidateInput {
+  content: string;
+  category?: MemoryCategory;
+  importance?: number;
+  key?: string;
+  retention?: "short_term" | "long_term";
   expiresAt?: number;
 }
 
@@ -99,3 +112,22 @@ export type MemoryFilter = {
   minImportance?: number;
   searchQuery?: string;
 };
+
+export type MemoryRetrievalSource =
+  | "pinned"
+  | "semantic"
+  | "short_term"
+  | "relationship"
+  | "summary";
+
+export interface MemoryRetrievalItem {
+  memory: Memory;
+  score: number;
+  source: MemoryRetrievalSource;
+}
+
+export interface MemoryRetrievalResult {
+  memories: MemoryRetrievalItem[];
+  query: string;
+  retrievedAt: number;
+}

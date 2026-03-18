@@ -47,6 +47,7 @@ export const IpcMessages = {
   CHAT_STREAM_END: "clippy_chat_stream_end",
   CHAT_STREAM_ERROR: "clippy_chat_stream_error",
   CHAT_TRANSCRIBE_AUDIO: "clippy_chat_transcribe_audio",
+  CHAT_GENERATE_BUBBLE_TEXT: "clippy_chat_generate_bubble_text",
 
   // Clipboard
   CLIPBOARD_WRITE: "clippy_clipboard_write",
@@ -55,6 +56,7 @@ export const IpcMessages = {
   MEMORY_GET_ALL: "clippy_memory_get_all",
   MEMORY_GET: "clippy_memory_get",
   MEMORY_CREATE: "clippy_memory_create",
+  MEMORY_SUBMIT_CANDIDATE: "clippy_memory_submit_candidate",
   MEMORY_UPDATE: "clippy_memory_update",
   MEMORY_DELETE: "clippy_memory_delete",
   MEMORY_SEARCH: "clippy_memory_search",

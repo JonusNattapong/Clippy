@@ -62,7 +62,9 @@ export const SettingsModel: React.FC = () => {
   // Ollama detection
   const [ollamaHost, setOllamaHost] = useState<string>(
     (settings as any).ollamaHost ||
-      (process.env as any)?.OLLAMA_HOST ||
+      (typeof process !== "undefined"
+        ? (process.env as any)?.OLLAMA_HOST
+        : undefined) ||
       "http://localhost:11434",
   );
   const [ollamaChecking, setOllamaChecking] = useState(false);
@@ -101,8 +103,7 @@ export const SettingsModel: React.FC = () => {
     async function fetchSkills() {
       setSkillsLoading(true);
       try {
-        // @ts-ignore - clippy injected in preload
-        const res = await (window as any).clippy.checkSkillStatuses();
+        const res = await clippyApi.checkSkillStatuses();
         if (!mounted) return;
         setSkillsInfo(res);
       } catch (err) {
@@ -125,8 +126,7 @@ export const SettingsModel: React.FC = () => {
     async function detectOllama() {
       setOllamaChecking(true);
       try {
-        // @ts-ignore
-        const res = await (window as any).clippy.checkOllama(ollamaHost);
+        const res = await clippyApi.checkOllama(ollamaHost);
         if (!mounted) return;
         setOllamaInfo(res);
       } catch (err) {
@@ -315,8 +315,7 @@ export const SettingsModel: React.FC = () => {
               setTestLoading(true);
               setTestResult(null);
               try {
-                // @ts-ignore
-                const res = await (window as any).clippy.testProviderConnection(
+                const res = await clippyApi.testProviderConnection(
                   useGeminiApi ? apiProvider : "ollama",
                   { host: ollamaHost, apiKey },
                 );
@@ -340,8 +339,7 @@ export const SettingsModel: React.FC = () => {
               setModelsLoading(true);
               setModelsList(null);
               try {
-                // @ts-ignore
-                const res = await (window as any).clippy.listProviderModels(
+                const res = await clippyApi.listProviderModels(
                   useGeminiApi ? apiProvider : "ollama",
                   { host: ollamaHost, apiKey },
                 );
@@ -512,8 +510,7 @@ export const SettingsModel: React.FC = () => {
             onClick={async () => {
               setSkillsLoading(true);
               try {
-                // @ts-ignore
-                await (window as any).clippy.checkSkillStatuses();
+                await clippyApi.checkSkillStatuses();
               } finally {
                 setSkillsLoading(false);
               }

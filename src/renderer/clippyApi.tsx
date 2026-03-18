@@ -5,10 +5,23 @@ import {
   MessageRecord,
   Versions,
   Memory,
+  MemoryCandidateInput,
   MemoryFilter,
   MemoryMaintenanceReport,
   MemoryStats,
 } from "../types/interfaces";
+import {
+  ProviderTestResult,
+  ProviderListResult,
+  OllamaCheckResult,
+  TelegramNotificationResult,
+  ToolExecutionResult,
+  WebSearchResult,
+  FetchUrlResult,
+  BackupResult,
+  TranscriptionResult,
+  BubbleTextResult,
+} from "../types/contracts";
 import { DebugState } from "../debugState";
 
 import type { BubbleView } from "./contexts/BubbleViewContext";
@@ -53,11 +66,7 @@ export type ClippyApi = {
     reason?: string;
     source: "manual" | "rule" | "agent";
     allowDuringQuietHours?: boolean;
-  }) => Promise<{
-    success: boolean;
-    output?: string;
-    error?: string;
-  }>;
+  }) => Promise<TelegramNotificationResult>;
   // Chats
   getChatRecords: () => Promise<Record<string, ChatRecord>>;
   getChatWithMessages: (chatId: string) => Promise<ChatWithMessages | null>;
@@ -93,7 +102,13 @@ export type ClippyApi = {
     mimeType: string;
     provider?: string;
     model?: string;
-  }) => Promise<string>;
+  }) => Promise<TranscriptionResult>;
+  generateBubbleText: (payload?: {
+    provider?: string;
+    model?: string;
+    prompt?: string;
+    systemPrompt?: string;
+  }) => Promise<BubbleTextResult>;
   // Clipboard
   clipboardWrite: (data: Data) => Promise<void>;
   // Memory
@@ -105,6 +120,11 @@ export type ClippyApi = {
     importance: number,
     source?: string,
   ) => Promise<Memory>;
+  submitMemoryCandidate: (
+    input: MemoryCandidateInput,
+    source?: string,
+    options?: { autoApprove?: boolean },
+  ) => Promise<Memory | null>;
   updateMemory: (
     id: string,
     updates: {
@@ -202,15 +222,24 @@ export type ClippyApi = {
     output?: string;
     error?: string;
   }>;
-  fetchUrl: (url: string) => Promise<{
-    success: boolean;
-    output?: string;
-    error?: string;
-  }>;
+  fetchUrl: (url: string) => Promise<FetchUrlResult>;
   // TTS
   ttsSpeak: (text: string, voice?: string) => Promise<string>;
   ttsGetVoices: () => Promise<string[]>;
   ttsSpeakThai: (text: string) => Promise<string>;
+  // Provider helpers
+  checkOllama: (host?: string) => Promise<OllamaCheckResult>;
+  testProviderConnection: (
+    provider: string,
+    opts?: { host?: string; apiUrl?: string; apiKey?: string },
+  ) => Promise<ProviderTestResult>;
+  listProviderModels: (
+    provider: string,
+    opts?: { host?: string; apiUrl?: string; apiKey?: string },
+  ) => Promise<{ ok: boolean; models?: string[]; message?: string }>;
+  checkSkillStatuses: () => Promise<
+    Record<string, { installed: boolean; version?: string }>
+  >;
 };
 
 declare global {

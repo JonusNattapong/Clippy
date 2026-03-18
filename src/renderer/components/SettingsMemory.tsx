@@ -7,6 +7,11 @@ import {
   MemoryStats,
 } from "../../types/interfaces";
 import { useTranslation } from "../contexts/SharedStateContext";
+import {
+  getMoodLabel,
+  getResponseStyleLabel,
+  getUserToneLabel,
+} from "../helpers/mood-labels";
 
 type ViewMode = "list" | "timeline";
 
@@ -226,56 +231,6 @@ export const SettingsMemory: React.FC = () => {
     if (happiness >= 40) return t.content_mood;
     if (happiness >= 20) return t.neutral;
     return t.sad;
-  };
-
-  const getPrimaryMood = (mood: MemoryStats["mood"]["primary"]): string => {
-    switch (mood) {
-      case "playful":
-        return t.mood_playful;
-      case "supportive":
-        return t.mood_supportive;
-      case "excited":
-        return t.mood_excited;
-      case "focused":
-        return t.mood_focused;
-      case "concerned":
-        return t.mood_concerned;
-      case "calm":
-      default:
-        return t.mood_calm;
-    }
-  };
-
-  const getResponseStyle = (
-    style: MemoryStats["mood"]["responseStyle"],
-  ): string => {
-    switch (style) {
-      case "gentle":
-        return t.response_gentle;
-      case "energetic":
-        return t.response_energetic;
-      case "balanced":
-      default:
-        return t.response_balanced;
-    }
-  };
-
-  const getUserTone = (tone: MemoryStats["mood"]["userTone"]): string => {
-    switch (tone) {
-      case "positive":
-        return t.tone_positive;
-      case "affectionate":
-        return t.tone_affectionate;
-      case "curious":
-        return t.tone_curious;
-      case "distressed":
-        return t.tone_distressed;
-      case "frustrated":
-        return t.tone_frustrated;
-      case "neutral":
-      default:
-        return t.tone_neutral;
-    }
   };
 
   const formatDate = (timestamp: number) => {
@@ -531,13 +486,14 @@ export const SettingsMemory: React.FC = () => {
           <div style={{ marginTop: "10px", fontSize: "12px", color: "#666" }}>
             <div>
               <strong>{t.current_mood}:</strong>{" "}
-              {getPrimaryMood(stats.mood.primary)} ({stats.mood.intensity}/100)
+              {getMoodLabel(stats.mood.primary, t)} ({stats.mood.intensity}/100)
             </div>
             <div>
               <strong>{t.response_style}:</strong>{" "}
-              {getResponseStyle(stats.mood.responseStyle)} |{" "}
-              <strong>{t.user_tone}:</strong> {getUserTone(stats.mood.userTone)}{" "}
-              | <strong>{t.social_battery}:</strong> {stats.mood.socialBattery}
+              {getResponseStyleLabel(stats.mood.responseStyle, t)} |{" "}
+              <strong>{t.user_tone}:</strong>{" "}
+              {getUserToneLabel(stats.mood.userTone, t)} |{" "}
+              <strong>{t.social_battery}:</strong> {stats.mood.socialBattery}
               /100
             </div>
             <div>{stats.mood.summary}</div>

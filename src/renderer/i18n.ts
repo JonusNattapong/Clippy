@@ -101,6 +101,8 @@ export interface Translations {
   api_benefit_2: string;
   api_benefit_3: string;
   api_benefit_4: string;
+  test_connection?: string;
+  list_models?: string;
 
   // Prompts / Parameters
   prompts_description: string;

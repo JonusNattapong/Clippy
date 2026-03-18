@@ -5,10 +5,14 @@ import path from "path";
 import {
   Memory,
   MemoryBank,
+  MemoryCandidateInput,
   MemoryCategory,
   MemoryFilter,
   MemoryMaintenanceReport,
   MemoryStats,
+  MemoryRetrievalItem,
+  MemoryRetrievalResult,
+  MemoryRetrievalSource,
 } from "../types/interfaces";
 import { buildMoodState, DEFAULT_MOOD_STATE } from "../helpers/mood-engine";
 import { getMemoryVectorStore } from "./memory-vector-store";
@@ -35,7 +39,19 @@ export class MemoryManager {
 
   public getAllMemories(): Memory[] {
     return Object.values(this.memoryBank.memories).filter(
-      (memory) => !this.isExpired(memory),
+      (memory) => memory.status === "active" && !this.isExpired(memory),
+    );
+  }
+
+  public getCandidateMemories(): Memory[] {
+    return Object.values(this.memoryBank.memories).filter(
+      (memory) => memory.status === "candidate",
+    );
+  }
+
+  public getSupersededMemories(): Memory[] {
+    return Object.values(this.memoryBank.memories).filter(
+      (memory) => memory.status === "superseded",
     );
   }
 
@@ -43,6 +59,17 @@ export class MemoryManager {
     return this.memoryBank.memories[id] || null;
   }
 
+  /**
+   * Creates a memory directly - use for:
+   * - User-initiated memory creation (Settings UI)
+   * - System/migration scripts
+   * - Explicit "/remember" commands
+   *
+   * For AI-driven candidate creation, use submitMemoryCandidate() instead.
+   *
+   * @param autoApprove - If true, memory becomes "active" immediately.
+   *                      If false, memory stays as "candidate" until approved.
+   */
   public createMemory(
     content: string,
     category: MemoryCategory = "fact",
@@ -52,6 +79,7 @@ export class MemoryManager {
     retention: "short_term" | "long_term" = "long_term",
     expiresAt?: number,
     pendingApproval?: boolean,
+    autoApprove: boolean = true,
   ): Memory {
     const now = Date.now();
     const memory: Memory = {
@@ -62,7 +90,8 @@ export class MemoryManager {
       key,
       retention,
       pinned: false,
-      pendingApproval: pendingApproval ?? false,
+      status: autoApprove ? "active" : "candidate",
+      pendingApproval: pendingApproval ?? !autoApprove,
       createdAt: now,
       updatedAt: now,
       source,
@@ -72,6 +101,55 @@ export class MemoryManager {
     this.memoryBank.memories[memory.id] = memory;
     this.saveToDisk();
     return memory;
+  }
+
+  /**
+   * Creates a memory through the policy pipeline - use for:
+   * - AI-driven memory extraction from conversation
+   * - Candidates that need relevance/duplicate checking
+   * - Memory that should respect auto-approve settings
+   *
+   * This applies shouldSaveMemory() filtering and conflict detection.
+   * For direct user creation, use createMemory() instead.
+   *
+   * @param options.autoApprove - If true, bypasses approval queue (respects settings).
+   */
+  public submitMemoryCandidate(
+    input: MemoryCandidateInput,
+    source?: string,
+    options?: { autoApprove?: boolean },
+  ): Memory | null {
+    const content = input.content.trim();
+    if (!content) {
+      return null;
+    }
+
+    const category = input.category || "fact";
+    const retention =
+      input.retention || (category === "event" ? "short_term" : "long_term");
+    const expiresAt =
+      input.expiresAt ||
+      (retention === "short_term"
+        ? Date.now() + 1000 * 60 * 60 * 24 * 7
+        : undefined);
+    const candidate: ExtractedMemoryCandidate = {
+      content,
+      category,
+      importance: Math.max(1, Math.min(10, input.importance ?? 5)),
+      key: input.key || this.buildMemoryKey(category, content),
+      retention,
+      expiresAt,
+    };
+
+    if (!this.shouldSaveMemory(candidate, content)) {
+      return null;
+    }
+
+    return this.upsertMemoryCandidate(
+      candidate,
+      source,
+      options?.autoApprove ?? false,
+    );
   }
 
   public updateMemory(
@@ -153,6 +231,7 @@ export class MemoryManager {
     const memory = this.memoryBank.memories[id];
     if (!memory || !memory.pendingApproval) return null;
 
+    memory.status = "active";
     memory.pendingApproval = false;
     memory.updatedAt = Date.now();
     this.saveToDisk();
@@ -221,6 +300,13 @@ export class MemoryManager {
     query: string,
     limit: number = 8,
   ): Promise<Memory[]> {
+    const result = await this.getMemoriesWithBudget(query);
+    return result.memories.map((item) => item.memory);
+  }
+
+  public async getMemoriesWithBudget(
+    query: string,
+  ): Promise<MemoryRetrievalResult> {
     const normalizedQuery = query.trim().toLowerCase();
     const tokens = normalizedQuery
       .split(/[\s,.;:!?()[\]{}"'`~@#$%^&*+=\\/|<>-]+/)
@@ -228,18 +314,60 @@ export class MemoryManager {
       .filter((token) => token.length >= 2);
 
     const preferredCategories = this.inferCategoriesFromQuery(normalizedQuery);
-    const memories = this.getAllMemories();
+    const allActiveMemories = this.getAllMemories();
     const now = Date.now();
+
+    const BUDGET = {
+      pinned: 2,
+      semantic: 4,
+      shortTerm: 2,
+      relationship: 1,
+    };
+
+    const result: MemoryRetrievalItem[] = [];
+    const addedIds = new Set<string>();
+
+    const pinnedMemories = allActiveMemories
+      .filter((m) => m.pinned)
+      .sort((a, b) => b.importance - a.importance)
+      .slice(0, BUDGET.pinned);
+    for (const memory of pinnedMemories) {
+      if (!addedIds.has(memory.id)) {
+        result.push({
+          memory,
+          score: 100 + memory.importance,
+          source: "pinned",
+        });
+        addedIds.add(memory.id);
+      }
+    }
+
+    const shortTermMemories = allActiveMemories
+      .filter((m) => m.retention === "short_term")
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .slice(0, BUDGET.shortTerm);
+    for (const memory of shortTermMemories) {
+      if (!addedIds.has(memory.id)) {
+        result.push({
+          memory,
+          score: 50 + memory.importance,
+          source: "short_term",
+        });
+        addedIds.add(memory.id);
+      }
+    }
+
     const semanticMatches = await getMemoryVectorStore().findRelevantMemories(
       query,
-      memories,
-      limit * 2,
+      allActiveMemories,
+      (BUDGET.semantic + BUDGET.relationship) * 2,
     );
     const semanticScores = new Map(
       semanticMatches.map((match) => [match.memoryId, match.score]),
     );
 
-    const scored = memories
+    const scored = allActiveMemories
+      .filter((m) => !addedIds.has(m.id))
       .map((memory) => {
         const content = memory.content.toLowerCase();
         const key = (memory.key || "").toLowerCase();
@@ -256,17 +384,11 @@ export class MemoryManager {
         }
 
         for (const token of tokens) {
-          if (content.includes(token)) {
-            score += 4;
-          }
-          if (key.includes(token)) {
-            score += 2;
-          }
+          if (content.includes(token)) score += 4;
+          if (key.includes(token)) score += 2;
         }
 
-        if (preferredCategories.has(memory.category)) {
-          score += 8;
-        }
+        if (preferredCategories.has(memory.category)) score += 8;
 
         score += semanticScore * 20;
         score += memory.importance * 2;
@@ -277,20 +399,33 @@ export class MemoryManager {
         );
         score += Math.max(0, 10 - Math.min(recencyDays, 10));
 
-        return { memory, score };
+        const source: MemoryRetrievalSource =
+          memory.category === "relationship" ? "relationship" : "semantic";
+
+        return { memory, score, source };
       })
       .filter(({ score }) => score > 0)
-      .sort((a, b) => {
-        if (b.score !== a.score) {
-          return b.score - a.score;
-        }
-        if (b.memory.importance !== a.memory.importance) {
-          return b.memory.importance - a.memory.importance;
-        }
-        return b.memory.updatedAt - a.memory.updatedAt;
-      });
+      .sort((a, b) => b.score - a.score);
 
-    return scored.slice(0, limit).map(({ memory }) => memory);
+    const semanticResults = scored
+      .filter((s) => s.source === "semantic")
+      .slice(0, BUDGET.semantic);
+    const relationshipResults = scored
+      .filter((s) => s.source === "relationship")
+      .slice(0, BUDGET.relationship);
+
+    for (const item of [...semanticResults, ...relationshipResults]) {
+      if (!addedIds.has(item.memory.id)) {
+        result.push(item);
+        addedIds.add(item.memory.id);
+      }
+    }
+
+    return {
+      memories: result,
+      query,
+      retrievedAt: now,
+    };
   }
 
   public recordActionOutcome(params: {
@@ -684,8 +819,30 @@ export class MemoryManager {
     try {
       const content = fs.readFileSync(this.memoryFile, "utf8");
       const data = JSON.parse(content);
+      const memories: Record<string, Memory> = {};
+
+      for (const [id, memory] of Object.entries(data.memories || {})) {
+        const mem = memory as Partial<Memory>;
+        memories[id] = {
+          id: mem.id || id,
+          content: mem.content || "",
+          category: mem.category || "fact",
+          importance: mem.importance || 5,
+          key: mem.key,
+          retention: mem.retention || "long_term",
+          pinned: mem.pinned || false,
+          status: mem.status || "active",
+          supersededBy: mem.supersededBy,
+          pendingApproval: mem.pendingApproval || false,
+          createdAt: mem.createdAt || Date.now(),
+          updatedAt: mem.updatedAt || Date.now(),
+          source: mem.source,
+          expiresAt: mem.expiresAt,
+        };
+      }
+
       return {
-        memories: data.memories || {},
+        memories,
         stats: {
           ...DEFAULT_STATS,
           ...(data.stats || {}),
@@ -736,33 +893,98 @@ export class MemoryManager {
     );
 
     for (const candidate of candidates) {
-      const existing = this.findMemoryByKey(candidate.key, candidate.category);
-      if (existing) {
-        existing.content = candidate.content;
-        existing.importance = Math.max(
-          existing.importance,
-          candidate.importance,
-        );
-        existing.retention = candidate.retention;
-        existing.expiresAt = candidate.expiresAt;
-        existing.updatedAt = Date.now();
-        if (source) {
-          existing.source = source;
-        }
+      if (!this.shouldSaveMemory(candidate, userMessage)) {
         continue;
       }
 
-      this.createMemory(
-        candidate.content,
-        candidate.category,
-        candidate.importance,
-        source,
-        candidate.key,
-        candidate.retention,
-        candidate.expiresAt,
-        !autoApprove,
-      );
+      this.upsertMemoryCandidate(candidate, source, autoApprove);
     }
+  }
+
+  private shouldSaveMemory(
+    candidate: ExtractedMemoryCandidate,
+    userMessage: string,
+  ): boolean {
+    const lowerMessage = userMessage.toLowerCase();
+    const smallTalkPatterns = [
+      /^hi|^hello|^hey|^yo|^sup/i,
+      /^ok|^okay|^sure|^yeah|^yep|^no|^nope/i,
+      /^thanks?|thank you/i,
+      /^(good|great|nice) (morning|afternoon|evening|day)/i,
+      /^(what|how) (are you|do you).*(doing|going)/i,
+      /^(have a|have an) (good|nice) (day|one|evening|morning)/i,
+    ];
+
+    for (const pattern of smallTalkPatterns) {
+      if (pattern.test(lowerMessage.trim())) {
+        return false;
+      }
+    }
+
+    if (
+      candidate.category === "event" &&
+      candidate.retention !== "short_term"
+    ) {
+      if (
+        !candidate.content.match(
+          /(got|received|started|finished|completed|achievement|won|bought|moved)/i,
+        )
+      ) {
+        return false;
+      }
+    }
+
+    if (candidate.importance < 3) return false;
+
+    return true;
+  }
+
+  private isMemoryConflict(
+    existing: Memory,
+    candidate: ExtractedMemoryCandidate,
+  ): boolean {
+    const existingLower = existing.content.toLowerCase();
+    const candidateLower = candidate.content.toLowerCase();
+
+    const conflictPatterns = [
+      {
+        positive: /^(like|love|enjoy|prefer).+/i,
+        negative: /^(dislike|hate|dont like|not like|stop|quit|given up).+/i,
+      },
+      {
+        positive: /^(work at|employed at|job is)/i,
+        negative:
+          /^(left|quit|resigned|no longer|now|changed|new).+(job|work)/i,
+      },
+      {
+        positive: /^(live in|stay in|based in)/i,
+        negative: /^(moved|moving|relocated|left).+(live|stay)/i,
+      },
+      {
+        positive: /^(single|married|divorced|widowed)/i,
+        negative: /^(now |just |recently )?(single|married|divorced|widowed)/i,
+      },
+    ];
+
+    const existingPositive = conflictPatterns.some((p) =>
+      p.positive.test(existingLower),
+    );
+    const candidateNegative = conflictPatterns.some((p) =>
+      p.negative.test(candidateLower),
+    );
+
+    if (existingPositive && candidateNegative) return true;
+
+    const existingNegative = conflictPatterns.some((p) =>
+      p.negative.test(existingLower),
+    );
+    const candidatePositive = conflictPatterns.some((p) =>
+      p.positive.test(candidateLower),
+    );
+
+    if (existingNegative && candidatePositive) return true;
+
+    return false;
   }
 
   private extractMemoryCandidates(
@@ -770,6 +992,60 @@ export class MemoryManager {
     assistantMessage: string,
   ): ExtractedMemoryCandidate[] {
     return extractMemoryCandidates(userMessage, assistantMessage);
+  }
+
+  private upsertMemoryCandidate(
+    candidate: ExtractedMemoryCandidate,
+    source?: string,
+    autoApprove: boolean = false,
+  ): Memory {
+    const existing = this.findMemoryByKey(candidate.key, candidate.category);
+    if (existing) {
+      if (this.isMemoryConflict(existing, candidate)) {
+        const nextMemory = this.createMemory(
+          candidate.content,
+          candidate.category,
+          candidate.importance,
+          source,
+          candidate.key,
+          candidate.retention,
+          candidate.expiresAt,
+          !autoApprove,
+          autoApprove,
+        );
+        existing.status = "superseded";
+        existing.pendingApproval = false;
+        existing.supersededBy = nextMemory.id;
+        existing.updatedAt = Date.now();
+        this.saveToDisk();
+        return nextMemory;
+      }
+
+      existing.content = candidate.content;
+      existing.importance = Math.max(existing.importance, candidate.importance);
+      existing.retention = candidate.retention;
+      existing.expiresAt = candidate.expiresAt;
+      existing.updatedAt = Date.now();
+      existing.status = autoApprove ? "active" : "candidate";
+      existing.pendingApproval = !autoApprove;
+      if (source) {
+        existing.source = source;
+      }
+      this.saveToDisk();
+      return existing;
+    }
+
+    return this.createMemory(
+      candidate.content,
+      candidate.category,
+      candidate.importance,
+      source,
+      candidate.key,
+      candidate.retention,
+      candidate.expiresAt,
+      !autoApprove,
+      autoApprove,
+    );
   }
 
   private findMemoryByKey(key: string, category: MemoryCategory) {

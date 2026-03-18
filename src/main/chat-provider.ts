@@ -5,6 +5,7 @@ import path from "node:path";
 import { ApiProvider } from "../sharedState";
 import { MessageRecord } from "../types/interfaces";
 import { getMemoryManager } from "./memory";
+import { MemoryRetrievalResult } from "../types/interfaces";
 
 export type StreamChatOptions = {
   provider: ApiProvider;
@@ -242,26 +243,37 @@ function buildMoodContext(): string {
 }
 
 async function buildMemoryContext(query: string): Promise<string> {
-  let memories;
+  let result: MemoryRetrievalResult | null = null;
   try {
-    memories = await getMemoryManager().getRelevantMemoriesForQuery(query, 6);
+    result = await getMemoryManager().getMemoriesWithBudget(query);
   } catch {
     return "";
   }
 
-  if (memories.length === 0) {
+  if (result.memories.length === 0) {
     return "";
   }
 
-  const lines = memories.map((memory, index) => {
-    const updatedAt = new Date(memory.updatedAt).toISOString().slice(0, 10);
-    return `${index + 1}. [${memory.category}] importance=${memory.importance} updated=${updatedAt} ${memory.content}`;
+  const lines = result.memories.map((item) => {
+    const updatedAt = new Date(item.memory.updatedAt)
+      .toISOString()
+      .slice(0, 10);
+    return `[${item.source}] ${item.memory.content}`;
+  });
+
+  console.debug("[Memory Retrieval]", {
+    query: result.query,
+    sources: result.memories.map((m) => ({
+      source: m.source,
+      score: m.score,
+      content: m.memory.content.slice(0, 30),
+    })),
   });
 
   return [
-    "Relevant memory context about the user and prior interactions:",
+    "Relevant memory context about the user (source indicates retrieval method):",
     ...lines,
-    "Use this context when it helps, but do not mention memory metadata unless the user asks.",
+    "Use this context when it helps, but do not mention memory sources unless the user asks.",
   ].join("\n");
 }
 
@@ -1003,4 +1015,16 @@ export async function* streamChatCompletion(options: StreamChatOptions) {
     default:
       yield* streamGemini(nextOptions);
   }
+}
+
+export async function generateChatCompletionText(
+  options: StreamChatOptions,
+): Promise<string> {
+  let text = "";
+
+  for await (const chunk of streamChatCompletion(options)) {
+    text += chunk;
+  }
+
+  return text.trim();
 }

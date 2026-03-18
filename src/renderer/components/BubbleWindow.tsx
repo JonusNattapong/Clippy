@@ -7,6 +7,7 @@ import { useBubbleView } from "../contexts/BubbleViewContext";
 import { Chats } from "./Chats";
 import { useSharedState, useTranslation } from "../contexts/SharedStateContext";
 import { FirstRunSetup } from "./FirstRunSetup";
+import { getMoodLabel } from "../helpers/mood-labels";
 
 export function Bubble() {
   const { currentView, setCurrentView } = useBubbleView();
@@ -287,27 +288,4 @@ export function Bubble() {
       )}
     </div>
   );
-}
-
-function getMoodLabel(
-  mood: NonNullable<
-    ReturnType<typeof useSharedState>["settings"]["clippyMood"]
-  >,
-  t: ReturnType<typeof useTranslation>,
-) {
-  switch (mood) {
-    case "playful":
-      return t.mood_playful;
-    case "supportive":
-      return t.mood_supportive;
-    case "excited":
-      return t.mood_excited;
-    case "focused":
-      return t.mood_focused;
-    case "concerned":
-      return t.mood_concerned;
-    case "calm":
-    default:
-      return t.mood_calm;
-  }
 }

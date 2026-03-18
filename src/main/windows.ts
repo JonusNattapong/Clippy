@@ -12,7 +12,7 @@ let mainWindow: BrowserWindow | undefined;
 let overlayWindow: BrowserWindow | undefined;
 let postItWindow: BrowserWindow | undefined;
 const CHAT_WINDOW_TITLES = new Set(["Clippy Chat", "Clippy Chat"]);
-const MAIN_WINDOW_SIZE = { width: 125, height: 100 };
+const MAIN_WINDOW_SIZE = { width: 250, height: 250 };
 const OVERLAY_WINDOW_SIZE = { width: 400, height: 300 };
 const POSTIT_WINDOW_SIZE = { width: 250, height: 250 };
 const POSTIT_DATA_FILE = "postit.json";

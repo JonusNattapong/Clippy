@@ -1,7 +1,11 @@
 import { ANIMATION_KEYS } from "../clippy-animation-helpers";
 import { TodoItem } from "../../sharedState";
-import { Memory, MemoryStats } from "../../types/interfaces";
 import { Translations } from "../i18n";
+import {
+  getMoodLabel,
+  getResponseStyleLabel,
+  getUserToneLabel,
+} from "./mood-labels";
 
 export type ChoicePrompt = {
   prompt: string;
@@ -224,141 +228,4 @@ export function mergeTodoItems(
  */
 export function normalizeTodoKey(value: string): string {
   return value.trim().toLowerCase();
-}
-
-/**
- * Builds a memory context string from memories and stats for injection into the system prompt.
- */
-export function buildMemoryContext(
-  memories: Memory[],
-  stats: MemoryStats,
-  t: Translations,
-): string {
-  if (memories.length === 0) {
-    return t.no_memories_yet;
-  }
-
-  const byCategory: Record<string, Memory[]> = {};
-  const shortTermMemories: Memory[] = memories.filter(
-    (memory) => memory.retention === "short_term",
-  );
-  const longTermMemories: Memory[] = memories.filter(
-    (memory) => memory.retention !== "short_term",
-  );
-  for (const memory of longTermMemories) {
-    if (!byCategory[memory.category]) {
-      byCategory[memory.category] = [];
-    }
-    byCategory[memory.category].push(memory);
-  }
-
-  const lines: string[] = [];
-
-  let relationshipLevel: string = t.strangers;
-  if (stats.bondLevel >= 80) relationshipLevel = t.best_friends;
-  else if (stats.bondLevel >= 60) relationshipLevel = t.close_friends;
-  else if (stats.bondLevel >= 40) relationshipLevel = t.friends;
-  else if (stats.bondLevel >= 20) relationshipLevel = t.acquaintances;
-
-  lines.push(
-    `${t.relationship}: We are ${relationshipLevel}. ${t.bond_level}: ${stats.bondLevel}/100, ${t.happiness}: ${stats.happiness}/100`,
-  );
-  lines.push(
-    `${t.current_mood}: ${getMoodLabel(stats.mood.primary, t)}. ${t.response_style}: ${getResponseStyleLabel(stats.mood.responseStyle, t)}. ${t.user_tone}: ${getUserToneLabel(stats.mood.userTone, t)}. ${t.social_battery}: ${stats.mood.socialBattery}/100.`,
-  );
-  lines.push(stats.mood.summary);
-  lines.push("");
-
-  if (shortTermMemories.length > 0) {
-    lines.push("Recent short-term context:");
-    for (const memory of shortTermMemories.slice(0, 4)) {
-      lines.push(`  - ${memory.content}`);
-    }
-    lines.push("");
-  }
-
-  const categoryOrder: ("fact" | "preference" | "relationship" | "event")[] = [
-    "fact",
-    "preference",
-    "relationship",
-    "event",
-  ];
-  for (const category of categoryOrder) {
-    const categoryMemories: Memory[] | undefined = byCategory[category];
-    if (categoryMemories?.length) {
-      const categoryLabel: string =
-        category === "fact"
-          ? t.fact
-          : category === "preference"
-            ? t.preference
-            : category === "relationship"
-              ? t.relationship
-              : t.event;
-
-      lines.push(`${categoryLabel}:`);
-      for (const memory of categoryMemories.slice(0, 5)) {
-        lines.push(`  - ${memory.content}`);
-      }
-      lines.push("");
-    }
-  }
-
-  return lines.join("\n");
-}
-
-function getMoodLabel(
-  mood: MemoryStats["mood"]["primary"],
-  t: Translations,
-): string {
-  switch (mood) {
-    case "playful":
-      return t.mood_playful;
-    case "supportive":
-      return t.mood_supportive;
-    case "excited":
-      return t.mood_excited;
-    case "focused":
-      return t.mood_focused;
-    case "concerned":
-      return t.mood_concerned;
-    case "calm":
-    default:
-      return t.mood_calm;
-  }
-}
-
-function getResponseStyleLabel(
-  style: MemoryStats["mood"]["responseStyle"],
-  t: Translations,
-): string {
-  switch (style) {
-    case "gentle":
-      return t.response_gentle;
-    case "energetic":
-      return t.response_energetic;
-    case "balanced":
-    default:
-      return t.response_balanced;
-  }
-}
-
-function getUserToneLabel(
-  tone: MemoryStats["mood"]["userTone"],
-  t: Translations,
-): string {
-  switch (tone) {
-    case "positive":
-      return t.tone_positive;
-    case "affectionate":
-      return t.tone_affectionate;
-    case "curious":
-      return t.tone_curious;
-    case "distressed":
-      return t.tone_distressed;
-    case "frustrated":
-      return t.tone_frustrated;
-    case "neutral":
-    default:
-      return t.tone_neutral;
-  }
 }

@@ -16,7 +16,6 @@ import { useMemoryCommands } from "../hooks/useMemoryCommands";
 import {
   filterMessageContent,
   mergeTodoItems,
-  buildMemoryContext,
   ChoicePrompt,
 } from "../helpers/filterMessageContent";
 
@@ -153,12 +152,6 @@ export function Chat({ style }: ChatProps) {
           throw new Error(t.provide_api_key);
         }
 
-        const [memories, stats] = await Promise.all([
-          clippyApi.getAllMemories(),
-          clippyApi.getMemoryStats(),
-        ]);
-
-        const memoryContext = buildMemoryContext(memories, stats, t);
         const telegramPrompt =
           settings.telegramNotificationsEnabled &&
           settings.telegramAgentNotificationsEnabled
@@ -176,7 +169,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
             : "";
 
         const systemPrompt = (settings.systemPrompt || "")
-          .replace("[USER_MEMORY]", memoryContext)
+          .replace("[USER_MEMORY]", "")
           .replace(
             /\[LIST OF ANIMATIONS\]/g,
             ANIMATION_KEYS_BRACKETS.join(", "),
@@ -270,11 +263,16 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
 
         if (memoryUpdate) {
           try {
-            await clippyApi.createMemory(
-              memoryUpdate.content,
-              memoryUpdate.category,
-              memoryUpdate.importance,
+            await clippyApi.submitMemoryCandidate(
+              {
+                content: memoryUpdate.content,
+                category: memoryUpdate.category as any,
+                importance: memoryUpdate.importance,
+              },
               assistantMessage.id,
+              {
+                autoApprove: settings.memoryAutoApprove ?? false,
+              },
             );
           } catch (error) {
             console.error("Error creating memory:", error);

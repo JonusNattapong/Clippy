@@ -41,9 +41,22 @@ hr {
   user-select: none;
 }
 
+@keyframes messageEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .message {
   flex-shrink: 0;
   user-select: text;
+  animation: messageEntrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
 }
 
 .chat-container {
@@ -57,6 +70,8 @@ hr {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
   padding: 16px 16px 12px;
 }
 

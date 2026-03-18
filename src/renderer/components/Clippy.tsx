@@ -10,6 +10,7 @@ import { useChat } from "../contexts/ChatContext";
 import { log } from "../logging";
 import { useDebugState } from "../contexts/DebugContext";
 import { clippyApi } from "../clippyApi";
+import { SpeechBubble } from "./SpeechBubble";
 
 const WAIT_TIME = 6000;
 
@@ -143,7 +144,8 @@ export function Clippy() {
   );
 
   return (
-    <div>
+    <div style={{ position: "relative" }}>
+      <SpeechBubble onBubbleClick={toggleChat} />
       <div
         className="app-no-select"
         onPointerDown={handlePointerDown}
