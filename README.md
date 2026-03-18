@@ -49,55 +49,118 @@ npm run start
 
 ```
 src/
-├── main/                    # Electron main process
-│   ├── skills/              # Skills/Plugins system
-│   │   ├── index.ts         # Public API exports
-│   │   ├── types.ts         # TypeScript interfaces
-│   │   ├── registry.ts      # Skill registry & loader
-│   │   ├── system.skill.ts  # System skill
-│   │   └── web.skill.ts     # Web skill
-│   ├── chat-provider.ts     # AI chat providers
-│   ├── desktop-tools.ts     # Desktop commands implementation
-│   ├── web-tools.ts         # Web search tools
-│   ├── memory.ts            # Memory management
-│   ├── memory-vector-store.ts # Vector store for memories
-│   ├── tts.ts               # Text-to-speech
-│   ├── windows.ts           # Window management
-│   ├── chats.ts             # Chat history management
-│   ├── state.ts             # App state
-│   └── ipc.ts               # IPC handlers
-├── renderer/                # React UI (frontend)
-│   ├── components/          # React components
-│   ├── hooks/               # Custom React hooks
-│   │   ├── useCommandParser.ts    # Command parsing logic
-│   │   └── useMemoryCommands.ts   # Memory command handling
-│   ├── helpers/             # Helper functions
-│   │   └── filterMessageContent.ts # Message filtering & parsing
-│   ├── contexts/            # React contexts
-│   └── api/                # API integrations
-├── helpers/                 # Shared utilities
-├── types/                   # TypeScript definitions
-└── ipc-messages.ts          # IPC communication definitions
+├── bubble-message-config.ts      # Shared bubble message prompt/config
+├── ipc-messages.ts               # IPC communication definitions
+├── main/                         # Electron main process
+│   ├── skills/                   # Skills/Plugins system
+│   ├── chat-provider.ts          # LLM streaming + prompt augmentation
+│   ├── provider-service.ts       # Provider connection/model listing helpers
+│   ├── desktop-tools.ts          # Desktop commands implementation
+│   ├── web-tools.ts              # Web search tools
+│   ├── memory.ts                 # Memory manager + maintenance
+│   ├── memory-helpers.ts         # Memory extraction/policy helpers
+│   ├── memory-vector-store.ts    # Semantic retrieval index
+│   ├── notification-service.ts   # Telegram notification delivery
+│   ├── logger.ts                 # Main-process logging
+│   ├── tts.ts                    # Text-to-speech
+│   ├── windows.ts                # Window management
+│   ├── chats.ts                  # Chat history management
+│   ├── state.ts                  # App state
+│   └── ipc.ts                    # IPC handlers
+├── renderer/                     # React UI (frontend)
+│   ├── components/               # App windows and UI components
+│   ├── hooks/                    # React hooks (commands, errors, telegram)
+│   ├── helpers/                  # Parsing, labels, UI helpers
+│   ├── contexts/                 # Shared React contexts
+│   ├── api/                      # Renderer-side API integrations
+│   ├── clippyApi.tsx             # Typed renderer bridge
+│   └── preload.ts                # Electron preload bridge
+├── helpers/                      # Shared utilities
+└── types/                        # TypeScript contracts/interfaces
 ```
 
 ## Architecture
 
-<p align="center">
-  <a href="docs/images/arch.png" target="_blank">
-    <img src="docs/images/arch.png" alt="Architecture diagram" style="max-width:100%;height:auto;border:1px solid #ddd;background:#fff" />
-  </a>
-</p>
+```text
+User
+  |
+  v
+Renderer Chat.tsx
+  |
+  +--> Memory command? (remember / forget)
+  |      |
+  |      v
+  |    IPC MEMORY_HANDLE_COMMAND
+  |      |
+  |      v
+  |    Main Process -> MemoryManager -> local response
+  |
+  +--> IPC chat request
+         |
+         v
+      Main Process
+         |
+         v
+      buildAugmentedSystemPrompt
+         |
+         +--> MemoryManager.getMemoriesWithBudget()
+         |      |
+         |      +--> memory.json
+         |      |
+         |      +--> vector-index.json
+         |
+         v
+      AI Provider
+         |
+         v
+      Assistant Response
+         |
+         v
+      Renderer response parser
+         |
+         +--> [MEMORY_UPDATE] -> IPC MEMORY_SUBMIT_CANDIDATE
+         |                        |
+         |                        v
+         |                    submitMemoryCandidate()
+         |                        |
+         |                        +--> save active memory
+         |                        |
+         |                        +--> save candidate memory
+         |                               |
+         |                               v
+         |                            memory.json
+         |
+         +--> processConversationTurn()
+         |      |
+         |      +--> extractMemoryCandidates()
+         |      +--> update bond / happiness / mood
+         |      +--> save to memory.json
+         |
+         +--> tool calls -> recordActionOutcome() -> memory.json
+
+Maintenance
+  |
+  v
+runMaintenance()
+  |
+  +--> deduplicate
+  +--> expire
+  +--> summarize
+  |
+  +--> update memory.json
+  +--> refresh vector-index.json
+```
 
 ## Important Scripts
 
 | Script            | Description                     |
 | ----------------- | ------------------------------- |
 | `npm run start`   | Start development server        |
-| `npm run build`   | Build for production            |
 | `npm run lint`    | Format code with Prettier       |
 | `npm test`        | Run test suite                  |
 | `npm run package` | Package app without installer   |
 | `npm run make`    | Create distributable installers |
+| `npm run publish` | Publish packaged releases       |
 
 ## Skills System
 
@@ -147,15 +210,16 @@ See [`docs/skills.md`](docs/skills.md) for full documentation.
 
 ### Stored Files
 
-| File                   | Description              |
-| ---------------------- | ------------------------ |
-| `config.json`          | App settings             |
-| `memories/memory.json` | Long-term memories       |
-| `chats/`               | Chat history             |
-| `identity.json`        | Clippy identity settings |
-| `user.json`            | User profile             |
-| `skills/`              | Custom skills            |
-| `logs/`                | PowerShell command logs  |
+| File                         | Description                                     |
+| ---------------------------- | ----------------------------------------------- |
+| `config.json`                | App settings                                    |
+| `memories/memory.json`       | Memory store for active, candidate, and history |
+| `memories/vector-index.json` | Semantic retrieval index for memories           |
+| `chats/`                     | Chat history                                    |
+| `identity.json`              | Clippy identity settings                        |
+| `user.json`                  | User profile                                    |
+| `skills/`                    | Custom skills                                   |
+| `logs/`                      | PowerShell command logs                         |
 
 ## Desktop Commands
 
@@ -196,7 +260,7 @@ See [`docs/skills.md`](docs/skills.md) for full documentation.
 
 Clippy's AI responses can include special commands embedded in the response:
 
-- **[MEMORY_UPDATE:category|content|importance]** - Save to memory
+- **[MEMORY_UPDATE:category|content|importance]** - Submit a memory candidate through memory policy
 - **[STATS_UPDATE:{bond:±X, happiness:±Y}]** - Update mood stats
 - **[TOOL_CALL:tool_name|arg1=value1,arg2=value2]** - Execute tools
 - **[TODO_ADD:title|note]** - Add todo item
