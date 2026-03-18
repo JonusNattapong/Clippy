@@ -1,4 +1,3 @@
-import Markdown from "react-markdown";
 import questionIcon from "../images/icons/question.png";
 import defaultClippy from "../images/animations/Default.png";
 import { MessageRecord } from "../../types/interfaces";
@@ -37,8 +36,8 @@ export function Message({ message }: { message: Message }) {
         </div>
         {message.images && message.images.length > 0 && (
           <div className="message-images">
-            {message.images.map((img, index) => (
-              <img key={index} src={img} alt={`Attachment ${index + 1}`} />
+            {message.images.map((img, idx) => (
+              <img key={`img-${idx}`} src={img} alt={`Attachment ${idx + 1}`} />
             ))}
           </div>
         )}
@@ -48,15 +47,8 @@ export function Message({ message }: { message: Message }) {
           ) : message.children ? (
             message.children
           ) : (
-            <Markdown
-              components={{
-                a: ({ node, ...props }) => (
-                  <a target="_blank" rel="noreferrer" {...props} />
-                ),
-              }}
-            >
-              {message.content}
-            </Markdown>
+            // Dynamic import for ESM compatibility
+            <span>{message.content}</span>
           )}
         </div>
       </div>

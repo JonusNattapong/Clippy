@@ -173,7 +173,13 @@ See [`docs/skills.md`](docs/skills.md) for full documentation.
 - [`API.md`](API.md) - API documentation
 - [`docs/skills.md`](docs/skills.md) - Skills system documentation
 - [`TH-th/README.th.md`](TH-th/README.th.md) - Thai translation
-
 ## License
 
-This project is licensed under the MIT License — see [`LICENSE.md`](LICENSE.md).
+This repository's source code is licensed under the MIT License. See [`LICENSE.md`](LICENSE.md) for the full license text.
+
+Please note:
+
+- The MIT license applies only to the original code written in this repository.
+- Any Clippy character artwork, images, icons, or other assets that are owned by Microsoft (or third parties) are not covered by the MIT license and may remain subject to separate copyright or trademark restrictions. These assets are included for nostalgic/educational purposes; obtain the necessary permissions before redistributing Microsoft-owned assets.
+- When redistributing binaries, installers, or modified versions, include `LICENSE.md` and preserve the copyright notice.
+

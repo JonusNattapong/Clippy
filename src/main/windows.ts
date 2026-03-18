@@ -1,5 +1,4 @@
 import { BrowserWindow, shell, screen, app } from "electron";
-import contextMenu from "electron-context-menu";
 import { getLogger } from "./logger";
 
 import path from "path";
@@ -102,8 +101,10 @@ export function setupWindowListener() {
       setupNavigationHandler(browserWindow);
 
       if (!isMainWindow) {
-        contextMenu({
-          window: browserWindow,
+        import("electron-context-menu").then((module) => {
+          module.default({
+            window: browserWindow,
+          });
         });
       }
 
