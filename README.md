@@ -69,54 +69,11 @@ src/
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  U["User"] -->|interacts| R["Renderer<br>React UI"]
-  R -->|IPC: send message| IPC["Preload / contextBridge"]
-  IPC --> M["Main Process<br>Electron"]
-
-  subgraph MAIN["Main Process (Electron)"]
-    M --> Skills["Skills / Plugins"]
-    M --> Tools["Desktop & Web Tools"]
-    M --> Router["Request Router / Provider Selector"]
-    M --> Memory["Local Memory Store<br>%APPDATA% / files"]
-    M --> TTS["Text-to-Speech (edge-tts / node-edge-tts)"]
-    M --> Windows["Windows / App lifecycle"]
-  end
-
-  subgraph PROVIDERS["Model Providers"]
-    L["Local Models<br>(ollama / llama.cpp / GGUF)"]
-    G["Gemini / Google"]
-    O["OpenAI"]
-    A["Anthropic"]
-    OR["OpenRouter"]
-  end
-
-  Router -->|choose provider| L
-  Router --> G
-  Router --> O
-  Router --> A
-  Router --> OR
-
-  Skills -->|call provider| Router
-  Skills -->|use| Tools
-  Tools -->|system commands / screenshots| OS["Operating System"]
-
-  Router -->|response| Memory
-  Skills --> Memory
-  Memory --> M
-  M -->|send response| IPC
-  IPC --> R
-  R -->|render message| U
-
-  M -->|send text| TTS --> Audio["Speakers"]
-
-  Tools --> Fetch["Web fetcher<br>Tavily / fetch_url"]
-  Fetch --> PROVIDERS
-
-  classDef main fill:#f9f,stroke:#333,stroke-width:1px;
-  class MAIN main;
-```
+<p align="center">
+  <a href="docs/page/arch.html" target="_blank">
+    <img src="docs/images/arch.png" alt="Architecture diagram" style="max-width:100%;height:auto;border:1px solid #ddd;background:#fff" />
+  </a>
+</p>
 
 ## Important Scripts
 

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Getting Started — Cliplala</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css" />
+    <style>body{padding:20px;font-family:Segoe UI, Tahoma, sans-serif;background:#008080;color:#111} .window{max-width:980px;margin:0 auto}</style>
+  </head>
+  <body>
+    <div class="window">
+      <h1>Getting Started</h1>
+      <p>Quick steps to run Cliplala locally for development.</p>
+      <h2>Prerequisites</h2>
+      <ul>
+        <li>Node.js (>=18)</li>
+        <li>npm or pnpm</li>
+        <li>Operating system: Windows/macOS/Linux</li>
+      </ul>
+      <h2>Development</h2>
+      <pre><code>git clone https://github.com/JonusNattapong/Clippy.git
+    cd Clippy
+    npm ci
+    cp .env.example .env
+    # Edit .env to add any API keys (GEMINI_API_KEY, OPENAI_API_KEY, etc.)
+    npm run start</code></pre>
+      <h2>Local models (optional)</h2>
+      <p>If you want to use local models (recommended for privacy/offline):</p>
+      <ol>
+        <li>Install and run Ollama or set up <code>llama.cpp</code> compatible models.</li>
+        <li>For Ollama, run: <code>ollama serve</code> and ensure a model is pulled (e.g., <code>ollama pull llama3.2</code>).</li>
+        <li>Configure provider in the app settings or set environment variables for local endpoints.</li>
+      </ol>
+      <h2>Troubleshooting</h2>
+      <ul>
+        <li>If the renderer window is blank, open DevTools via the app menu and check console errors.</li>
+        <li>Ensure Node version meets minimum requirement: <code>node -v</code>.</li>
+        <li>On Windows, run PowerShell as Administrator if installation fails for native modules.</li>
+      </ul>
+      <h2>Notes</h2>
+      <p>The app uses Electron + React. See <a href="index.html">docs index</a>.</p>
+    </div>
+  </body>
+</html>

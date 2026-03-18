@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>API / IPC — Cliplala</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css" />
+    <style>body{padding:20px;background:#008080;color:#111;font-family:Segoe UI, Tahoma, sans-serif}.window{max-width:980px;margin:0 auto}</style>
+  </head>
+  <body>
+    <div class="window">
+      <h1>API / IPC</h1>
+      <p>This document summarizes the IPC messages between the Renderer and Main processes.</p>
+      <h2>Key channels</h2>
+      <ul>
+        <li><code>chat:send</code> — Renderer → Main: send user message to provider</li>
+        <li><code>chat:response</code> — Main → Renderer: provider response</li>
+        <li><code>desktop:exec</code> — Renderer → Main: run desktop command</li>
+      </ul>
+      <p>See <code>src/ipc-messages.ts</code> for full message definitions.</p>
+    </div>
+  </body>
+</html>
