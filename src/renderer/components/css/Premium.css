@@ -557,6 +557,55 @@ select:focus {
   z-index: 10;
 }
 
+.chat-input-file-preview {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--premium-border-soft);
+  background: rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+  max-width: 150px;
+}
+
+.chat-input-file-name {
+  font-size: 11px;
+  color: var(--premium-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-input-shell.dragging {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4),
+    rgba(224, 214, 173, 0.95)
+  );
+  border: 2px dashed var(--premium-accent);
+}
+
+.chat-input-drop-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 111, 190, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.chat-input-drop-message {
+  background: var(--premium-accent);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+}
+
 .chat-input-image-remove:hover {
   background: rgba(231, 76, 60, 0.9);
 }

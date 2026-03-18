@@ -1,5 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Mic, MicOff, Loader2, Image, X } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  Loader2,
+  Image,
+  X,
+  FileText,
+  Paperclip,
+} from "lucide-react";
 import { useChat } from "../contexts/ChatContext";
 import { useSharedState, useTranslation } from "../contexts/SharedStateContext";
 import { transcribeAudio } from "../api/chat-provider";
@@ -9,19 +17,33 @@ interface ExtendedWindow extends Window {
 }
 
 export type ChatInputProps = {
-  onSend: (message: string, images?: string[]) => void;
+  onSend: (
+    message: string,
+    images?: string[],
+    files?: FileAttachment[],
+  ) => void;
   onAbort: () => void;
 };
+
+export interface FileAttachment {
+  name: string;
+  type: string;
+  size: number;
+  content: string; // base64
+}
 
 export function ChatInput({ onSend, onAbort }: ChatInputProps) {
   const { status } = useChat();
   const t = useTranslation();
   const [message, setMessage] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  const [files, setFiles] = useState<FileAttachment[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const { isModelLoaded } = useChat();
   const { settings } = useSharedState();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -33,6 +55,7 @@ export function ChatInput({ onSend, onAbort }: ChatInputProps) {
   const isBusy = status === "thinking" || status === "responding";
   const hasApiKey = !!(settings.apiKey || settings.geminiApiKey || "").trim();
   const canUseApi = hasApiKey;
+  const totalAttachments = images.length + files.length;
 
   // Audio Visualizer Logic
   useEffect(() => {
@@ -156,12 +179,13 @@ export function ChatInput({ onSend, onAbort }: ChatInputProps) {
 
   const handleSend = useCallback(() => {
     const trimmedMessage = message.trim();
-    if (trimmedMessage || images.length > 0) {
-      onSend(trimmedMessage, images);
+    if (trimmedMessage || images.length > 0 || files.length > 0) {
+      onSend(trimmedMessage, images, files);
       setMessage("");
       setImages([]);
+      setFiles([]);
     }
-  }, [message, images, onSend]);
+  }, [message, images, files, onSend]);
 
   const handleAbort = useCallback(() => {
     setMessage("");
@@ -212,6 +236,181 @@ export function ChatInput({ onSend, onAbort }: ChatInputProps) {
     setImages((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const removeFile = useCallback((index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const uploadedFiles = e.target.files;
+      if (!uploadedFiles) return;
+
+      const newFiles: FileAttachment[] = [];
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const file = uploadedFiles[i];
+
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result);
+          };
+          reader.readAsDataURL(file);
+        });
+
+        newFiles.push({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content: base64,
+        });
+      }
+
+      setFiles((prev) => [...prev, ...newFiles].slice(0, 4));
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+    [],
+  );
+
+  const handleAudioFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const audioFiles = e.target.files;
+      if (!audioFiles || audioFiles.length === 0) return;
+
+      setIsTranscribing(true);
+      setErrorMessage(null);
+
+      try {
+        const audioFile = audioFiles[0];
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result);
+          };
+          reader.readAsDataURL(audioFile);
+        });
+
+        const provider =
+          settings.apiProvider === "openai" ? "openai" : "gemini";
+        const text = await transcribeAudio(base64, audioFile.type, {
+          provider,
+          model:
+            provider === "gemini"
+              ? settings.apiModel || "gemini-3-flash-preview"
+              : undefined,
+        });
+
+        if (text && text.trim()) {
+          setMessage(text.trim());
+          if (text.trim().length > 1) {
+            handleSend();
+          }
+        }
+      } catch (err) {
+        console.error("Audio file transcription error:", err);
+        setErrorMessage(
+          `Audio Error: ${err instanceof Error ? err.message : "Failed to transcribe"}`,
+        );
+      } finally {
+        setIsTranscribing(false);
+        if (audioInputRef.current) audioInputRef.current.value = "";
+      }
+    },
+    [settings.apiProvider, settings.apiModel, handleSend],
+  );
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFiles = e.dataTransfer.files;
+    if (!droppedFiles || droppedFiles.length === 0) return;
+
+    const newImages: string[] = [];
+    const newFiles: FileAttachment[] = [];
+
+    for (let i = 0; i < droppedFiles.length; i++) {
+      const file = droppedFiles[i];
+
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result);
+          };
+          reader.readAsDataURL(file);
+        });
+        newImages.push(base64);
+      } else {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => {
+            const result = reader.result as string;
+            resolve(result);
+          };
+          reader.readAsDataURL(file);
+        });
+        newFiles.push({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          content: base64,
+        });
+      }
+    }
+
+    setImages((prev) => [...prev, ...newImages].slice(0, 4));
+    setFiles((prev) => [...prev, ...newFiles].slice(0, 4));
+  }, []);
+
+  // Screenshot capture
+  const handleScreenshot = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+      });
+
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      await video.play();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(video, 0, 0);
+
+      stream.getTracks().forEach((track) => track.stop());
+
+      const dataUrl = canvas.toDataURL("image/png");
+      setImages((prev) => [...prev, dataUrl].slice(0, 4));
+    } catch (err) {
+      console.error("Screenshot error:", err);
+      setErrorMessage("Failed to capture screenshot");
+    }
+  }, []);
+
   useEffect(() => {
     if (
       isModelLoaded &&
@@ -239,21 +438,47 @@ export function ChatInput({ onSend, onAbort }: ChatInputProps) {
     ? t.clippy_is_responding
     : isTranscribing
       ? t.clippy_is_listening
-      : message || images.length > 0
+      : message || totalAttachments > 0
         ? ""
         : t.type_message;
 
   return (
-    <div className="chat-input-shell">
-      {images.length > 0 && (
+    <div
+      className={`chat-input-shell ${isDragging ? "dragging" : ""}`}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="chat-input-drop-overlay">
+          <div className="chat-input-drop-message">
+            Drop files here to attach
+          </div>
+        </div>
+      )}
+      {totalAttachments > 0 && (
         <div className="chat-input-images">
           {images.map((img, index) => (
-            <div key={index} className="chat-input-image-preview">
+            <div key={`img-${index}`} className="chat-input-image-preview">
               <img src={img} alt={`Upload ${index + 1}`} />
               <button
                 type="button"
                 className="chat-input-image-remove"
                 onClick={() => removeImage(index)}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+          {files.map((file, index) => (
+            <div key={`file-${index}`} className="chat-input-file-preview">
+              <FileText size={20} />
+              <span className="chat-input-file-name">{file.name}</span>
+              <button
+                type="button"
+                className="chat-input-image-remove"
+                onClick={() => removeFile(index)}
               >
                 <X size={14} />
               </button>
@@ -285,6 +510,7 @@ export function ChatInput({ onSend, onAbort }: ChatInputProps) {
           placeholder={placeholder}
           className={`chat-input-textarea ${isListening ? "voice-active" : ""} ${isTranscribing ? "transcribing" : ""}`}
         />
+        {/* Image input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -292,6 +518,24 @@ export function ChatInput({ onSend, onAbort }: ChatInputProps) {
           multiple
           onChange={handleImageUpload}
           style={{ display: "none" }}
+        />
+        {/* File input for documents */}
+        <input
+          ref={audioInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.txt,.md,.json,.csv,.xlsx,.pptx"
+          multiple
+          onChange={handleFileUpload}
+          style={{ display: "none" }}
+        />
+        {/* Audio file input */}
+        <input
+          type="file"
+          accept="audio/*"
+          multiple
+          onChange={handleAudioFileUpload}
+          style={{ display: "none" }}
+          id="audio-file-input"
         />
         <button
           className="chat-input-button"
@@ -324,6 +568,26 @@ export function ChatInput({ onSend, onAbort }: ChatInputProps) {
           ) : (
             <Mic size={18} />
           )}
+        </button>
+        {/* File upload button */}
+        <button
+          className="chat-input-button"
+          type="button"
+          disabled={isBusy || isTranscribing || files.length >= 4}
+          onClick={() => (audioInputRef.current as HTMLInputElement)?.click()}
+          title="Attach file"
+        >
+          <Paperclip size={18} />
+        </button>
+        {/* Screenshot button */}
+        <button
+          className="chat-input-button"
+          type="button"
+          disabled={isBusy || isTranscribing || images.length >= 4}
+          onClick={handleScreenshot}
+          title="Capture screenshot"
+        >
+          <Image size={18} />
         </button>
         <button
           className="chat-input-button"

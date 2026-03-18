@@ -11,6 +11,12 @@ export interface Message extends MessageRecord {
   children?: React.ReactNode;
   createdAt: number;
   sender: "user" | "clippy";
+  attachments?: {
+    name: string;
+    type: string;
+    size: number;
+    content: string;
+  }[];
 }
 
 export function Message({ message }: { message: Message }) {

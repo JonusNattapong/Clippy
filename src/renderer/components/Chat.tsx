@@ -72,7 +72,11 @@ export function Chat({ style }: ChatProps) {
   }, []);
 
   const handleSendMessage = useCallback(
-    async (message: string, images?: string[]) => {
+    async (
+      message: string,
+      images?: string[],
+      files?: { name: string; type: string; size: number; content: string }[],
+    ) => {
       if (status !== "idle") {
         return;
       }
@@ -87,6 +91,7 @@ export function Chat({ style }: ChatProps) {
         sender: "user",
         createdAt: Date.now(),
         images,
+        attachments: files,
       };
 
       await addMessage(userMessage);
