@@ -306,6 +306,29 @@ a {
   object-fit: contain;
 }
 
+.shell-snippets {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.shell-snippet {
+  padding: 12px;
+  background: #fbf7ea;
+  border: 1px solid var(--header-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.shell-snippet-title {
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.shell-snippet pre {
+  margin: 0;
+}
+
 pre {
   margin: 14px 0;
   padding: 12px 14px;

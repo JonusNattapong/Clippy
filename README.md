@@ -45,6 +45,19 @@ cp .env.example .env
 npm run start
 ```
 
+## Quick Install
+
+Download the latest packaged release from the GitHub Releases page:
+
+- **Windows (PowerShell)**  
+  `powershell -Command "irm https://github.com/JonusNattapong/Clippy/releases/latest | Out-Null; Start-Process 'https://github.com/JonusNattapong/Clippy/releases/latest'"`  
+- **Windows (cmd.exe)**  
+  `start https://github.com/JonusNattapong/Clippy/releases/latest`
+- **macOS / Linux**  
+  `xdg-open https://github.com/JonusNattapong/Clippy/releases/latest 2>/dev/null || open https://github.com/JonusNattapong/Clippy/releases/latest`
+
+If you want a direct asset instead of the release page, use the platform links in `docs/` or the GitHub release assets list.
+
 ## Project Structure
 
 ```
