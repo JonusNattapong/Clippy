@@ -41,6 +41,11 @@ const PROVIDER_ENDPOINTS: Record<
     envKey: "OLLAMA_HOST",
     modelsPath: "/v1/models",
   },
+  kilo: {
+    baseUrl: "https://api.kilo.ai/api/gateway",
+    envKey: "KILO_API_KEY",
+    modelsPath: "/models",
+  },
 };
 
 function getApiKey(provider: ApiProvider, overrideKey?: string): string | null {
@@ -81,6 +86,10 @@ function parseModelList(provider: ApiProvider, data: any): string[] {
 
   if (provider === "ollama") {
     return (data.data || []).map((m: any) => m.name || m.id);
+  }
+
+  if (provider === "kilo") {
+    return (data.data || []).map((m: any) => m.id);
   }
 
   if (data.data && Array.isArray(data.data)) {

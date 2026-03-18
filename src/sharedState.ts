@@ -5,7 +5,8 @@ export type ApiProvider =
   | "openai"
   | "anthropic"
   | "openrouter"
-  | "ollama";
+  | "ollama"
+  | "kilo";
 export type PowerShellMode = "safe" | "full";
 
 export type DefaultFont =
@@ -125,6 +126,7 @@ export const API_PROVIDER_DEFAULT_MODELS: Record<ApiProvider, string> = {
   anthropic: "claude-3-sonnet-5",
   openrouter: "openai/gpt-4o-mini",
   ollama: "llama3.2:latest",
+  kilo: "anthropic/claude-sonnet-4.5",
 };
 
 export const API_PROVIDER_LABELS: Record<ApiProvider, string> = {
@@ -133,6 +135,7 @@ export const API_PROVIDER_LABELS: Record<ApiProvider, string> = {
   anthropic: "Anthropic",
   openrouter: "OpenRouter",
   ollama: "Ollama",
+  kilo: "Kilo AI Gateway",
 };
 
 export const DEFAULT_CUSTOM_THEME: CustomThemeColors = {

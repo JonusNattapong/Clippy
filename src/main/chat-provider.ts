@@ -711,6 +711,45 @@ async function* streamOpenRouter(options: StreamChatOptions) {
   }
 }
 
+const KILO_BASE_URL = "https://api.kilo.ai/api/gateway";
+
+async function* streamKilo(options: StreamChatOptions) {
+  const messages = [
+    ...(options.systemPrompt
+      ? [{ role: "system", content: options.systemPrompt }]
+      : []),
+    ...buildHistory(options.history, options.message, options.images),
+  ];
+
+  const apiKey = process.env.KILO_API_KEY;
+  if (!apiKey) {
+    throw new Error("KILO_API_KEY environment variable is not set");
+  }
+
+  const finalModel = options.model || "anthropic/claude-sonnet-4.5";
+
+  const response = await fetch(`${KILO_BASE_URL}/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    signal: options.signal,
+    body: JSON.stringify({
+      model: finalModel,
+      stream: true,
+      temperature: options.temperature ?? 0.7,
+      messages,
+    }),
+  });
+
+  if (!response.ok) {
+    throw await parseResponseError(response);
+  }
+
+  yield* streamOpenAiCompatible(response);
+}
+
 const OLLAMA_DEFAULT_HOST = "http://localhost:11434";
 
 async function* streamOllama(options: StreamChatOptions) {
@@ -1010,6 +1049,9 @@ export async function* streamChatCompletion(options: StreamChatOptions) {
       return;
     case "ollama":
       yield* streamOllama(nextOptions);
+      return;
+    case "kilo":
+      yield* streamKilo(nextOptions);
       return;
     case "gemini":
     default:
