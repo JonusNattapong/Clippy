@@ -107,14 +107,14 @@ npm run start
 
 ### สคริปต์สำคัญ
 
-| สคริปต์ | คำอธิบาย |
-|---------|----------|
-| `npm run start` | เริ่มโหมดพัฒนา |
-| `npm run build` | Build สำหรับ production |
-| `npm run lint` | จัดรูปแบบโค้ดด้วย Prettier |
-| `npm test` | รันชุดทดสอบ |
+| สคริปต์           | คำอธิบาย                     |
+| ----------------- | ---------------------------- |
+| `npm run start`   | เริ่มโหมดพัฒนา               |
+| `npm run build`   | Build สำหรับ production      |
+| `npm run lint`    | จัดรูปแบบโค้ดด้วย Prettier   |
+| `npm test`        | รันชุดทดสอบ                  |
 | `npm run package` | แพ็คเกจแอปโดยไม่มีตัวติดตั้ง |
-| `npm run make` | สร้างตัวติดตั้ง |
+| `npm run make`    | สร้างตัวติดตั้ง              |
 
 ---
 
@@ -124,10 +124,10 @@ Clippy มีระบบ Skills/Plugins แบบโมดูลาร์สำ
 
 ### Built-in Skills
 
-| Skill | Actions |
-|-------|---------|
+| Skill    | Actions                                               |
+| -------- | ----------------------------------------------------- |
 | `system` | `get_info`, `list_processes`, `get_env`, `get_uptime` |
-| `web` | `search`, `fetch_url` |
+| `web`    | `search`, `fetch_url`                                 |
 
 ### สร้าง Skill เอง
 
@@ -161,45 +161,45 @@ module.exports.default = function createMySkill() {
 
 ## ตำแหน่งข้อมูลผู้ใช้
 
-| แพลตฟอร์ม | ตำแหน่ง |
-|------------|---------|
-| Windows | `%APPDATA%\Clippy\` |
-| macOS | `~/Library/Application Support/Clippy/` |
+| แพลตฟอร์ม | ตำแหน่ง                                 |
+| --------- | --------------------------------------- |
+| Windows   | `%APPDATA%\Clippy\`                     |
+| macOS     | `~/Library/Application Support/Clippy/` |
 
 ### ไฟล์ที่จัดเก็บ
 
-| ไฟล์ | คำอธิบาย |
-|------|----------|
-| `config.json` | การตั้งค่าแอป |
-| `memories/memory.json` | ความจำระยะยาว |
-| `chats/` | ประวัติการสนทนา |
-| `identity.json` | การตั้งค่าตัวตนของ Clippy |
-| `user.json` | โปรไฟล์ผู้ใช้ |
-| `skills/` | Custom skills |
+| ไฟล์                   | คำอธิบาย                  |
+| ---------------------- | ------------------------- |
+| `config.json`          | การตั้งค่าแอป             |
+| `memories/memory.json` | ความจำระยะยาว             |
+| `chats/`               | ประวัติการสนทนา           |
+| `identity.json`        | การตั้งค่าตัวตนของ Clippy |
+| `user.json`            | โปรไฟล์ผู้ใช้             |
+| `skills/`              | Custom skills             |
 
 ---
 
 ## คำสั่งเดสก์ท็อป
 
-| คำสั่ง | คำอธิบาย |
-|--------|----------|
-| `/run <cmd>` | รันคำสั่ง PowerShell |
-| `/ls [path]` | แสดงเนื้อหาไดเรกทอรี |
-| `/read <file>` | อ่านเนื้อหาไฟล์ |
-| `/search <query>` | ค้นหาไฟล์ |
-| `/sysinfo` | ข้อมูลระบบ |
-| `/ps [limit]` | แสดง process |
-| `/screenshot` | ถ่ายภาพหน้าจอ |
-| `/clipboard` | อ่านคลิปบอร์ด |
+| คำสั่ง            | คำอธิบาย             |
+| ----------------- | -------------------- |
+| `/run <cmd>`      | รันคำสั่ง PowerShell |
+| `/ls [path]`      | แสดงเนื้อหาไดเรกทอรี |
+| `/read <file>`    | อ่านเนื้อหาไฟล์      |
+| `/search <query>` | ค้นหาไฟล์            |
+| `/sysinfo`        | ข้อมูลระบบ           |
+| `/ps [limit]`     | แสดง process         |
+| `/screenshot`     | ถ่ายภาพหน้าจอ        |
+| `/clipboard`      | อ่านคลิปบอร์ด        |
 
 ---
 
 ## คำสั่งเว็บ
 
-| คำสั่ง | คำอธิบาย |
-|--------|----------|
+| คำสั่ง            | คำอธิบาย                          |
+| ----------------- | --------------------------------- |
 | `/search <query>` | ค้นหาเว็บ (ต้องมี Tavily API key) |
-| `/fetch <url>` | ดึงเนื้อหาเว็บเพจ |
+| `/fetch <url>`    | ดึงเนื้อหาเว็บเพจ                 |
 
 ---
 

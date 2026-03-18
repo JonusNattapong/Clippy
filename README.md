@@ -1,4 +1,4 @@
-# Clippy (Cliplala)
+# Clippy
 
 Clippy brings back the 90s office assistant as a modern AI desktop companion.
 
@@ -64,14 +64,14 @@ src/
 
 ## Important Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run start` | Start development server |
-| `npm run build` | Build for production |
-| `npm run lint` | Format code with Prettier |
-| `npm test` | Run test suite |
-| `npm run package` | Package app without installer |
-| `npm run make` | Create distributable installers |
+| Script            | Description                     |
+| ----------------- | ------------------------------- |
+| `npm run start`   | Start development server        |
+| `npm run build`   | Build for production            |
+| `npm run lint`    | Format code with Prettier       |
+| `npm test`        | Run test suite                  |
+| `npm run package` | Package app without installer   |
+| `npm run make`    | Create distributable installers |
 
 ## Skills System
 
@@ -79,10 +79,10 @@ Clippy includes a modular Skills/Plugins system for extending capabilities:
 
 ### Built-in Skills
 
-| Skill | Actions |
-|-------|---------|
+| Skill    | Actions                                               |
+| -------- | ----------------------------------------------------- |
 | `system` | `get_info`, `list_processes`, `get_env`, `get_uptime` |
-| `web` | `search`, `fetch_url` |
+| `web`    | `search`, `fetch_url`                                 |
 
 ### Creating Custom Skills
 
@@ -114,41 +114,57 @@ See [`docs/skills.md`](docs/skills.md) for full documentation.
 
 ## User Data Location
 
-| Platform | Path |
-|----------|------|
-| Windows | `%APPDATA%\Clippy\` |
-| macOS | `~/Library/Application Support/Clippy/` |
+| Platform | Path                                    |
+| -------- | --------------------------------------- |
+| Windows  | `%APPDATA%\Clippy\`                     |
+| macOS    | `~/Library/Application Support/Clippy/` |
 
 ### Stored Files
 
-| File | Description |
-|------|-------------|
-| `config.json` | App settings |
-| `memories/memory.json` | Long-term memories |
-| `chats/` | Chat history |
-| `identity.json` | Clippy identity settings |
-| `user.json` | User profile |
-| `skills/` | Custom skills |
+| File                   | Description              |
+| ---------------------- | ------------------------ |
+| `config.json`          | App settings             |
+| `memories/memory.json` | Long-term memories       |
+| `chats/`               | Chat history             |
+| `identity.json`        | Clippy identity settings |
+| `user.json`            | User profile             |
+| `skills/`              | Custom skills            |
+| `logs/`                | PowerShell command logs  |
 
 ## Desktop Commands
 
-| Command | Description |
-|---------|-------------|
-| `/run <cmd>` | Run PowerShell command |
-| `/ls [path]` | List directory contents |
-| `/read <file>` | Read file content |
-| `/search <query>` | Search for files |
-| `/sysinfo` | System information |
-| `/ps [limit]` | List processes |
-| `/screenshot` | Take screenshot |
-| `/clipboard` | Read clipboard |
+| Command              | Description              | Example                 |
+| -------------------- | ------------------------ | ----------------------- |
+| `/run <cmd>`         | Run PowerShell command   | `/run Get-Process`      |
+| `/ls [path]`         | List directory contents  | `/ls` or `/ls C:\Users` |
+| `/list <path>`       | List directory (alias)   | `/list C:\Users`        |
+| `/read <file>`       | Read file content        | `/read notes.txt`       |
+| `/cat <file>`        | Read file (alias)        | `/cat config.json`      |
+| `/search <query>`    | Search for files (local) | `/search report`        |
+| `/find <query>`      | Search files (alias)     | `/find budget`          |
+| `/sysinfo`           | System information       | `/sysinfo`              |
+| `/ps [limit]`        | List processes           | `/ps 10`                |
+| `/screenshot [name]` | Take screenshot          | `/screenshot`           |
+| `/clipboard`         | Read clipboard           | `/clipboard`            |
+
+### Security
+
+- **Safe mode**: Only read-only PowerShell commands allowed
+- **Full mode**: Requires user confirmation before execution
+- **Blocked**: Destructive commands like `Remove-Item`, `Stop-Process` are blocked
+- **Logging**: All commands logged to `%APPDATA%\Clippy\logs\`
 
 ## Web Commands
 
-| Command | Description |
-|---------|-------------|
-| `/search <query>` | Web search (requires Tavily API key) |
-| `/fetch <url>` | Fetch webpage content |
+| Command           | Description           | Example                      |
+| ----------------- | --------------------- | ---------------------------- |
+| `/search <query>` | Search the web        | `/search weather Bangkok`    |
+| `/google <query>` | Google search (alias) | `/google Thai food`          |
+| `/fetch <url>`    | Fetch webpage content | `/fetch https://example.com` |
+| `/curl <url>`     | Fetch URL (alias)     | `/curl https://example.com`  |
+| `/wget <url>`     | Fetch URL (alias)     | `/wget https://example.com`  |
+
+**Note:** Web search requires Tavily API key configured in Settings.
 
 ## Documentation
 
