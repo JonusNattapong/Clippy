@@ -43,7 +43,44 @@ export const SettingsModel: React.FC = () => {
   );
   const [saved, setSaved] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
+  const [skillsLoading, setSkillsLoading] = useState(false);
+  const [skillsInfo, setSkillsInfo] = useState<{
+    ok: boolean;
+    message?: string;
+    statuses?: Array<{
+      id: string;
+      enabled: boolean;
+      loaded: boolean;
+      error?: string;
+    }>;
+    skillsDir?: string;
+  } | null>(null);
+  const [skillSearch, setSkillSearch] = useState("");
+  const [skillStatusFilter, setSkillStatusFilter] = useState<
+    "all" | "loaded" | "unloaded" | "error"
+  >("all");
+  // Ollama detection
+  const [ollamaHost, setOllamaHost] = useState<string>(
+    (settings as any).ollamaHost ||
+      (process.env as any)?.OLLAMA_HOST ||
+      "http://localhost:11434",
+  );
+  const [ollamaChecking, setOllamaChecking] = useState(false);
+  const [ollamaInfo, setOllamaInfo] = useState<null | {
+    ok: boolean;
+    message?: string;
+    models?: any;
+  }>(null);
 
+  // Provider test / models listing state
+  const [testLoading, setTestLoading] = useState(false);
+  const [testResult, setTestResult] = useState<null | {
+    ok: boolean;
+    message?: string;
+    models?: any;
+  }>(null);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsList, setModelsList] = useState<string[] | null>(null);
   useEffect(() => {
     // Sync with settings
     setUseGeminiApi(settings.useGeminiApi ?? true);
@@ -57,6 +94,54 @@ export const SettingsModel: React.FC = () => {
         ],
     );
   }, [settings, useGeminiApi]); // Added useGeminiApi to dependencies
+
+  useEffect(() => {
+    // Fetch skills status on mount
+    let mounted = true;
+    async function fetchSkills() {
+      setSkillsLoading(true);
+      try {
+        // @ts-ignore - clippy injected in preload
+        const res = await (window as any).clippy.checkSkillStatuses();
+        if (!mounted) return;
+        setSkillsInfo(res);
+      } catch (err) {
+        if (!mounted) return;
+        setSkillsInfo({ ok: false, message: String(err) });
+      } finally {
+        if (mounted) setSkillsLoading(false);
+      }
+    }
+
+    fetchSkills();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Auto-check Ollama on mount or when saved host changes
+    let mounted = true;
+    async function detectOllama() {
+      setOllamaChecking(true);
+      try {
+        // @ts-ignore
+        const res = await (window as any).clippy.checkOllama(ollamaHost);
+        if (!mounted) return;
+        setOllamaInfo(res);
+      } catch (err) {
+        if (!mounted) return;
+        setOllamaInfo({ ok: false, message: String(err) });
+      } finally {
+        if (mounted) setOllamaChecking(false);
+      }
+    }
+
+    detectOllama();
+    return () => {
+      mounted = false;
+    };
+  }, [ollamaHost]);
 
   const hasApiKey = !!apiKey.trim();
 
@@ -215,6 +300,89 @@ export const SettingsModel: React.FC = () => {
           </p>
         </div>
 
+        {/* Provider test / list actions */}
+        <div
+          style={{
+            marginTop: 10,
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <button
+            type="button"
+            onClick={async () => {
+              setTestLoading(true);
+              setTestResult(null);
+              try {
+                // @ts-ignore
+                const res = await (window as any).clippy.testProviderConnection(
+                  useGeminiApi ? apiProvider : "ollama",
+                  { host: ollamaHost, apiKey },
+                );
+                setTestResult(res);
+              } catch (e) {
+                setTestResult({ ok: false, message: String(e) });
+              } finally {
+                setTestLoading(false);
+              }
+            }}
+            disabled={testLoading}
+          >
+            {testLoading
+              ? "Testing..."
+              : t.test_connection || "Test connection"}
+          </button>
+
+          <button
+            type="button"
+            onClick={async () => {
+              setModelsLoading(true);
+              setModelsList(null);
+              try {
+                // @ts-ignore
+                const res = await (window as any).clippy.listProviderModels(
+                  useGeminiApi ? apiProvider : "ollama",
+                  { host: ollamaHost, apiKey },
+                );
+                if (res && res.ok && Array.isArray(res.models)) {
+                  const normalized = res.models
+                    .map((m: any) =>
+                      typeof m === "string"
+                        ? m
+                        : m.id || m.name || JSON.stringify(m),
+                    )
+                    .filter(Boolean);
+                  setModelsList(normalized as string[]);
+                } else if (res && res.ok && res.models) {
+                  // Try to coerce non-array into string list
+                  setModelsList([String(res.models)]);
+                } else {
+                  setModelsList([]);
+                }
+              } catch (e) {
+                setModelsList([]);
+              } finally {
+                setModelsLoading(false);
+              }
+            }}
+            disabled={modelsLoading}
+          >
+            {modelsLoading ? "Listing..." : t.list_models || "List models"}
+          </button>
+
+          {testResult ? (
+            <span
+              style={{
+                marginLeft: 8,
+                color: testResult.ok ? "#2d6f2d" : "#b94a48",
+              }}
+            >
+              {testResult.ok ? "✅" : "❌"}{" "}
+              {testResult.message || (testResult.ok ? "OK" : "Error")}
+            </span>
+          ) : null}
+        </div>
         {/* Model input */}
         <div className="field-row-stacked" style={{ marginTop: 15 }}>
           <label
@@ -235,6 +403,30 @@ export const SettingsModel: React.FC = () => {
             }
             onChange={(e) => setApiModel(e.target.value)}
           />
+          {modelsList ? (
+            modelsList.length > 0 ? (
+              <div style={{ marginTop: 8 }}>
+                <label style={{ display: "block", marginBottom: 6 }}>
+                  Choose from detected models:
+                </label>
+                <select
+                  value={apiModel}
+                  onChange={(e) => setApiModel(e.target.value)}
+                  style={{ width: "100%" }}
+                >
+                  {modelsList.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div style={{ marginTop: 8, color: "#888" }}>
+                No models found.
+              </div>
+            )
+          ) : null}
           <div className="settings-actions-row">
             <button type="button" onClick={handleUseDefaultModel}>
               {t.use_default_model}
@@ -286,6 +478,143 @@ export const SettingsModel: React.FC = () => {
           <li>{t.api_benefit_4}</li>
         </ul>
       </div>
+
+      <fieldset style={{ marginTop: 16 }}>
+        <legend>Skills</legend>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div>
+            {skillsLoading ? (
+              <span>Checking skills...</span>
+            ) : skillsInfo ? (
+              skillsInfo.ok ? (
+                <div style={{ color: "#2d6f2d" }}>
+                  ✅ Skills loaded: {skillsInfo.statuses?.length ?? 0}
+                  {skillsInfo.skillsDir ? (
+                    <div style={{ fontSize: 12, opacity: 0.9 }}>
+                      Dir: {skillsInfo.skillsDir}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div style={{ color: "#b94a48" }}>
+                  ❌ Skills error: {skillsInfo.message}
+                </div>
+              )
+            ) : (
+              <span style={{ opacity: 0.8 }}>No skills info</span>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            type="button"
+            onClick={async () => {
+              setSkillsLoading(true);
+              try {
+                // @ts-ignore
+                await (window as any).clippy.checkSkillStatuses();
+              } finally {
+                setSkillsLoading(false);
+              }
+            }}
+          >
+            Refresh
+          </button>
+        </div>
+
+        <div
+          style={{
+            marginTop: 12,
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+          }}
+        >
+          <input
+            aria-label="Search skills"
+            placeholder="Search skills..."
+            value={skillSearch}
+            onChange={(e) => setSkillSearch(e.target.value)}
+            style={{ padding: 6, flex: 1 }}
+          />
+          <select
+            value={skillStatusFilter}
+            onChange={(e) => setSkillStatusFilter(e.target.value as any)}
+          >
+            <option value="all">All</option>
+            <option value="loaded">Loaded</option>
+            <option value="unloaded">Unloaded</option>
+            <option value="error">Error</option>
+          </select>
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          {skillsInfo?.ok &&
+          skillsInfo.statuses &&
+          skillsInfo.statuses.length > 0 ? (
+            (() => {
+              const q = skillSearch.trim().toLowerCase();
+              const filtered = skillsInfo.statuses!.filter((s) => {
+                if (q) {
+                  if (
+                    !s.id.toLowerCase().includes(q) &&
+                    !(s.error || "").toLowerCase().includes(q)
+                  )
+                    return false;
+                }
+                if (skillStatusFilter === "loaded" && !s.loaded) return false;
+                if (skillStatusFilter === "unloaded" && s.loaded) return false;
+                if (skillStatusFilter === "error" && !s.error) return false;
+                return true;
+              });
+
+              return filtered.length > 0 ? (
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: "left", padding: 6 }}>Status</th>
+                      <th style={{ textAlign: "left", padding: 6 }}>Skill</th>
+                      <th style={{ textAlign: "left", padding: 6 }}>Enabled</th>
+                      <th style={{ textAlign: "left", padding: 6 }}>Loaded</th>
+                      <th style={{ textAlign: "left", padding: 6 }}>Error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((s) => (
+                      <tr key={s.id} style={{ borderTop: "1px solid #eee" }}>
+                        <td style={{ padding: 6 }}>
+                          {s.loaded ? (
+                            <span style={{ color: "#2d6f2d" }}>●</span>
+                          ) : s.error ? (
+                            <span style={{ color: "#b94a48" }}>●</span>
+                          ) : (
+                            <span style={{ color: "#c0a000" }}>●</span>
+                          )}
+                        </td>
+                        <td style={{ padding: 6 }}>{s.id}</td>
+                        <td style={{ padding: 6 }}>
+                          {s.enabled ? "Yes" : "No"}
+                        </td>
+                        <td style={{ padding: 6 }}>
+                          {s.loaded ? "Yes" : "No"}
+                        </td>
+                        <td style={{ padding: 6, color: "#b94a48" }}>
+                          {s.error || ""}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={{ opacity: 0.8 }}>No skills match your filter</div>
+              );
+            })()
+          ) : (
+            <div style={{ opacity: 0.8 }}>No skills loaded</div>
+          )}
+        </div>
+      </fieldset>
     </div>
   );
 };

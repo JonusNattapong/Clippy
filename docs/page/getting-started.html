@@ -3,42 +3,117 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Getting Started — Cliplala</title>
+    <title>Getting Started — Clippy</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <style>body{padding:20px;font-family:Segoe UI, Tahoma, sans-serif;background:#008080;color:#111} .window{max-width:980px;margin:0 auto}</style>
+    <style>
+      body {
+        padding: 20px;
+        background: #008080;
+        font-family:
+          "Tahoma", "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+      }
+      .window {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .window-body {
+        background: #fff;
+        color: #000;
+      }
+      .window-body h1,
+      .window-body h2,
+      .window-body h3 {
+        color: #000;
+      }
+      .window-body code {
+        background: #fff;
+        padding: 2px 4px;
+        border: 1px solid #888;
+      }
+      .window-body pre {
+        background: #fff;
+        padding: 10px;
+        border: 1px solid #888;
+        overflow-x: auto;
+      }
+      .window-body a {
+        color: #0000ff;
+      }
+      .window-body a:visited {
+        color: #800080;
+      }
+      .nav-links {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+      }
+      .nav-links a {
+        margin-right: 15px;
+        color: #0000ff;
+      }
+    </style>
   </head>
   <body>
     <div class="window">
-      <h1>Getting Started</h1>
-      <p>Quick steps to run Cliplala locally for development.</p>
-      <h2>Prerequisites</h2>
-      <ul>
-        <li>Node.js (>=18)</li>
-        <li>npm or pnpm</li>
-        <li>Operating system: Windows/macOS/Linux</li>
-      </ul>
-      <h2>Development</h2>
-      <pre><code>git clone https://github.com/JonusNattapong/Clippy.git
-    cd Clippy
-    npm ci
-    cp .env.example .env
-    # Edit .env to add any API keys (GEMINI_API_KEY, OPENAI_API_KEY, etc.)
-    npm run start</code></pre>
-      <h2>Local models (optional)</h2>
-      <p>If you want to use local models (recommended for privacy/offline):</p>
-      <ol>
-        <li>Install and run Ollama or set up <code>llama.cpp</code> compatible models.</li>
-        <li>For Ollama, run: <code>ollama serve</code> and ensure a model is pulled (e.g., <code>ollama pull llama3.2</code>).</li>
-        <li>Configure provider in the app settings or set environment variables for local endpoints.</li>
-      </ol>
-      <h2>Troubleshooting</h2>
-      <ul>
-        <li>If the renderer window is blank, open DevTools via the app menu and check console errors.</li>
-        <li>Ensure Node version meets minimum requirement: <code>node -v</code>.</li>
-        <li>On Windows, run PowerShell as Administrator if installation fails for native modules.</li>
-      </ul>
-      <h2>Notes</h2>
-      <p>The app uses Electron + React. See <a href="index.html">docs index</a>.</p>
+      <div class="title-bar">
+        <div class="title-bar-text">Getting Started — Clippy</div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize"></button>
+          <button aria-label="Maximize"></button>
+          <button aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <h1>Getting Started</h1>
+        <p>Quick steps to run Clippy locally for development.</p>
+
+        <h2>Prerequisites</h2>
+        <ul>
+          <li>Node.js (>=18)</li>
+          <li>npm or pnpm</li>
+          <li>Operating system: Windows/macOS/Linux</li>
+        </ul>
+
+        <h2>Development</h2>
+        <pre><code>git clone https://github.com/JonusNattapong/Clippy.git
+cd Clippy
+npm ci
+cp .env.example .env
+# Edit .env to add any API keys (GEMINI_API_KEY, OPENAI_API_KEY, etc.)
+npm run start</code></pre>
+
+        <h2>Local models (optional)</h2>
+        <p>
+          If you want to use local models (recommended for privacy/offline):
+        </p>
+        <ol>
+          <li>Install and run <a href="https://ollama.ai">Ollama</a></li>
+          <li>Run: <code>ollama serve</code></li>
+          <li>Pull a model: <code>ollama pull llama3.2</code></li>
+          <li>Configure Ollama in Settings</li>
+        </ol>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li>
+            If the renderer window is blank, open DevTools via the app menu and
+            check console errors.
+          </li>
+          <li>
+            Ensure Node version meets minimum requirement: <code>node -v</code>.
+          </li>
+          <li>
+            On Windows, run PowerShell as Administrator if installation fails
+            for native modules.
+          </li>
+        </ul>
+
+        <div class="nav-links">
+          <a href="../index.html">← Back to Home</a>
+          <a href="install.html">Installation →</a>
+          <a href="quick-start.html">Quick Start →</a>
+        </div>
+      </div>
     </div>
   </body>
 </html>

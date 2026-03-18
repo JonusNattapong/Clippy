@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 import {
   toggleChatWindow,
+  togglePostItWindow,
   maximizeChatWindow,
   minimizeChatWindow,
   getMainWindow,
@@ -30,6 +31,7 @@ import {
   ApiProvider,
 } from "../sharedState";
 import { streamChatCompletion, transcribeAudio } from "./chat-provider";
+import { getNotificationManager } from "./notification-service";
 
 interface IdentityData {
   name: string;
@@ -144,6 +146,11 @@ function syncMemoryStatsToSettings(stats: MemoryStats) {
 
 function resolveProviderApiKey(provider: ApiProvider) {
   const settings = getStateManager().store.get("settings");
+  // Ollama runs locally and does not require an API key.
+  if (provider === "ollama") {
+    return "";
+  }
+
   if (provider === "gemini") {
     return (settings.geminiApiKey || settings.apiKey || "").trim();
   }
@@ -154,6 +161,7 @@ function resolveProviderApiKey(provider: ApiProvider) {
 export function setupIpcListeners() {
   // Window
   ipcMain.handle(IpcMessages.TOGGLE_CHAT_WINDOW, () => toggleChatWindow());
+  ipcMain.handle(IpcMessages.TOGGLE_POSTIT_WINDOW, () => togglePostItWindow());
   ipcMain.handle(IpcMessages.MINIMIZE_CHAT_WINDOW, () => minimizeChatWindow());
   ipcMain.handle(IpcMessages.MAXIMIZE_CHAT_WINDOW, () => maximizeChatWindow());
   ipcMain.handle(IpcMessages.MINIMIZE_MAIN_WINDOW, () => {
@@ -190,6 +198,18 @@ export function setupIpcListeners() {
       throw new Error(result.error || "Failed to open PowerShell log.");
     }
   });
+  ipcMain.handle(
+    IpcMessages.APP_SEND_TELEGRAM_NOTIFICATION,
+    async (
+      _,
+      payload: {
+        message: string;
+        reason?: string;
+        source: "manual" | "rule" | "agent";
+        allowDuringQuietHours?: boolean;
+      },
+    ) => getNotificationManager().sendTelegramNotification(payload),
+  );
   ipcMain.handle(IpcMessages.APP_EXPORT_BACKUP, async () => {
     const result = await dialog.showSaveDialog(getMainWindow(), {
       title: "Export Clippy Backup",
@@ -284,6 +304,185 @@ export function setupIpcListeners() {
   ipcMain.handle(IpcMessages.CHAT_GET_CHAT_RECORDS, () =>
     getChatManager().getChats(),
   );
+
+  // Check Ollama availability (local server)
+  ipcMain.handle(IpcMessages.CHECK_OLLAMA, async (_, hostOverride?: string) => {
+    const host =
+      hostOverride || process.env.OLLAMA_HOST || "http://localhost:11434";
+    try {
+      const res = await fetch(`${host}/v1/models`);
+      if (!res.ok) {
+        const text = await res.text();
+        return { ok: false, message: `Status ${res.status}: ${text}` };
+      }
+      const json = await res.json();
+      return { ok: true, models: json };
+    } catch (err) {
+      return { ok: false, message: String(err) };
+    }
+  });
+
+  // Test generic provider connection (openai, openrouter, ollama)
+  ipcMain.handle(
+    IpcMessages.TEST_PROVIDER_CONNECTION,
+    async (
+      _: any,
+      provider: string,
+      opts?: { host?: string; apiUrl?: string; apiKey?: string },
+    ) => {
+      try {
+        if (provider === "ollama") {
+          const host =
+            opts?.host || process.env.OLLAMA_HOST || "http://localhost:11434";
+          try {
+            const res = await fetch(`${host}/v1/models`);
+            if (!res.ok) {
+              const text = await res.text();
+              return { ok: false, message: `Status ${res.status}: ${text}` };
+            }
+            const json = await res.json();
+            return { ok: true, models: json };
+          } catch (err) {
+            return { ok: false, message: String(err) };
+          }
+        }
+
+        if (provider === "openai") {
+          const key = opts?.apiKey || resolveProviderApiKey("openai");
+          if (!key) return { ok: false, message: "OpenAI API key missing" };
+          try {
+            const res = await fetch("https://api.openai.com/v1/models", {
+              headers: { Authorization: `Bearer ${key}` },
+            });
+            if (!res.ok) {
+              const text = await res.text();
+              return { ok: false, message: `Status ${res.status}: ${text}` };
+            }
+            const json = await res.json();
+            return { ok: true, models: json.data || json };
+          } catch (err) {
+            return { ok: false, message: String(err) };
+          }
+        }
+
+        if (provider === "openrouter") {
+          const apiUrl =
+            opts?.apiUrl ||
+            process.env.OPENROUTER_API_URL ||
+            "https://openrouter.ai/api/v1";
+          const key =
+            opts?.apiKey ||
+            process.env.OPENROUTER_API_KEY ||
+            resolveProviderApiKey("openrouter");
+          if (!key) return { ok: false, message: "OpenRouter API key missing" };
+          // Try common models endpoint
+          const tryUrls = [`${apiUrl.replace(/\/+$/, "")}/models`, apiUrl];
+          for (const url of tryUrls) {
+            try {
+              const res = await fetch(url, {
+                headers: { Authorization: `Bearer ${key}` },
+              });
+              if (!res.ok) {
+                const text = await res.text();
+                // continue to next
+                continue;
+              }
+              const json = await res.json();
+              return { ok: true, models: json };
+            } catch (e) {
+              // try next
+            }
+          }
+          return {
+            ok: false,
+            message: "OpenRouter: unable to reach models endpoint",
+          };
+        }
+
+        return { ok: false, message: `Provider ${provider} not supported` };
+      } catch (err) {
+        return { ok: false, message: String(err) };
+      }
+    },
+  );
+
+  // List models for a provider (returns array or provider-specific response)
+  ipcMain.handle(
+    IpcMessages.LIST_PROVIDER_MODELS,
+    async (
+      _: any,
+      provider: string,
+      opts?: { host?: string; apiUrl?: string; apiKey?: string },
+    ) => {
+      try {
+        if (provider === "ollama") {
+          const host =
+            opts?.host || process.env.OLLAMA_HOST || "http://localhost:11434";
+          const res = await fetch(`${host}/v1/models`);
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          const json = await res.json();
+          // Ollama returns { object: 'list', data: [...] }
+          return { ok: true, models: json.data || json };
+        }
+        if (provider === "openai") {
+          const key = opts?.apiKey || resolveProviderApiKey("openai");
+          if (!key) return { ok: false, message: "OpenAI API key missing" };
+          const res = await fetch("https://api.openai.com/v1/models", {
+            headers: { Authorization: `Bearer ${key}` },
+          });
+          if (!res.ok) {
+            const text = await res.text();
+            return { ok: false, message: `Status ${res.status}: ${text}` };
+          }
+          const json = await res.json();
+          return { ok: true, models: json.data || json };
+        }
+        if (provider === "openrouter") {
+          const apiUrl =
+            opts?.apiUrl ||
+            process.env.OPENROUTER_API_URL ||
+            "https://openrouter.ai/api/v1";
+          const key =
+            opts?.apiKey ||
+            process.env.OPENROUTER_API_KEY ||
+            resolveProviderApiKey("openrouter");
+          if (!key) return { ok: false, message: "OpenRouter API key missing" };
+          const tryUrls = [`${apiUrl.replace(/\/+$/, "")}/models`, apiUrl];
+          for (const url of tryUrls) {
+            try {
+              const res = await fetch(url, {
+                headers: { Authorization: `Bearer ${key}` },
+              });
+              if (!res.ok) continue;
+              const json = await res.json();
+              return { ok: true, models: json.data || json };
+            } catch (e) {
+              continue;
+            }
+          }
+          return { ok: false, message: "OpenRouter: unable to list models" };
+        }
+        return { ok: false, message: `Provider ${provider} not supported` };
+      } catch (err) {
+        return { ok: false, message: String(err) };
+      }
+    },
+  );
+
+  // Return skills statuses from the registry
+  ipcMain.handle(IpcMessages.CHECK_SKILL_STATUSES, async () => {
+    try {
+      const registry = await import("./skills");
+      const statuses = registry.getSkillRegistry().getStatuses();
+      return {
+        ok: true,
+        statuses,
+        skillsDir: registry.getSkillRegistry().getSkillsDir(),
+      };
+    } catch (err) {
+      return { ok: false, message: String(err) };
+    }
+  });
   ipcMain.handle(IpcMessages.CHAT_GET_CHAT_WITH_MESSAGES, (_, chatId: string) =>
     getChatManager().getChatWithMessages(chatId),
   );
@@ -304,7 +503,8 @@ export function setupIpcListeners() {
       const provider =
         payload.provider || getStateManager().store.get("settings.apiProvider");
       const apiKey = resolveProviderApiKey(provider);
-      if (!apiKey) {
+      // Allow local providers (like Ollama) to operate without an API key.
+      if (provider !== "ollama" && !apiKey) {
         throw new Error(`API key for ${provider} is missing.`);
       }
 
@@ -444,12 +644,14 @@ export function setupIpcListeners() {
       assistantMessage: string,
       updates,
       source?: string,
+      options?: { autoApprove?: boolean },
     ) => {
       const stats = getMemoryManager().processConversationTurn(
         userMessage,
         assistantMessage,
         updates,
         source,
+        options,
       );
       syncMemoryStatsToSettings(stats);
       return stats;
@@ -482,6 +684,21 @@ export function setupIpcListeners() {
   );
   ipcMain.handle(IpcMessages.MEMORY_DELETE_ALL, () =>
     getMemoryManager().deleteAllMemories(),
+  );
+  ipcMain.handle(IpcMessages.MEMORY_TOGGLE_PIN, (_, id: string) =>
+    getMemoryManager().togglePin(id),
+  );
+  ipcMain.handle(IpcMessages.MEMORY_GET_PINNED, () =>
+    getMemoryManager().getPinnedMemories(),
+  );
+  ipcMain.handle(IpcMessages.MEMORY_GET_PENDING, () =>
+    getMemoryManager().getPendingApprovalMemories(),
+  );
+  ipcMain.handle(IpcMessages.MEMORY_APPROVE, (_, id: string) =>
+    getMemoryManager().approveMemory(id),
+  );
+  ipcMain.handle(IpcMessages.MEMORY_REJECT, (_, id: string) =>
+    getMemoryManager().rejectMemory(id),
   );
 
   // Identity

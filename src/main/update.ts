@@ -20,7 +20,7 @@ export function setupAutoUpdater() {
     updateElectronApp({
       updateSource: {
         type: UpdateSourceType.ElectronPublicUpdateService,
-        repo: "felixrieseberg/clippy",
+        repo: "JonusNattapong/Clippy",
       },
       updateInterval: "1 hour",
       logger: require("electron-log"),
@@ -94,7 +94,7 @@ export async function checkForUpdates() {
     });
 
     if (result.response === 0) {
-      shell.openExternal("https://felixrieseberg.github.io/clippy/");
+      shell.openExternal("https://jonusnattapong.github.io/Clippy/");
     }
   }
 }
@@ -121,7 +121,7 @@ export async function getVersionComparisonString() {
 export async function getLatestVersionFromGitHub(): Promise<string | null> {
   try {
     const response = await fetch(
-      "https://api.github.com/repos/felixrieseberg/clippy/releases/latest",
+      "https://api.github.com/repos/JonusNattapong/Clippy/releases/latest",
     );
     const data = await response.json();
     return data.tag_name;

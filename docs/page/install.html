@@ -3,22 +3,103 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Installation — Cliplala</title>
+    <title>Installation — Clippy</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <style>body{padding:20px;background:#008080;color:#111;font-family:Segoe UI, Tahoma, sans-serif}.window{max-width:980px;margin:0 auto}</style>
+    <style>
+      body {
+        padding: 20px;
+        background: #008080;
+        font-family:
+          "Tahoma", "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+      }
+      .window {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .window-body {
+        background: #fff;
+        color: #000;
+      }
+      .window-body h1,
+      .window-body h2,
+      .window-body h3 {
+        color: #000;
+      }
+      .window-body code {
+        background: #fff;
+        padding: 2px 4px;
+        border: 1px solid #888;
+      }
+      .window-body pre {
+        background: #fff;
+        padding: 10px;
+        border: 1px solid #888;
+        overflow-x: auto;
+      }
+      .window-body a {
+        color: #0000ff;
+      }
+      .nav-links {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+      }
+      .nav-links a {
+        margin-right: 15px;
+        color: #0000ff;
+      }
+    </style>
   </head>
   <body>
     <div class="window">
-      <h1>Installation</h1>
-      <h2>Binary Releases</h2>
-      <p>Download prebuilt releases from the project's GitHub Releases page.</p>
-      <h2>From source</h2>
-      <pre><code>git clone https://github.com/JonusNattapong/Clippy.git
+      <div class="title-bar">
+        <div class="title-bar-text">Installation — Clippy</div>
+        <div class="title-bar-controls">
+          <button type="button" aria-label="Minimize"></button>
+          <button type="button" aria-label="Maximize"></button>
+          <button type="button" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <h1>Installation</h1>
+
+        <h2>Binary Releases</h2>
+        <p>
+          Download prebuilt releases from the project's
+          <a href="https://github.com/JonusNattapong/Clippy/releases"
+            >GitHub Releases</a
+          >
+          page.
+        </p>
+
+        <h2>From Source</h2>
+        <pre><code>git clone https://github.com/JonusNattapong/Clippy.git
 cd Clippy
 npm ci
 npm run start</code></pre>
-      <h2>.env</h2>
-      <p>Copy <code>.env.example</code> to <code>.env</code> and add API keys for cloud providers if needed.</p>
+
+        <h2>Environment Variables</h2>
+        <p>
+          Copy <code>.env.example</code> to <code>.env</code> and add API keys
+          for cloud providers:
+        </p>
+        <ul>
+          <li><code>GEMINI_API_KEY</code> - Google Gemini</li>
+          <li><code>OPENAI_API_KEY</code> - OpenAI</li>
+          <li><code>ANTHROPIC_API_KEY</code> - Anthropic Claude</li>
+          <li><code>OPENROUTER_API_KEY</code> - OpenRouter</li>
+          <li>
+            <code>OLLAMA_HOST</code> - Ollama URL (default:
+            http://localhost:11434)
+          </li>
+        </ul>
+
+        <div class="nav-links">
+          <a href="../index.html">← Back to Home</a>
+          <a href="quick-start.html">← Quick Start</a>
+          <a href="getting-started.html">Getting Started →</a>
+        </div>
+      </div>
     </div>
   </body>
 </html>

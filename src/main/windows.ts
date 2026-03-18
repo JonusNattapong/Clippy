@@ -2,14 +2,20 @@ import { BrowserWindow, shell, screen, app } from "electron";
 import { getLogger } from "./logger";
 
 import path from "path";
+import fs from "fs";
 import { getStateManager } from "./state";
 import { getDebugManager } from "./debug";
 import { popupAppMenu } from "./menu";
 import { ThemePreset, WindowBounds, WindowPosition } from "../sharedState";
 
 let mainWindow: BrowserWindow | undefined;
+let overlayWindow: BrowserWindow | undefined;
+let postItWindow: BrowserWindow | undefined;
 const CHAT_WINDOW_TITLES = new Set(["Clippy Chat", "Clippy Chat"]);
 const MAIN_WINDOW_SIZE = { width: 125, height: 100 };
+const OVERLAY_WINDOW_SIZE = { width: 400, height: 300 };
+const POSTIT_WINDOW_SIZE = { width: 250, height: 250 };
+const POSTIT_DATA_FILE = "postit.json";
 
 /**
  * Get the main window
@@ -476,4 +482,259 @@ function constrainChatWindowBounds(
     width: Math.min(width, workWidth),
     height: Math.min(height, workHeight),
   };
+}
+
+export interface PostItData {
+  content: string;
+  color: string;
+  x: number;
+  y: number;
+}
+
+function getPostItDataPath(): string {
+  return path.join(app.getPath("userData"), POSTIT_DATA_FILE);
+}
+
+export function loadPostItData(): PostItData | null {
+  try {
+    const filePath = getPostItDataPath();
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, "utf-8");
+      return JSON.parse(content);
+    }
+  } catch (error) {
+    getLogger().error("Failed to load post-it data:", error);
+  }
+  return null;
+}
+
+function savePostItData(data: PostItData): void {
+  try {
+    const filePath = getPostItDataPath();
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+  } catch (error) {
+    getLogger().error("Failed to save post-it data:", error);
+  }
+}
+
+export function getPostItWindow(): BrowserWindow | undefined {
+  return postItWindow;
+}
+
+export function togglePostItWindow() {
+  if (postItWindow && !postItWindow.isDestroyed()) {
+    if (postItWindow.isVisible()) {
+      postItWindow.hide();
+    } else {
+      postItWindow.show();
+      postItWindow.focus();
+    }
+  } else {
+    createPostItWindow();
+  }
+}
+
+export function createPostItWindow() {
+  if (postItWindow && !postItWindow.isDestroyed()) {
+    postItWindow.show();
+    postItWindow.focus();
+    return;
+  }
+
+  const savedData = loadPostItData();
+  const settings = getStateManager().store.get("settings");
+  const display = screen.getPrimaryDisplay();
+  const { x: displayX, y: displayY, width: displayWidth } = display.workArea;
+
+  const defaultX = displayX + displayWidth - POSTIT_WINDOW_SIZE.width - 20;
+  const defaultY = displayY + 20;
+
+  postItWindow = new BrowserWindow({
+    width: POSTIT_WINDOW_SIZE.width,
+    height: POSTIT_WINDOW_SIZE.height,
+    x: savedData?.x ?? defaultX,
+    y: savedData?.y ?? defaultY,
+    minWidth: 150,
+    minHeight: 100,
+    frame: false,
+    transparent: false,
+    backgroundColor: savedData?.color || "#ffffa5",
+    alwaysOnTop: true,
+    skipTaskbar: false,
+    resizable: true,
+    title: "Post-it",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Comic Sans MS', 'Marker Felt', sans-serif;
+      background-color: ${savedData?.color || "#ffffa5"};
+      color: #333;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .title-bar {
+      background: linear-gradient(90deg, #808080, #c0c0c0);
+      padding: 4px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: move;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+    .title-bar span {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .title-bar button {
+      -webkit-app-region: no-drag;
+      background: #c0c0c0;
+      border: 1px solid #808080;
+      width: 16px;
+      height: 14px;
+      font-size: 10px;
+      cursor: pointer;
+      padding: 0;
+    }
+    .title-bar button:hover { background: #fff; }
+    .color-buttons {
+      display: flex;
+      gap: 4px;
+      padding: 4px 8px;
+      background: rgba(0,0,0,0.05);
+    }
+    .color-btn {
+      width: 20px;
+      height: 20px;
+      border: 1px solid #808080;
+      cursor: pointer;
+    }
+    .color-btn:hover { transform: scale(1.1); }
+    textarea {
+      flex: 1;
+      width: 100%;
+      border: none;
+      background: transparent;
+      resize: none;
+      padding: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+    textarea::placeholder { color: #999; }
+  </style>
+</head>
+<body>
+  <div class="title-bar">
+    <span>📝 Post-it</span>
+    <button id="closeBtn" title="Close">✕</button>
+  </div>
+  <div class="color-buttons">
+    <button class="color-btn" style="background:#ffffa5" data-color="#ffffa5" title="Yellow"></button>
+    <button class="color-btn" style="background:#ffb3ba" data-color="#ffb3ba" title="Pink"></button>
+    <button class="color-btn" style="background:#baffc9" data-color="#baffc9" title="Green"></button>
+    <button class="color-btn" style="background:#bae1ff" data-color="#bae1ff" title="Blue"></button>
+    <button class="color-btn" style="background:#ffffba" data-color="#ffffba" title="Light Yellow"></button>
+    <button class="color-btn" style="background:#e0bbe4" data-color="#e0bbe4" title="Purple"></button>
+  </div>
+  <textarea id="note" placeholder="Type your note here...">${savedData?.content || ""}</textarea>
+  <script>
+    const note = document.getElementById('note');
+    const closeBtn = document.getElementById('closeBtn');
+    const colorBtns = document.querySelectorAll('.color-btn');
+    
+    function save() {
+      const data = {
+        content: note.value,
+        color: document.body.style.backgroundColor,
+        x: window.innerX,
+        y: window.innerY
+      };
+      window.postMessage({ type: 'save', data }, '*');
+    }
+    
+    note.addEventListener('input', save);
+    
+    colorBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.body.style.backgroundColor = btn.dataset.color;
+        save();
+      });
+    });
+    
+    closeBtn.addEventListener('click', () => {
+      window.postMessage({ type: 'close' }, '*');
+    });
+  </script>
+</body>
+</html>
+  `;
+
+  postItWindow.loadURL(
+    `data:text/html;charset=utf-8,${encodeURIComponent(htmlContent)}`,
+  );
+
+  postItWindow.on("moved", () => {
+    if (postItWindow && !postItWindow.isDestroyed()) {
+      const [x, y] = postItWindow.getPosition();
+      const [width, height] = postItWindow.getSize();
+      const data: PostItData = {
+        content: (postItWindow as any)._postItContent || "",
+        color: postItWindow.getBackgroundColor() || "#ffffa5",
+        x,
+        y,
+      };
+      savePostItData(data);
+    }
+  });
+
+  postItWindow.on("closed", () => {
+    postItWindow = undefined;
+  });
+
+  postItWindow.webContents.on("did-finish-load", () => {
+    postItWindow?.webContents.executeJavaScript(`
+      window.addEventListener('message', (event) => {
+        if (event.data.type === 'save') {
+          const data = event.data.data;
+          window.postMessage({ type: 'saveToMain', data: JSON.stringify(data) }, '*');
+        } else if (event.data.type === 'close') {
+          window.postMessage({ type: 'closeWindow' }, '*');
+        }
+      });
+    `);
+  });
+
+  postItWindow.webContents.on("console-message", (_event, level, message) => {
+    if (message.startsWith("{") && message.includes('"type":"saveToMain"')) {
+      try {
+        const data = JSON.parse(message.replace(/^.*\{/, "{"));
+        if (data.data) {
+          const postItData = JSON.parse(data.data);
+          (postItWindow as any)._postItContent = postItData.content;
+          savePostItData(postItData);
+        }
+      } catch {}
+    } else if (
+      message.startsWith("{") &&
+      message.includes('"type":"closeWindow"')
+    ) {
+      postItWindow?.close();
+    }
+  });
+
+  getLogger().info("Post-it window created");
 }

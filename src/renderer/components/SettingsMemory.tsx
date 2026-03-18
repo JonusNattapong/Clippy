@@ -8,9 +8,13 @@ import {
 } from "../../types/interfaces";
 import { useTranslation } from "../contexts/SharedStateContext";
 
+type ViewMode = "list" | "timeline";
+
 export const SettingsMemory: React.FC = () => {
   const t = useTranslation();
   const [memories, setMemories] = useState<Memory[]>([]);
+  const [pinnedMemories, setPinnedMemories] = useState<Memory[]>([]);
+  const [pendingMemories, setPendingMemories] = useState<Memory[]>([]);
   const [stats, setStats] = useState<MemoryStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,6 +25,7 @@ export const SettingsMemory: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [maintenanceReport, setMaintenanceReport] =
     useState<MemoryMaintenanceReport | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
 
   const CATEGORY_LABELS: Record<MemoryCategory, string> = {
     fact: t.fact,
@@ -36,19 +41,22 @@ export const SettingsMemory: React.FC = () => {
     relationship: "#d9534f",
   };
 
-  // Form states
   const [formContent, setFormContent] = useState("");
   const [formCategory, setFormCategory] = useState<MemoryCategory>("fact");
   const [formImportance, setFormImportance] = useState(5);
 
   const loadData = useCallback(async () => {
     try {
-      const [allMemories, currentStats] = await Promise.all([
+      const [allMemories, currentStats, pinned, pending] = await Promise.all([
         clippyApi.getAllMemories(),
         clippyApi.getMemoryStats(),
+        clippyApi.getPinnedMemories(),
+        clippyApi.getPendingApprovalMemories(),
       ]);
       setMemories(allMemories);
       setStats(currentStats);
+      setPinnedMemories(pinned);
+      setPendingMemories(pending);
     } catch (error) {
       console.error("Error loading memories:", error);
     } finally {
@@ -68,6 +76,10 @@ export const SettingsMemory: React.FC = () => {
       selectedCategory === "all" || memory.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const sortedByTime = [...filteredMemories].sort(
+    (a, b) => b.updatedAt - a.updatedAt,
+  );
   const memoryConflicts = findMemoryConflicts(memories);
 
   const handleCreate = async () => {
@@ -103,13 +115,40 @@ export const SettingsMemory: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(t.confirm_delete_chat)) return; // Shared key or could add specific one
+    if (!window.confirm(t.confirm_delete_chat)) return;
 
     try {
       await clippyApi.deleteMemory(id);
       loadData();
     } catch (error) {
       console.error("Error deleting memory:", error);
+    }
+  };
+
+  const handleTogglePin = async (id: string) => {
+    try {
+      await clippyApi.togglePinMemory(id);
+      loadData();
+    } catch (error) {
+      console.error("Error toggling pin:", error);
+    }
+  };
+
+  const handleApprove = async (id: string) => {
+    try {
+      await clippyApi.approveMemory(id);
+      loadData();
+    } catch (error) {
+      console.error("Error approving memory:", error);
+    }
+  };
+
+  const handleReject = async (id: string) => {
+    try {
+      await clippyApi.rejectMemory(id);
+      loadData();
+    } catch (error) {
+      console.error("Error rejecting memory:", error);
     }
   };
 
@@ -239,6 +278,183 @@ export const SettingsMemory: React.FC = () => {
     }
   };
 
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const renderMemoryItem = (memory: Memory, showPin = true) => (
+    <div
+      key={memory.id}
+      style={{
+        padding: "10px",
+        borderBottom: "1px solid #ddd",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: "10px",
+      }}
+    >
+      <div
+        style={{
+          width: "8px",
+          height: "8px",
+          borderRadius: "50%",
+          backgroundColor: CATEGORY_COLORS[memory.category],
+          marginTop: "6px",
+          flexShrink: 0,
+        }}
+      />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: "14px", marginBottom: "4px" }}>
+          {memory.content}
+        </div>
+        <div style={{ fontSize: "11px", color: "#666" }}>
+          <span
+            style={{
+              color: CATEGORY_COLORS[memory.category],
+              fontWeight: "bold",
+            }}
+          >
+            {CATEGORY_LABELS[memory.category]}
+          </span>{" "}
+          • {t.importance_label}: {memory.importance}/10 • {t.memory_retention}:{" "}
+          {memory.retention === "short_term"
+            ? t.retention_short_term
+            : t.retention_long_term}{" "}
+          • {formatDate(memory.updatedAt)}
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: "5px" }}>
+        {showPin && (
+          <button
+            type="button"
+            onClick={() => handleTogglePin(memory.id)}
+            style={{
+              fontSize: "11px",
+              padding: "2px 8px",
+              color: memory.pinned ? "#d9534f" : "#666",
+            }}
+          >
+            {memory.pinned ? t.unpin_memory : t.pin_memory}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => startEdit(memory)}
+          style={{ fontSize: "11px", padding: "2px 8px" }}
+        >
+          {t.edit_memory.split(" ")[0]}
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDelete(memory.id)}
+          style={{
+            fontSize: "11px",
+            padding: "2px 8px",
+            color: "#d9534f",
+          }}
+        >
+          {t.delete_selected.split(" ")[0]}
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderTimelineItem = (memory: Memory, index: number) => {
+    const isFirst = index === 0;
+    const isLast = index === sortedByTime.length - 1;
+
+    return (
+      <div key={memory.id} style={{ display: "flex", gap: "12px" }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            width: "20px",
+          }}
+        >
+          {!isFirst && (
+            <div
+              style={{
+                width: "2px",
+                flex: 1,
+                backgroundColor: "#ddd",
+              }}
+            />
+          )}
+          <div
+            style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "50%",
+              backgroundColor: CATEGORY_COLORS[memory.category],
+              border: memory.pinned ? "2px solid #d9534f" : "none",
+              flexShrink: 0,
+            }}
+          />
+          {!isLast && (
+            <div
+              style={{
+                width: "2px",
+                flex: 1,
+                backgroundColor: "#ddd",
+              }}
+            />
+          )}
+        </div>
+        <div
+          style={{
+            flex: 1,
+            paddingBottom: "16px",
+          }}
+        >
+          <div style={{ fontSize: "12px", color: "#888", marginBottom: "4px" }}>
+            {formatDate(memory.updatedAt)}
+            {memory.pinned && (
+              <span
+                style={{
+                  marginLeft: "8px",
+                  color: "#d9534f",
+                  fontWeight: "bold",
+                }}
+              >
+                📌
+              </span>
+            )}
+          </div>
+          <div
+            style={{
+              padding: "8px",
+              backgroundColor: memory.pinned ? "#fff5f5" : "#f5f5f5",
+              borderRadius: "4px",
+              border: "1px solid #ddd",
+            }}
+          >
+            <div style={{ fontSize: "14px" }}>{memory.content}</div>
+            <div style={{ fontSize: "11px", color: "#888", marginTop: "4px" }}>
+              <span
+                style={{
+                  color: CATEGORY_COLORS[memory.category],
+                  fontWeight: "bold",
+                }}
+              >
+                {CATEGORY_LABELS[memory.category]}
+              </span>
+              {" • "}
+              {t.importance_label}: {memory.importance}/10
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="settings-page">
@@ -257,7 +473,6 @@ export const SettingsMemory: React.FC = () => {
         <p>{t.memory_description}</p>
       </div>
 
-      {/* Stats Section */}
       {stats && (
         <fieldset style={{ marginBottom: "20px" }}>
           <legend>{t.relationship_stats}</legend>
@@ -335,7 +550,92 @@ export const SettingsMemory: React.FC = () => {
         </fieldset>
       )}
 
-      {/* Search and Filter */}
+      {pendingMemories.length > 0 && (
+        <fieldset style={{ marginBottom: "20px", borderColor: "#f0ad4e" }}>
+          <legend>
+            {t.pending_approval} ({pendingMemories.length})
+          </legend>
+          <div
+            style={{
+              maxHeight: "200px",
+              overflowY: "auto",
+              border: "2px solid #f0ad4e",
+              backgroundColor: "#fffbf0",
+            }}
+          >
+            {pendingMemories.map((memory) => (
+              <div
+                key={memory.id}
+                style={{
+                  padding: "10px",
+                  borderBottom: "1px solid #f0ad4e",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: "10px",
+                }}
+              >
+                <div
+                  style={{
+                    width: "8px",
+                    height: "8px",
+                    borderRadius: "50%",
+                    backgroundColor: CATEGORY_COLORS[memory.category],
+                    marginTop: "6px",
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: "14px", marginBottom: "4px" }}>
+                    {memory.content}
+                  </div>
+                  <div style={{ fontSize: "11px", color: "#666" }}>
+                    <span
+                      style={{
+                        color: CATEGORY_COLORS[memory.category],
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {CATEGORY_LABELS[memory.category]}
+                    </span>{" "}
+                    • {t.importance_label}: {memory.importance}/10
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "5px" }}>
+                  <button
+                    type="button"
+                    onClick={() => handleApprove(memory.id)}
+                    style={{
+                      fontSize: "11px",
+                      padding: "2px 8px",
+                      backgroundColor: "#5cb85c",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    {t.approve}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReject(memory.id)}
+                    style={{
+                      fontSize: "11px",
+                      padding: "2px 8px",
+                      backgroundColor: "#d9534f",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "3px",
+                    }}
+                  >
+                    {t.reject}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </fieldset>
+      )}
+
       <fieldset style={{ marginBottom: "20px" }}>
         <legend>{t.memory_review}</legend>
         <div
@@ -358,6 +658,24 @@ export const SettingsMemory: React.FC = () => {
           )}
         </div>
       </fieldset>
+
+      {pinnedMemories.length > 0 && (
+        <fieldset style={{ marginBottom: "20px" }}>
+          <legend>
+            {t.pinned_memories} ({pinnedMemories.length})
+          </legend>
+          <div
+            style={{
+              maxHeight: "150px",
+              overflowY: "auto",
+              border: "2px solid #d9534f",
+              backgroundColor: "#fff5f5",
+            }}
+          >
+            {pinnedMemories.map((memory) => renderMemoryItem(memory, true))}
+          </div>
+        </fieldset>
+      )}
 
       {memoryConflicts.length > 0 && (
         <fieldset style={{ marginBottom: "20px" }}>
@@ -419,8 +737,14 @@ export const SettingsMemory: React.FC = () => {
             style={{ flex: 1 }}
           />
         </div>
-        <div className="field-row">
-          <label>{t.category}:</label>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
           <select
             value={selectedCategory}
             onChange={(e) =>
@@ -434,10 +758,38 @@ export const SettingsMemory: React.FC = () => {
               </option>
             ))}
           </select>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              style={{
+                backgroundColor: viewMode === "list" ? "#4a90d9" : "#e0e0e0",
+                color: viewMode === "list" ? "white" : "black",
+                border: "none",
+                padding: "4px 12px",
+                borderRadius: "3px",
+              }}
+            >
+              {t.view_list}
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("timeline")}
+              style={{
+                backgroundColor:
+                  viewMode === "timeline" ? "#4a90d9" : "#e0e0e0",
+                color: viewMode === "timeline" ? "white" : "black",
+                border: "none",
+                padding: "4px 12px",
+                borderRadius: "3px",
+              }}
+            >
+              {t.view_timeline}
+            </button>
+          </div>
         </div>
       </fieldset>
 
-      {/* Add Memory Button */}
       <div style={{ marginBottom: "15px" }}>
         <button type="button" onClick={startCreate} disabled={isCreating}>
           + {t.add_memory}
@@ -452,13 +804,13 @@ export const SettingsMemory: React.FC = () => {
         </button>
       </div>
 
-      {/* Create/Edit Form */}
       {(isCreating || editingMemory) && (
         <fieldset style={{ marginBottom: "20px", backgroundColor: "#f5f5f5" }}>
           <legend>{editingMemory ? t.edit_memory : t.add_new_memory}</legend>
           <div className="field-row-stacked" style={{ marginBottom: "10px" }}>
-            <label>{t.content}:</label>
+            <label htmlFor="memory-content">{t.content}:</label>
             <textarea
+              id="memory-content"
               rows={3}
               value={formContent}
               onChange={(e) => setFormContent(e.target.value)}
@@ -467,8 +819,9 @@ export const SettingsMemory: React.FC = () => {
             />
           </div>
           <div className="field-row" style={{ marginBottom: "10px" }}>
-            <label>{t.category}:</label>
+            <label htmlFor="memory-category">{t.category}:</label>
             <select
+              id="memory-category"
               value={formCategory}
               onChange={(e) =>
                 setFormCategory(e.target.value as MemoryCategory)
@@ -482,8 +835,9 @@ export const SettingsMemory: React.FC = () => {
             </select>
           </div>
           <div className="field-row" style={{ marginBottom: "10px" }}>
-            <label>{t.importance} (1-10):</label>
+            <label htmlFor="memory-importance">{t.importance} (1-10):</label>
             <input
+              id="memory-importance"
               type="number"
               min={1}
               max={10}
@@ -510,7 +864,6 @@ export const SettingsMemory: React.FC = () => {
         </fieldset>
       )}
 
-      {/* Memories List */}
       <fieldset>
         <legend>
           {t.memories} ({filteredMemories.length})
@@ -531,71 +884,14 @@ export const SettingsMemory: React.FC = () => {
                 ? t.no_memories_found
                 : t.no_memories_yet}
             </div>
+          ) : viewMode === "list" ? (
+            filteredMemories.map((memory) => renderMemoryItem(memory, true))
           ) : (
-            filteredMemories.map((memory) => (
-              <div
-                key={memory.id}
-                style={{
-                  padding: "10px",
-                  borderBottom: "1px solid #ddd",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                }}
-              >
-                <div
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    borderRadius: "50%",
-                    backgroundColor: CATEGORY_COLORS[memory.category],
-                    marginTop: "6px",
-                    flexShrink: 0,
-                  }}
-                />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: "14px", marginBottom: "4px" }}>
-                    {memory.content}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#666" }}>
-                    <span
-                      style={{
-                        color: CATEGORY_COLORS[memory.category],
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {CATEGORY_LABELS[memory.category]}
-                    </span>{" "}
-                    • {t.importance_label}: {memory.importance}/10 •{" "}
-                    {t.memory_retention}:{" "}
-                    {memory.retention === "short_term"
-                      ? t.retention_short_term
-                      : t.retention_long_term}{" "}
-                    • {new Date(memory.updatedAt).toLocaleDateString()}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  <button
-                    type="button"
-                    onClick={() => startEdit(memory)}
-                    style={{ fontSize: "11px", padding: "2px 8px" }}
-                  >
-                    {t.edit_memory.split(" ")[0]}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(memory.id)}
-                    style={{
-                      fontSize: "11px",
-                      padding: "2px 8px",
-                      color: "#d9534f",
-                    }}
-                  >
-                    {t.delete_selected.split(" ")[0]}
-                  </button>
-                </div>
-              </div>
-            ))
+            <div style={{ padding: "10px" }}>
+              {sortedByTime.map((memory, index) =>
+                renderTimelineItem(memory, index),
+              )}
+            </div>
           )}
         </div>
       </fieldset>

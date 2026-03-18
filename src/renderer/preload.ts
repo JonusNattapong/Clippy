@@ -18,6 +18,8 @@ import { BubbleView } from "./contexts/BubbleViewContext";
 const clippyApi: ClippyApi = {
   // Window
   toggleChatWindow: () => ipcRenderer.invoke(IpcMessages.TOGGLE_CHAT_WINDOW),
+  togglePostItWindow: () =>
+    ipcRenderer.invoke(IpcMessages.TOGGLE_POSTIT_WINDOW),
   minimizeChatWindow: () =>
     ipcRenderer.invoke(IpcMessages.MINIMIZE_CHAT_WINDOW),
   maximizeChatWindow: () =>
@@ -130,6 +132,8 @@ const clippyApi: ClippyApi = {
   importBackup: () => ipcRenderer.invoke(IpcMessages.APP_IMPORT_BACKUP),
   openPowerShellLog: () =>
     ipcRenderer.invoke(IpcMessages.APP_OPEN_POWERSHELL_LOG),
+  sendTelegramNotification: (payload) =>
+    ipcRenderer.invoke(IpcMessages.APP_SEND_TELEGRAM_NOTIFICATION, payload),
 
   // Clipboard
   clipboardWrite: (data: Data) =>
@@ -174,6 +178,7 @@ const clippyApi: ClippyApi = {
     assistantMessage: string,
     updates?: { bond?: number; happiness?: number },
     source?: string,
+    options?: { autoApprove?: boolean },
   ) =>
     ipcRenderer.invoke(
       IpcMessages.MEMORY_PROCESS_TURN,
@@ -181,6 +186,7 @@ const clippyApi: ClippyApi = {
       assistantMessage,
       updates,
       source,
+      options,
     ),
   recordActionOutcome: (payload: {
     toolName: string;
@@ -194,6 +200,15 @@ const clippyApi: ClippyApi = {
   runMemoryMaintenance: () =>
     ipcRenderer.invoke(IpcMessages.MEMORY_RUN_MAINTENANCE),
   deleteAllMemories: () => ipcRenderer.invoke(IpcMessages.MEMORY_DELETE_ALL),
+  togglePinMemory: (id: string) =>
+    ipcRenderer.invoke(IpcMessages.MEMORY_TOGGLE_PIN, id),
+  getPinnedMemories: () => ipcRenderer.invoke(IpcMessages.MEMORY_GET_PINNED),
+  getPendingApprovalMemories: () =>
+    ipcRenderer.invoke(IpcMessages.MEMORY_GET_PENDING),
+  approveMemory: (id: string) =>
+    ipcRenderer.invoke(IpcMessages.MEMORY_APPROVE, id),
+  rejectMemory: (id: string) =>
+    ipcRenderer.invoke(IpcMessages.MEMORY_REJECT, id),
 
   // Identity
   getIdentity: () => ipcRenderer.invoke(IpcMessages.IDENTITY_GET),
@@ -228,6 +243,24 @@ const clippyApi: ClippyApi = {
   webSearch: (query: string, numResults?: number) =>
     ipcRenderer.invoke(IpcMessages.WEB_SEARCH, query, numResults),
   fetchUrl: (url: string) => ipcRenderer.invoke(IpcMessages.FETCH_URL, url),
+
+  // Ollama
+  checkOllama: (host?: string) =>
+    ipcRenderer.invoke(IpcMessages.CHECK_OLLAMA, host),
+
+  // Provider helpers
+  testProviderConnection: (
+    provider: string,
+    opts?: { host?: string; apiUrl?: string; apiKey?: string },
+  ) => ipcRenderer.invoke(IpcMessages.TEST_PROVIDER_CONNECTION, provider, opts),
+  listProviderModels: (
+    provider: string,
+    opts?: { host?: string; apiUrl?: string; apiKey?: string },
+  ) => ipcRenderer.invoke(IpcMessages.LIST_PROVIDER_MODELS, provider, opts),
+
+  // Skills
+  checkSkillStatuses: () =>
+    ipcRenderer.invoke(IpcMessages.CHECK_SKILL_STATUSES),
 
   // TTS
   ttsSpeak: (text: string, voice?: string) =>

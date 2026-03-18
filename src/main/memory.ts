@@ -12,15 +12,12 @@ import {
 } from "../types/interfaces";
 import { buildMoodState, DEFAULT_MOOD_STATE } from "../helpers/mood-engine";
 import { getMemoryVectorStore } from "./memory-vector-store";
-
-type ExtractedMemoryCandidate = {
-  content: string;
-  category: MemoryCategory;
-  importance: number;
-  key: string;
-  retention: "short_term" | "long_term";
-  expiresAt?: number;
-};
+import {
+  buildMemoryKey,
+  extractMemoryCandidates,
+  inferCategoriesFromQuery,
+  type ExtractedMemoryCandidate,
+} from "./memory-helpers";
 
 const DEFAULT_STATS: MemoryStats = {
   bondLevel: 0,
@@ -54,6 +51,7 @@ export class MemoryManager {
     key?: string,
     retention: "short_term" | "long_term" = "long_term",
     expiresAt?: number,
+    pendingApproval?: boolean,
   ): Memory {
     const now = Date.now();
     const memory: Memory = {
@@ -63,6 +61,8 @@ export class MemoryManager {
       importance: Math.max(1, Math.min(10, importance)),
       key,
       retention,
+      pinned: false,
+      pendingApproval: pendingApproval ?? false,
       createdAt: now,
       updatedAt: now,
       source,
@@ -127,6 +127,45 @@ export class MemoryManager {
   public deleteAllMemories(): void {
     this.memoryBank.memories = {};
     this.saveToDisk();
+  }
+
+  public togglePin(id: string): Memory | null {
+    const memory = this.memoryBank.memories[id];
+    if (!memory) return null;
+
+    memory.pinned = !memory.pinned;
+    memory.updatedAt = Date.now();
+    this.saveToDisk();
+    return memory;
+  }
+
+  public getPinnedMemories(): Memory[] {
+    return this.getAllMemories().filter((memory) => memory.pinned);
+  }
+
+  public getPendingApprovalMemories(): Memory[] {
+    return Object.values(this.memoryBank.memories).filter(
+      (memory) => memory.pendingApproval,
+    );
+  }
+
+  public approveMemory(id: string): Memory | null {
+    const memory = this.memoryBank.memories[id];
+    if (!memory || !memory.pendingApproval) return null;
+
+    memory.pendingApproval = false;
+    memory.updatedAt = Date.now();
+    this.saveToDisk();
+    return memory;
+  }
+
+  public rejectMemory(id: string): boolean {
+    if (this.memoryBank.memories[id]) {
+      delete this.memoryBank.memories[id];
+      this.saveToDisk();
+      return true;
+    }
+    return false;
   }
 
   public searchMemories(filter: MemoryFilter = {}): Memory[] {
@@ -364,6 +403,7 @@ export class MemoryManager {
     assistantMessage: string,
     updates?: { bond?: number; happiness?: number },
     source?: string,
+    options?: { autoApprove?: boolean },
   ): MemoryStats {
     const current = this.getStats();
     const nextStats: MemoryStats = {
@@ -380,7 +420,12 @@ export class MemoryManager {
     };
 
     nextStats.mood = buildMoodState(nextStats, userMessage, assistantMessage);
-    this.scoreConversationMemories(userMessage, assistantMessage, source);
+    this.scoreConversationMemories(
+      userMessage,
+      assistantMessage,
+      source,
+      options?.autoApprove ?? true,
+    );
     this.memoryBank.stats = nextStats;
     this.runMaintenanceIfDue();
     this.saveToDisk();
@@ -660,41 +705,7 @@ export class MemoryManager {
   }
 
   private inferCategoriesFromQuery(query: string): Set<MemoryCategory> {
-    const categories = new Set<MemoryCategory>();
-
-    if (
-      /\b(prefer|preference|like|love|hate|favorite|ชอบ|ไม่ชอบ|โปรด)\b/i.test(
-        query,
-      )
-    ) {
-      categories.add("preference");
-    }
-
-    if (
-      /\b(friend|relationship|bond|close|care|รัก|สนิท|ความสัมพันธ์)\b/i.test(
-        query,
-      )
-    ) {
-      categories.add("relationship");
-    }
-
-    if (
-      /\b(event|happened|yesterday|today|ล่าสุด|เมื่อวาน|วันนี้|เหตุการณ์)\b/i.test(
-        query,
-      )
-    ) {
-      categories.add("event");
-    }
-
-    if (
-      /\b(name|fact|remember|about me|ข้อมูล|ชื่อ|จำไว้|เรื่องของฉัน)\b/i.test(
-        query,
-      )
-    ) {
-      categories.add("fact");
-    }
-
-    return categories;
+    return inferCategoriesFromQuery(query);
   }
 
   private saveToDisk(): void {
@@ -717,6 +728,7 @@ export class MemoryManager {
     userMessage: string,
     assistantMessage: string,
     source?: string,
+    autoApprove: boolean = true,
   ) {
     const candidates = this.extractMemoryCandidates(
       userMessage,
@@ -748,6 +760,7 @@ export class MemoryManager {
         candidate.key,
         candidate.retention,
         candidate.expiresAt,
+        !autoApprove,
       );
     }
   }
@@ -756,113 +769,7 @@ export class MemoryManager {
     userMessage: string,
     assistantMessage: string,
   ): ExtractedMemoryCandidate[] {
-    const text = userMessage.trim();
-    const lowered = text.toLowerCase();
-    const now = Date.now();
-    const weekMs = 1000 * 60 * 60 * 24 * 7;
-    const candidates: ExtractedMemoryCandidate[] = [];
-
-    const pushCandidate = (
-      content: string,
-      category: MemoryCategory,
-      importance: number,
-      key: string,
-      retention: "short_term" | "long_term",
-      expiresAt?: number,
-    ) => {
-      const cleaned = content.trim().replace(/\s+/g, " ");
-      if (!cleaned || cleaned.length < 6) {
-        return;
-      }
-
-      candidates.push({
-        content: cleaned,
-        category,
-        importance,
-        key,
-        retention,
-        expiresAt,
-      });
-    };
-
-    const preferenceMatch =
-      text.match(
-        /\b(?:i like|i love|i prefer|my favorite|i enjoy)\b[:\s-]*(.+)$/i,
-      ) || text.match(/(?:ฉันชอบ|เราชอบ|ชอบมาก|ของโปรดคือ)\s*(.+)$/i);
-    if (preferenceMatch?.[1]) {
-      pushCandidate(
-        `User preference: ${preferenceMatch[1]}`,
-        "preference",
-        7,
-        this.buildMemoryKey("preference", preferenceMatch[1]),
-        "long_term",
-      );
-    }
-
-    const nameMatch =
-      text.match(/\b(?:my name is|call me|i am)\b[:\s-]*(.+)$/i) ||
-      text.match(/(?:ฉันชื่อ|ชื่อเราคือ|เรียกเราว่า)\s*(.+)$/i);
-    if (nameMatch?.[1]) {
-      pushCandidate(
-        `User identity: ${nameMatch[1]}`,
-        "fact",
-        9,
-        this.buildMemoryKey("fact", nameMatch[1]),
-        "long_term",
-      );
-    }
-
-    const eventHint =
-      /\b(today|tomorrow|yesterday|this week|tonight|recently|later)\b/i.test(
-        text,
-      ) ||
-      /(วันนี้|พรุ่งนี้|เมื่อวาน|คืนนี้|สัปดาห์นี้|ล่าสุด|เดี๋ยว)/.test(text);
-    if (eventHint) {
-      pushCandidate(
-        `Recent context: ${text}`,
-        "event",
-        5,
-        this.buildMemoryKey("event", text),
-        "short_term",
-        now + weekMs,
-      );
-    }
-
-    const relationshipHint =
-      /\b(friend|best friend|partner|family|mom|dad|girlfriend|boyfriend)\b/i.test(
-        lowered,
-      ) || /(เพื่อน|แฟน|ครอบครัว|แม่|พ่อ|คนรัก)/.test(text);
-    if (relationshipHint) {
-      pushCandidate(
-        `Relationship context: ${text}`,
-        "relationship",
-        6,
-        this.buildMemoryKey("relationship", text),
-        eventHint ? "short_term" : "long_term",
-        eventHint ? now + weekMs : undefined,
-      );
-    }
-
-    const assistantReminderHint =
-      /\bremember|noted|i'll remember|got it\b/i.test(assistantMessage) ||
-      /(จะจำไว้|จำไว้แล้ว|รับทราบ|เข้าใจแล้ว)/.test(assistantMessage);
-    if (
-      assistantReminderHint &&
-      candidates.length === 0 &&
-      text.length >= 12 &&
-      text.length <= 180
-    ) {
-      pushCandidate(
-        `Conversation note: ${text}`,
-        eventHint ? "event" : "fact",
-        eventHint ? 4 : 6,
-        this.buildMemoryKey(eventHint ? "event" : "fact", text),
-        eventHint ? "short_term" : "long_term",
-        eventHint ? now + weekMs : undefined,
-      );
-    }
-
-    return candidates;
+    return extractMemoryCandidates(userMessage, assistantMessage);
   }
 
   private findMemoryByKey(key: string, category: MemoryCategory) {
@@ -876,32 +783,7 @@ export class MemoryManager {
   }
 
   private buildMemoryKey(category: MemoryCategory, rawContent: string) {
-    const normalized = rawContent
-      .toLowerCase()
-      .replace(/[^a-z0-9ก-๙\s]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-    const tokens = normalized
-      .split(" ")
-      .filter(
-        (token) =>
-          token.length > 2 &&
-          ![
-            "the",
-            "and",
-            "that",
-            "with",
-            "เป็น",
-            "และ",
-            "ของ",
-            "เรื่อง",
-            "ครับ",
-            "ค่ะ",
-          ].includes(token),
-      )
-      .slice(0, 4);
-
-    return `${category}.${tokens.join("_") || "general"}`;
+    return buildMemoryKey(category, rawContent);
   }
 
   private isExpired(memory: Memory) {

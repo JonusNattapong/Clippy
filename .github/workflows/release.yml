@@ -43,16 +43,16 @@ jobs:
       - name: Setup Node for image generation
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Generate release cover image
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENROUTER_API_URL: ${{ secrets.OPENROUTER_API_URL }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
-          COVER_SIZE: '1920x600'
+          COVER_SIZE: "1920x600"
           COVER_PROMPT: "Clippy in a 3D world reminiscent of Toy Story, vibrant cinematic lighting, full-bleed banner composition, include the text 'Clippy' and the version '{version}' prominently, retro Windows 95 color accents."
-          COVER_MODEL: 'bytedance-seed/seedream-4.5'
+          COVER_MODEL: "bytedance-seed/seedream-4.5"
         run: |
           mkdir -p artifacts
           node scripts/generate-release-cover.js

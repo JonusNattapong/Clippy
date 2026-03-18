@@ -641,7 +641,7 @@ async function* streamOpenRouter(options: StreamChatOptions) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${sanitizedKey}`,
-    "HTTP-Referer": "https://github.com/felixrieseberg/clippy",
+    "HTTP-Referer": "https://github.com/JonusNattapong/Clippy",
     "X-OpenRouter-Title": "Clippy",
   };
 
@@ -687,6 +687,72 @@ async function* streamOpenRouter(options: StreamChatOptions) {
       }),
     },
   );
+
+  if (!fallbackResponse.ok) {
+    throw await parseResponseError(fallbackResponse);
+  }
+
+  const payload = await fallbackResponse.json();
+  const text = payload.choices?.[0]?.message?.content;
+  if (typeof text === "string" && text) {
+    yield text;
+  }
+}
+
+const OLLAMA_DEFAULT_HOST = "http://localhost:11434";
+
+async function* streamOllama(options: StreamChatOptions) {
+  const messages = [
+    ...(options.systemPrompt
+      ? [{ role: "system", content: options.systemPrompt }]
+      : []),
+    ...buildHistory(options.history, options.message, options.images),
+  ];
+
+  const model = options.model || "llama3.2:latest";
+  const host = process.env.OLLAMA_HOST || OLLAMA_DEFAULT_HOST;
+
+  const response = await fetch(`${host}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    signal: options.signal,
+    body: JSON.stringify({
+      model,
+      stream: true,
+      temperature: options.temperature,
+      messages,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Ollama error (${response.status}): ${errorText}`);
+  }
+
+  let receivedAnyChunk = false;
+  for await (const chunk of streamOpenAiCompatible(response)) {
+    receivedAnyChunk = true;
+    yield chunk;
+  }
+
+  if (receivedAnyChunk) {
+    return;
+  }
+
+  const fallbackResponse = await fetch(`${host}/v1/chat/completions`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    signal: options.signal,
+    body: JSON.stringify({
+      model,
+      temperature: options.temperature,
+      messages,
+    }),
+  });
 
   if (!fallbackResponse.ok) {
     throw await parseResponseError(fallbackResponse);
@@ -929,6 +995,9 @@ export async function* streamChatCompletion(options: StreamChatOptions) {
       return;
     case "openrouter":
       yield* streamOpenRouter(nextOptions);
+      return;
+    case "ollama":
+      yield* streamOllama(nextOptions);
       return;
     case "gemini":
     default:

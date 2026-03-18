@@ -1,4 +1,5 @@
 #
+
 <p align="center">
   <img src="assets/icon.png" alt="Clippy" width="120" />
 </p>
@@ -16,7 +17,7 @@ Clippy is a desktop app inspired by Microsoft Clippy, reimagined as a modern AI 
 ## Features
 
 - **Local persistent memory** - Conversations and memories stored locally
-- **Multiple AI providers** - Gemini, OpenAI, Anthropic, OpenRouter, Ollama
+- **Multiple AI providers** - Gemini, OpenAI, Anthropic, OpenRouter, **Ollama (local)**
 - **Skills/Plugins System** - Modular plugin architecture for extending capabilities
 - **Desktop commands** - Execute PowerShell commands, search files, take screenshots
 - **Web search** - Search the web using Tavily API
@@ -56,15 +57,27 @@ src/
 │   │   ├── system.skill.ts  # System skill
 │   │   └── web.skill.ts     # Web skill
 │   ├── chat-provider.ts     # AI chat providers
-│   ├── desktop-tools.ts     # Desktop commands
+│   ├── desktop-tools.ts     # Desktop commands implementation
 │   ├── web-tools.ts         # Web search tools
 │   ├── memory.ts            # Memory management
+│   ├── memory-vector-store.ts # Vector store for memories
 │   ├── tts.ts               # Text-to-speech
-│   └── windows.ts           # Window management
+│   ├── windows.ts           # Window management
+│   ├── chats.ts             # Chat history management
+│   ├── state.ts             # App state
+│   └── ipc.ts               # IPC handlers
 ├── renderer/                # React UI (frontend)
+│   ├── components/          # React components
+│   ├── hooks/               # Custom React hooks
+│   │   ├── useCommandParser.ts    # Command parsing logic
+│   │   └── useMemoryCommands.ts   # Memory command handling
+│   ├── helpers/             # Helper functions
+│   │   └── filterMessageContent.ts # Message filtering & parsing
+│   ├── contexts/            # React contexts
+│   └── api/                # API integrations
 ├── helpers/                 # Shared utilities
 ├── types/                   # TypeScript definitions
-└── ipc-messages.ts          # IPC communication
+└── ipc-messages.ts          # IPC communication definitions
 ```
 
 ## Architecture
@@ -179,12 +192,24 @@ See [`docs/skills.md`](docs/skills.md) for full documentation.
 
 **Note:** Web search requires Tavily API key configured in Settings.
 
+## Message Parsing Features
+
+Clippy's AI responses can include special commands embedded in the response:
+
+- **[MEMORY_UPDATE:category|content|importance]** - Save to memory
+- **[STATS_UPDATE:{bond:±X, happiness:±Y}]** - Update mood stats
+- **[TOOL_CALL:tool_name|arg1=value1,arg2=value2]** - Execute tools
+- **[TODO_ADD:title|note]** - Add todo item
+- **[CHOICE:prompt|option1|option2|...]** - Show choice dialog
+- **[AnimationKey]** - Set animation (e.g., [Wave], [Think])
+
 ## Documentation
 
 - [`INSTALL.md`](INSTALL.md) - Installation guide
 - [`USAGE.md`](USAGE.md) - Usage examples
 - [`API.md`](API.md) - API documentation
 - [`docs/skills.md`](docs/skills.md) - Skills system documentation
+- [`docs/getting-started.md`](docs/getting-started.md) - Getting started guide
 - [`docs/lang/TH-th/README.th.md`](docs/lang/TH-th/README.th.md) - Thai translation
 
 ## Acknowledgements
@@ -205,4 +230,3 @@ Please note:
 - The MIT license applies only to the original code written in this repository.
 - Any Clippy character artwork, images, icons, or other assets that are owned by Microsoft (or third parties) are not covered by the MIT license and may remain subject to separate copyright or trademark restrictions. These assets are included for nostalgic/educational purposes; obtain the necessary permissions before redistributing Microsoft-owned assets.
 - When redistributing binaries, installers, or modified versions, include `LICENSE.md` and preserve the copyright notice.
-

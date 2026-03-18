@@ -3,16 +3,87 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Licenses & Assets — Cliplala</title>
+    <title>Licenses & Assets — Clippy</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <style>body{padding:20px;background:#008080;color:#111;font-family:Segoe UI, Tahoma, sans-serif}.window{max-width:980px;margin:0 auto}</style>
+    <style>
+      body {
+        padding: 20px;
+        background: #008080;
+        font-family:
+          "Tahoma", "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+      }
+      .window {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .window-body {
+        background: #fff;
+        color: #000;
+      }
+      .window-body h1,
+      .window-body h2,
+      .window-body h3 {
+        color: #000;
+      }
+      .window-body a {
+        color: #0000ff;
+      }
+      .nav-links {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+      }
+      .nav-links a {
+        margin-right: 15px;
+        color: #0000ff;
+      }
+    </style>
   </head>
   <body>
     <div class="window">
-      <h1>Licenses & Assets</h1>
-      <p>The project source code is licensed under the MIT License. See <a href="../LICENSE.md">LICENSE.md</a>.</p>
-      <h2>Artwork & Icons</h2>
-      <p>Clippy character and some assets are Microsoft-owned and not covered by the MIT license. Use caution when redistributing.</p>
+      <div class="title-bar">
+        <div class="title-bar-text">Licenses & Assets — Clippy</div>
+        <div class="title-bar-controls">
+          <button type="button" aria-label="Minimize"></button>
+          <button type="button" aria-label="Maximize"></button>
+          <button type="button" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <h1>Licenses & Assets</h1>
+
+        <h2>Source Code</h2>
+        <p>
+          The project source code is licensed under the MIT License. See
+          <a href="../LICENSE.md">LICENSE.md</a>.
+        </p>
+
+        <h2>Dependencies</h2>
+        <ul>
+          <li><strong>Electron</strong> - MIT</li>
+          <li><strong>React</strong> - MIT</li>
+          <li><strong>98.css</strong> - MIT</li>
+          <li><strong>electron-store</strong> - MIT</li>
+          <li><strong>edge-tts</strong> - MIT</li>
+        </ul>
+
+        <h2>Artwork & Icons</h2>
+        <p>
+          Clippy character and some assets are Microsoft-owned and not covered
+          by the MIT license. Use caution when redistributing.
+        </p>
+
+        <h2>Trademarks</h2>
+        <p>
+          This project is not affiliated with or endorsed by Microsoft.
+          Microsoft, Windows, and Clippy are trademarks of Microsoft
+          Corporation.
+        </p>
+
+        <div class="nav-links">
+          <a href="../index.html">← Back to Home</a>
+        </div>
+      </div>
     </div>
   </body>
 </html>

@@ -64,6 +64,8 @@ export interface Memory {
   importance: number; // 1-10
   key?: string;
   retention?: "short_term" | "long_term";
+  pinned?: boolean;
+  pendingApproval?: boolean;
   createdAt: number;
   updatedAt: number;
   source?: string; // chat ID that created this memory

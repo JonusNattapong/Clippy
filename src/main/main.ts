@@ -13,6 +13,8 @@ import { setupAutoUpdater } from "./update";
 import { setupAppMenu } from "./menu";
 import { getMemoryManager } from "./memory";
 import { getStateManager } from "./state";
+import { initSkillRegistry } from "./skills";
+import { getNotificationManager } from "./notification-service";
 
 async function migrateUserMemory() {
   try {
@@ -95,8 +97,16 @@ async function onReady() {
 
   // Run migration before other setup
   await migrateUserMemory();
+  // Initialize skills registry (load/prepare skills)
+  try {
+    await initSkillRegistry();
+    console.info("Skill registry initialized");
+  } catch (err) {
+    console.error("Failed to initialize skill registry:", err);
+  }
   getMemoryManager().runMaintenanceIfDue();
   syncRelationshipStateFromMemory();
+  getNotificationManager().start(() => getStateManager().store.get("settings"));
 
   await setupAutoUpdater();
   setupAppMenu();

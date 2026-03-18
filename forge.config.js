@@ -16,10 +16,10 @@ const config = {
   packagerConfig: {
     asar: true,
     executableName: "clippy",
-    appBundleId: "com.felixrieseberg.clippy",
+    appBundleId: "com.cliplala",
     appCategoryType: "public.app-category.productivity",
     win32metadata: {
-      CompanyName: "Felix Rieseberg",
+      CompanyName: "Cliplala",
       OriginalFilename: "Clippy",
     },
     icon: path.resolve(__dirname, "assets/icon"),

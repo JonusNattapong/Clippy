@@ -31,11 +31,11 @@ export const SettingsAbout: React.FC = () => {
       <p>
         {t.made_by}{" "}
         <a
-          href="https://github.com/felixrieseberg"
+          href="https://github.com/JonusNattapong"
           target="_blank"
           rel="noreferrer"
         >
-          Felix Rieseberg
+          JonusNattapong
         </a>{" "}
         {t.using}{" "}
         <a href="https://electronjs.org/" target="_blank" rel="noreferrer">

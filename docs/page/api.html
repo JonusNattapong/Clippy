@@ -3,21 +3,146 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>API / IPC — Cliplala</title>
+    <title>API / IPC — Clippy</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <style>body{padding:20px;background:#008080;color:#111;font-family:Segoe UI, Tahoma, sans-serif}.window{max-width:980px;margin:0 auto}</style>
+    <style>
+      body {
+        padding: 20px;
+        background: #008080;
+        font-family:
+          "Tahoma", "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+      }
+      .window {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .window-body {
+        background: #fff;
+        color: #000;
+      }
+      .window-body h1,
+      .window-body h2,
+      .window-body h3 {
+        color: #000;
+      }
+      .window-body code {
+        background: #c0c0c0;
+        padding: 2px 4px;
+        border: 1px solid #888;
+        font-size: 13px;
+      }
+      .window-body pre {
+        background: #fff;
+        padding: 10px;
+        border: 1px solid #888;
+        overflow-x: auto;
+      }
+      .window-body a {
+        color: #0000ff;
+      }
+      .nav-links {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+      }
+      .nav-links a {
+        margin-right: 15px;
+        color: #0000ff;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+      }
+      th,
+      td {
+        border: 1px solid #888;
+        padding: 5px;
+        text-align: left;
+      }
+      th {
+        background: #c0c0c0;
+      }
+    </style>
   </head>
   <body>
     <div class="window">
-      <h1>API / IPC</h1>
-      <p>This document summarizes the IPC messages between the Renderer and Main processes.</p>
-      <h2>Key channels</h2>
-      <ul>
-        <li><code>chat:send</code> — Renderer → Main: send user message to provider</li>
-        <li><code>chat:response</code> — Main → Renderer: provider response</li>
-        <li><code>desktop:exec</code> — Renderer → Main: run desktop command</li>
-      </ul>
-      <p>See <code>src/ipc-messages.ts</code> for full message definitions.</p>
+      <div class="title-bar">
+        <div class="title-bar-text">API / IPC — Clippy</div>
+        <div class="title-bar-controls">
+          <button type="button" aria-label="Minimize"></button>
+          <button type="button" aria-label="Maximize"></button>
+          <button type="button" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <h1>API / IPC</h1>
+        <p>
+          This document summarizes the IPC messages between the Renderer and
+          Main processes.
+        </p>
+
+        <h2>Key Channels</h2>
+        <table>
+          <tr>
+            <th>Channel</th>
+            <th>Direction</th>
+            <th>Description</th>
+          </tr>
+          <tr>
+            <td><code>clippy_chat_stream_start</code></td>
+            <td>Renderer → Main</td>
+            <td>Start chat completion stream</td>
+          </tr>
+          <tr>
+            <td><code>clippy_chat_stream_chunk</code></td>
+            <td>Main → Renderer</td>
+            <td>Stream response chunk</td>
+          </tr>
+          <tr>
+            <td><code>clippy_desktop_tool_execute</code></td>
+            <td>Renderer → Main</td>
+            <td>Execute desktop command</td>
+          </tr>
+          <tr>
+            <td><code>clippy_web_search</code></td>
+            <td>Renderer → Main</td>
+            <td>Search the web</td>
+          </tr>
+          <tr>
+            <td><code>clippy_memory_*</code></td>
+            <td>Both</td>
+            <td>Memory operations</td>
+          </tr>
+        </table>
+
+        <h2>Desktop Commands</h2>
+        <p>Available via <code>/command</code> in chat:</p>
+        <ul>
+          <li><code>/run &lt;cmd&gt;</code> - Run PowerShell command</li>
+          <li><code>/ls [path]</code> - List directory</li>
+          <li><code>/read &lt;file&gt;</code> - Read file</li>
+          <li><code>/search &lt;query&gt;</code> - Search files</li>
+          <li><code>/sysinfo</code> - System info</li>
+          <li><code>/ps [limit]</code> - List processes</li>
+          <li><code>/clipboard</code> - Read clipboard</li>
+          <li><code>/screenshot</code> - Take screenshot</li>
+        </ul>
+
+        <h2>Web Commands</h2>
+        <ul>
+          <li><code>/search &lt;query&gt;</code> - Web search</li>
+          <li><code>/fetch &lt;url&gt;</code> - Fetch webpage</li>
+        </ul>
+
+        <p>
+          See <code>src/ipc-messages.ts</code> for full message definitions.
+        </p>
+
+        <div class="nav-links">
+          <a href="../index.html">← Back to Home</a>
+        </div>
+      </div>
     </div>
   </body>
 </html>

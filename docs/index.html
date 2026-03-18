@@ -23,7 +23,7 @@
         <span>About</span>
       </a>
       <a
-        href="https://github.com/felixrieseberg/clippy"
+        href="https://github.com/JonusNattapong/Clippy"
         target="_blank"
         class="desktop-icon"
         id="icon-github"
@@ -35,10 +35,10 @@
         <img src="./images/icon_about.png" alt="Architecture" />
         <span>Architecture</span>
       </a>
-       <a href="#window-docs" class="desktop-icon" id="icon-docs">
-         <img src="./images/icon_help.png" alt="Docs" />
-         <span>Docs</span>
-       </a>
+      <a href="#window-docs" class="desktop-icon" id="icon-docs">
+        <img src="./images/icon_help.png" alt="Docs" />
+        <span>Docs</span>
+      </a>
     </div>
     <div class="main-content">
       <div class="window video-container" id="window-video">
@@ -70,36 +70,79 @@
             <button aria-label="Maximize"></button>
             <button aria-label="Close"></button>
           </div>
-            <div class="window docs-container" id="window-docs" style="display: none">
-              <div class="title-bar">
-                <div class="title-bar-text">Documentation</div>
-                <div class="title-bar-controls">
-                  <button aria-label="Minimize"></button>
-                  <button aria-label="Maximize"></button>
-                  <button aria-label="Close"></button>
-                </div>
+          <div
+            class="window docs-container"
+            id="window-docs"
+            style="display: none"
+          >
+            <div class="title-bar">
+              <div class="title-bar-text">Documentation</div>
+              <div class="title-bar-controls">
+                <button aria-label="Minimize"></button>
+                <button aria-label="Maximize"></button>
+                <button aria-label="Close"></button>
               </div>
-              <div class="window-body">
-                <h3>Documentation</h3>
-                <div class="docs-list-and-frame">
-                  <ul class="docs-list">
-                    <li><a href="#window-docs" data-src="page/getting-started.html">Getting Started</a></li>
-                    <li><a href="#window-docs" data-src="page/install.html">Installation</a></li>
-                    <li><a href="#window-docs" data-src="page/quick-start.html">Quick Start</a></li>
-                    <li><a href="#window-docs" data-src="page/api.html">API / IPC</a></li>
-                    <li><a href="#window-docs" data-src="page/contributing.html">Contributing</a></li>
-                    <li><a href="#window-docs" data-src="page/faq.html">FAQ</a></li>
-                    <li><a href="#window-docs" data-src="page/releases.html">Releases</a></li>
-                    <li><a href="#window-docs" data-src="page/licenses.html">Licenses & Assets</a></li>
-                    <li><a href="#window-docs" data-src="page/gallery.html">Gallery</a></li>
-                    <li><a href="#window-arch">Architecture</a></li>
-                  </ul>
-                  <div class="docs-frame">
-                    <iframe id="docs-iframe" src="" style="width:100%;height:420px;border:0;" title="Docs Viewer"></iframe>
-                  </div>
+            </div>
+            <div class="window-body">
+              <h3>Documentation</h3>
+              <div class="docs-list-and-frame">
+                <ul class="docs-list">
+                  <li>
+                    <a href="#window-docs" data-src="page/getting-started.html"
+                      >Getting Started</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/install.html"
+                      >Installation</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/quick-start.html"
+                      >Quick Start</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/api.html"
+                      >API / IPC</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/contributing.html"
+                      >Contributing</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/faq.html">FAQ</a>
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/releases.html"
+                      >Releases</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/licenses.html"
+                      >Licenses & Assets</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#window-docs" data-src="page/gallery.html"
+                      >Gallery</a
+                    >
+                  </li>
+                  <li><a href="#window-arch">Architecture</a></li>
+                </ul>
+                <div class="docs-frame">
+                  <iframe
+                    id="docs-iframe"
+                    src=""
+                    style="width: 100%; height: 420px; border: 0"
+                    title="Docs Viewer"
+                  ></iframe>
                 </div>
               </div>
             </div>
+          </div>
         </div>
         <div class="window-body">
           <p>
@@ -127,7 +170,7 @@
           <h3>Clippy</h3>
           <p>
             You can find the source code for this app on
-            <a href="https://github.com/felixrieseberg/clippy" target="_blank"
+            <a href="https://github.com/JonusNattapong/Clippy" target="_blank"
               >GitHub</a
             >.
           </p>
@@ -175,7 +218,11 @@
           </div>
         </div>
         <div class="window-body">
-          <iframe src="page/arch.html" style="width:100%;height:600px;border:0;" title="Architecture"></iframe>
+          <iframe
+            src="page/arch.html"
+            style="width: 100%; height: 600px; border: 0"
+            title="Architecture"
+          ></iframe>
         </div>
       </div>
 

@@ -154,6 +154,24 @@ export interface Translations {
   keep_newest: string;
   review_manually: string;
 
+  // Memory Timeline & Pin
+  memory_timeline: string;
+  pinned_memories: string;
+  pending_approval: string;
+  pin_memory: string;
+  unpin_memory: string;
+  approve: string;
+  reject: string;
+  memory_approved: string;
+  memory_rejected: string;
+  no_pinned_memories: string;
+  no_pending_approval: string;
+  memory_created_from: string;
+  view_timeline: string;
+  view_list: string;
+  auto_approve_memory: string;
+  auto_approve_memory_description: string;
+
   // Memory Categories
   fact: string;
   preference: string;
@@ -279,6 +297,24 @@ export interface Translations {
   tts_save_settings: string;
   tavily_api_key: string;
   tavily_description: string;
+  telegram_notifications: string;
+  telegram_notifications_description: string;
+  telegram_notifications_enabled: string;
+  telegram_bot_token: string;
+  telegram_chat_id: string;
+  telegram_allowed_chat_ids: string;
+  telegram_allowed_chat_ids_hint: string;
+  telegram_quiet_hours_start: string;
+  telegram_quiet_hours_end: string;
+  telegram_max_per_hour: string;
+  telegram_todo_reminders: string;
+  telegram_todo_complete: string;
+  telegram_error_alerts: string;
+  telegram_agent_notifications: string;
+  telegram_reminder_minutes: string;
+  telegram_send_test: string;
+  telegram_test_sent: string;
+  telegram_test_failed: string;
   save_settings: string;
   settings_saved_successfully: string;
 
@@ -450,6 +486,24 @@ export const translations: Record<Language, Translations> = {
     keep_newest: "Keep Newest",
     review_manually: "Review Manually",
 
+    memory_timeline: "Timeline",
+    pinned_memories: "Pinned",
+    pending_approval: "Pending Approval",
+    pin_memory: "Pin",
+    unpin_memory: "Unpin",
+    approve: "Approve",
+    reject: "Reject",
+    memory_approved: "Memory approved",
+    memory_rejected: "Memory rejected",
+    no_pinned_memories: "No pinned memories yet",
+    no_pending_approval: "No pending approvals",
+    memory_created_from: "From",
+    view_timeline: "Timeline",
+    view_list: "List",
+    auto_approve_memory: "Auto-approve memories",
+    auto_approve_memory_description:
+      "When enabled, Clippy will remember things automatically. When disabled, you will need to approve each memory before it's saved.",
+
     fact: "Fact",
     preference: "Preference",
     event: "Event",
@@ -584,6 +638,26 @@ export const translations: Record<Language, Translations> = {
     tavily_api_key: "Tavily API Key",
     tavily_description:
       "Enter your Tavily API key for web search. Get a free key at app.tavily.com.",
+    telegram_notifications: "Telegram Notifications",
+    telegram_notifications_description:
+      "Configure manual alerts, rule-based reminders, and guarded agent-triggered Telegram messages.",
+    telegram_notifications_enabled: "Enable Telegram notifications",
+    telegram_bot_token: "Telegram Bot Token",
+    telegram_chat_id: "Default Telegram Chat ID",
+    telegram_allowed_chat_ids: "Allowed Chat IDs",
+    telegram_allowed_chat_ids_hint:
+      "Separate multiple chat IDs with commas or spaces. The default chat ID must be included here.",
+    telegram_quiet_hours_start: "Quiet Hours Start",
+    telegram_quiet_hours_end: "Quiet Hours End",
+    telegram_max_per_hour: "Max Notifications Per Hour",
+    telegram_todo_reminders: "Send TODO/follow-up reminders",
+    telegram_todo_complete: "Send TODO completion updates",
+    telegram_error_alerts: "Send error alerts",
+    telegram_agent_notifications: "Allow agent-triggered notifications",
+    telegram_reminder_minutes: "Reminder Interval (minutes)",
+    telegram_send_test: "Send Test Notification",
+    telegram_test_sent: "Telegram test notification sent.",
+    telegram_test_failed: "Telegram test notification failed.",
     save_settings: "Save Settings",
     settings_saved_successfully: "Settings saved successfully!",
 
@@ -755,6 +829,24 @@ export const translations: Record<Language, Translations> = {
     keep_newest: "เก็บอันล่าสุด",
     review_manually: "ตรวจเอง",
 
+    memory_timeline: "ไทม์ไลน์",
+    pinned_memories: "ปักหมุดแล้ว",
+    pending_approval: "รออนุมัติ",
+    pin_memory: "ปักหมุด",
+    unpin_memory: "ถอนหมุด",
+    approve: "อนุมัติ",
+    reject: "ปฏิเสธ",
+    memory_approved: "อนุมัติความจำแล้ว",
+    memory_rejected: "ปฏิเสธความจำแล้ว",
+    no_pinned_memories: "ยังไม่มีความจำที่ปักหมุด",
+    no_pending_approval: "ไม่มีรออนุมัติ",
+    memory_created_from: "จาก",
+    view_timeline: "ไทม์ไลน์",
+    view_list: "รายการ",
+    auto_approve_memory: "จำโดยอัตโนมัติ",
+    auto_approve_memory_description:
+      "ถ้าเปิด Clippy จะจำเรื่องต่างๆ โดยอัตโนมัติ ถ้าปิด คุณจะต้องอนุมัติความจำแต่ละอันก่อนที่จะถูกบันทึก",
+
     fact: "ข้อเท็จจริง",
     preference: "ความชอบ",
     event: "เหตุการณ์",
@@ -888,6 +980,26 @@ export const translations: Record<Language, Translations> = {
     tavily_api_key: "Tavily API Key",
     tavily_description:
       "ใส่ Tavily API key สำหรับเว็บเสิร์ช โดยสมัครฟรีได้ที่ app.tavily.com",
+    telegram_notifications: "การแจ้งเตือน Telegram",
+    telegram_notifications_description:
+      "ตั้งค่าการส่งแบบ manual, กฎอัตโนมัติ และการแจ้งเตือนที่ AI เรียกใช้ภายใต้ guardrails",
+    telegram_notifications_enabled: "เปิดใช้การแจ้งเตือน Telegram",
+    telegram_bot_token: "Telegram Bot Token",
+    telegram_chat_id: "Telegram Chat ID หลัก",
+    telegram_allowed_chat_ids: "Chat ID ที่อนุญาต",
+    telegram_allowed_chat_ids_hint:
+      "ถ้ามีหลาย Chat ID ให้คั่นด้วย comma หรือเว้นวรรค และต้องมี Chat ID หลักรวมอยู่ด้วย",
+    telegram_quiet_hours_start: "เริ่ม Quiet Hours",
+    telegram_quiet_hours_end: "จบ Quiet Hours",
+    telegram_max_per_hour: "จำนวนแจ้งเตือนสูงสุดต่อชั่วโมง",
+    telegram_todo_reminders: "ส่งเตือน TODO / follow-up",
+    telegram_todo_complete: "ส่งแจ้งเมื่องานถูกทำเสร็จ",
+    telegram_error_alerts: "ส่งแจ้งเมื่อเกิด error",
+    telegram_agent_notifications: "อนุญาตให้ AI สั่งแจ้งเตือนเอง",
+    telegram_reminder_minutes: "ช่วงห่างการเตือน (นาที)",
+    telegram_send_test: "ส่งข้อความทดสอบ",
+    telegram_test_sent: "ส่งข้อความทดสอบไป Telegram แล้ว",
+    telegram_test_failed: "ส่งข้อความทดสอบไป Telegram ไม่สำเร็จ",
     save_settings: "บันทึกการตั้งค่า",
     settings_saved_successfully: "บันทึกการตั้งค่าเรียบร้อยแล้ว!",
 

@@ -3,17 +3,129 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FAQ — Cliplala</title>
+    <title>FAQ — Clippy</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <style>body{padding:20px;background:#008080;color:#111;font-family:Segoe UI, Tahoma, sans-serif}.window{max-width:980px;margin:0 auto}</style>
+    <style>
+      body {
+        padding: 20px;
+        background: #008080;
+        font-family:
+          "Tahoma", "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+      }
+      .window {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .window-body {
+        background: #fff;
+        color: #000;
+      }
+      .window-body h1,
+      .window-body h2,
+      .window-body h3 {
+        color: #000;
+      }
+      .window-body code {
+        background: #c0c0c0;
+        padding: 2px 4px;
+        border: 1px solid #888;
+      }
+      .window-body a {
+        color: #0000ff;
+      }
+      .nav-links {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+      }
+      .nav-links a {
+        margin-right: 15px;
+        color: #0000ff;
+      }
+      details {
+        margin: 10px 0;
+        padding: 5px;
+        border: 1px solid #888;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: bold;
+      }
+    </style>
   </head>
   <body>
     <div class="window">
-      <h1>FAQ / Troubleshooting</h1>
-      <h2>App doesn't start</h2>
-      <p>Check Node version and run <code>npm ci</code> then <code>npm run start</code>. See logs in the console.</p>
-      <h2>Models not found</h2>
-      <p>Ensure local model paths are configured and Ollama/local services are running.</p>
+      <div class="title-bar">
+        <div class="title-bar-text">FAQ — Clippy</div>
+        <div class="title-bar-controls">
+          <button type="button" aria-label="Minimize"></button>
+          <button type="button" aria-label="Maximize"></button>
+          <button type="button" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <h1>FAQ / Troubleshooting</h1>
+
+        <details>
+          <summary>App doesn't start</summary>
+          <p>
+            Check Node version and run <code>npm ci</code> then
+            <code>npm run start</code>. See logs in the console.
+          </p>
+        </details>
+
+        <details>
+          <summary>API key not working</summary>
+          <p>
+            Make sure your API key is correct. Check the .env file or Settings
+            in the app. For cloud providers, ensure you have credits available.
+          </p>
+        </details>
+
+        <details>
+          <summary>Ollama not connecting</summary>
+          <p>
+            Ensure Ollama is running: <code>ollama serve</code>. Also make sure
+            a model is pulled: <code>ollama pull llama3.2</code>.
+          </p>
+        </details>
+
+        <details>
+          <summary>Models not found</summary>
+          <p>
+            Ensure local model paths are configured and Ollama/local services
+            are running.
+          </p>
+        </details>
+
+        <details>
+          <summary>How to use desktop commands?</summary>
+          <p>
+            Type commands like <code>/ls</code>, <code>/read file.txt</code>,
+            <code>/sysinfo</code> in the chat. See full list in the API docs.
+          </p>
+        </details>
+
+        <details>
+          <summary>How to enable web search?</summary>
+          <p>
+            Get a Tavily API key from
+            <a href="https://tavily.com">tavily.com</a> and add it in Settings.
+          </p>
+        </details>
+
+        <details>
+          <summary>Where is user data stored?</summary>
+          <p>
+            Windows: <code>%APPDATA%\Clippy\</code>, macOS:
+            <code>~/Library/Application Support/Clippy/</code>
+          </p>
+        </details>
+
+        <div class="nav-links">
+          <a href="../index.html">← Back to Home</a>
+        </div>
+      </div>
     </div>
   </body>
 </html>

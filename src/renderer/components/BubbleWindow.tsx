@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type React from "react";
 import { clippyApi } from "../clippyApi";
 import { Chat } from "./Chat";
@@ -14,11 +14,24 @@ export function Bubble() {
   const t = useTranslation();
   const [isMaximized, setIsMaximized] = useState(false);
   const [isTodoListOpen, setIsTodoListOpen] = useState(false);
+  const [pendingMemoryCount, setPendingMemoryCount] = useState(0);
   const moodLabel = getMoodLabel(settings.clippyMood || "calm", t);
   const todoItems = settings.todoItems || [];
   const pendingTodoCount = todoItems.filter(
     (todoItem) => !todoItem.completed,
   ).length;
+
+  useEffect(() => {
+    const checkPendingMemories = async () => {
+      if (!settings.memoryAutoApprove) {
+        const pending = await clippyApi.getPendingApprovalMemories();
+        setPendingMemoryCount(pending.length);
+      } else {
+        setPendingMemoryCount(0);
+      }
+    };
+    checkPendingMemories();
+  }, [settings.memoryAutoApprove]);
 
   const containerStyle: React.CSSProperties = {
     width: "100%",
@@ -123,6 +136,20 @@ export function Bubble() {
               onClick={() => setCurrentView("chats")}
             >
               {t.chats}
+            </button>
+          )}
+          {!isFirstRun && pendingMemoryCount > 0 && (
+            <button
+              type="button"
+              className="title-action-button"
+              style={{
+                backgroundColor: "#f0ad4e",
+                color: "white",
+              }}
+              onClick={() => setCurrentView("settings-memory")}
+            >
+              {t.pending_approval}
+              <span className="title-action-count">{pendingMemoryCount}</span>
             </button>
           )}
           {!isFirstRun && (

@@ -3,22 +3,90 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Quick Start — Cliplala</title>
+    <title>Quick Start — Clippy</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <style>body{padding:20px;background:#008080;color:#111;font-family:Segoe UI, Tahoma, sans-serif}.window{max-width:980px;margin:0 auto}</style>
+    <style>
+      body {
+        padding: 20px;
+        background: #008080;
+        font-family:
+          "Tahoma", "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+      }
+      .window {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .window-body {
+        background: #fff;
+        color: #000;
+      }
+      .window-body h1,
+      .window-body h2,
+      .window-body h3 {
+        color: #000;
+      }
+      .window-body code {
+        background: #fff;
+        padding: 2px 4px;
+        border: 1px solid #888;
+      }
+      .window-body pre {
+        background: #fff;
+        padding: 10px;
+        border: 1px solid #888;
+        overflow-x: auto;
+      }
+      .window-body a {
+        color: #0000ff;
+      }
+      .nav-links {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+      }
+      .nav-links a {
+        margin-right: 15px;
+        color: #0000ff;
+      }
+    </style>
   </head>
   <body>
     <div class="window">
-      <h1>Quick Start</h1>
-      <p>Minimal steps to try the app quickly.</p>
-      <ol>
-        <li>Install dependencies: <code>npm ci</code></li>
-        <li>Copy env: <code>cp .env.example .env</code></li>
-        <li>Run: <code>npm run start</code></li>
-      </ol>
-      <h2>Run in production build</h2>
-      <pre><code>npm run build
+      <div class="title-bar">
+        <div class="title-bar-text">Quick Start — Clippy</div>
+        <div class="title-bar-controls">
+          <button type="button" aria-label="Minimize"></button>
+          <button type="button" aria-label="Maximize"></button>
+          <button type="button" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <h1>Quick Start</h1>
+        <p>Minimal steps to try the app quickly.</p>
+
+        <h2>Development Mode</h2>
+        <pre><code>npm ci
+cp .env.example .env
+npm run start</code></pre>
+
+        <h2>Run in production build</h2>
+        <pre><code>npm run build
 npm run make</code></pre>
+
+        <h2>Commands</h2>
+        <ul>
+          <li><code>npm start</code> - Start development</li>
+          <li><code>npm run lint</code> - Format code</li>
+          <li><code>npm test</code> - Run tests</li>
+          <li><code>npm run make</code> - Build installer</li>
+        </ul>
+
+        <div class="nav-links">
+          <a href="../index.html">← Back to Home</a>
+          <a href="getting-started.html">← Getting Started</a>
+          <a href="install.html">Installation →</a>
+        </div>
+      </div>
     </div>
   </body>
 </html>

@@ -17,6 +17,7 @@ import { Data } from "electron";
 export type ClippyApi = {
   // Window
   toggleChatWindow: () => Promise<void>;
+  togglePostItWindow: () => Promise<void>;
   minimizeChatWindow: () => Promise<void>;
   maximizeChatWindow: () => Promise<void>;
   minimizeMainWindow: () => Promise<void>;
@@ -47,6 +48,16 @@ export type ClippyApi = {
   exportBackup: () => Promise<{ success: boolean; path?: string }>;
   importBackup: () => Promise<{ success: boolean; path?: string }>;
   openPowerShellLog: () => Promise<void>;
+  sendTelegramNotification: (payload: {
+    message: string;
+    reason?: string;
+    source: "manual" | "rule" | "agent";
+    allowDuringQuietHours?: boolean;
+  }) => Promise<{
+    success: boolean;
+    output?: string;
+    error?: string;
+  }>;
   // Chats
   getChatRecords: () => Promise<Record<string, ChatRecord>>;
   getChatWithMessages: (chatId: string) => Promise<ChatWithMessages | null>;
@@ -114,6 +125,7 @@ export type ClippyApi = {
     assistantMessage: string,
     updates?: { bond?: number; happiness?: number },
     source?: string,
+    options?: { autoApprove?: boolean },
   ) => Promise<MemoryStats>;
   recordActionOutcome: (payload: {
     toolName: string;
@@ -128,6 +140,11 @@ export type ClippyApi = {
   ) => Promise<{ handled: boolean; response?: string }>;
   runMemoryMaintenance: () => Promise<MemoryMaintenanceReport>;
   deleteAllMemories: () => Promise<void>;
+  togglePinMemory: (id: string) => Promise<Memory | null>;
+  getPinnedMemories: () => Promise<Memory[]>;
+  getPendingApprovalMemories: () => Promise<Memory[]>;
+  approveMemory: (id: string) => Promise<Memory | null>;
+  rejectMemory: (id: string) => Promise<boolean>;
   // Identity
   getIdentity: () => Promise<{
     name: string;

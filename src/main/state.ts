@@ -20,6 +20,7 @@ import {
 } from "../sharedState";
 import { getLogger } from "./logger";
 import { setupAppMenu } from "./menu";
+import { getNotificationManager } from "./notification-service";
 
 function resolveDefaultApiKey(provider: ApiProvider): string {
   switch (provider) {
@@ -29,6 +30,8 @@ function resolveDefaultApiKey(provider: ApiProvider): string {
       return process.env.ANTHROPIC_API_KEY || "";
     case "openrouter":
       return process.env.OPENROUTER_API_KEY || "";
+    case "ollama":
+      return ""; // Ollama doesn't need an API key (runs locally)
     case "gemini":
     default:
       return (
@@ -128,6 +131,64 @@ export class StateManager {
       settings.powerShellMode = EMPTY_SHARED_STATE.settings.powerShellMode;
     }
 
+    if (settings.telegramNotificationsEnabled === undefined) {
+      settings.telegramNotificationsEnabled =
+        EMPTY_SHARED_STATE.settings.telegramNotificationsEnabled;
+    }
+
+    if (settings.telegramBotToken === undefined) {
+      settings.telegramBotToken = EMPTY_SHARED_STATE.settings.telegramBotToken;
+    }
+
+    if (settings.telegramChatId === undefined) {
+      settings.telegramChatId = EMPTY_SHARED_STATE.settings.telegramChatId;
+    }
+
+    if (settings.telegramAllowedChatIds === undefined) {
+      settings.telegramAllowedChatIds =
+        EMPTY_SHARED_STATE.settings.telegramAllowedChatIds;
+    }
+
+    if (settings.telegramQuietHoursStart === undefined) {
+      settings.telegramQuietHoursStart =
+        EMPTY_SHARED_STATE.settings.telegramQuietHoursStart;
+    }
+
+    if (settings.telegramQuietHoursEnd === undefined) {
+      settings.telegramQuietHoursEnd =
+        EMPTY_SHARED_STATE.settings.telegramQuietHoursEnd;
+    }
+
+    if (settings.telegramMaxPerHour === undefined) {
+      settings.telegramMaxPerHour =
+        EMPTY_SHARED_STATE.settings.telegramMaxPerHour;
+    }
+
+    if (settings.telegramTodoRemindersEnabled === undefined) {
+      settings.telegramTodoRemindersEnabled =
+        EMPTY_SHARED_STATE.settings.telegramTodoRemindersEnabled;
+    }
+
+    if (settings.telegramTodoReminderMinutes === undefined) {
+      settings.telegramTodoReminderMinutes =
+        EMPTY_SHARED_STATE.settings.telegramTodoReminderMinutes;
+    }
+
+    if (settings.telegramNotifyOnTodoComplete === undefined) {
+      settings.telegramNotifyOnTodoComplete =
+        EMPTY_SHARED_STATE.settings.telegramNotifyOnTodoComplete;
+    }
+
+    if (settings.telegramNotifyOnErrors === undefined) {
+      settings.telegramNotifyOnErrors =
+        EMPTY_SHARED_STATE.settings.telegramNotifyOnErrors;
+    }
+
+    if (settings.telegramAgentNotificationsEnabled === undefined) {
+      settings.telegramAgentNotificationsEnabled =
+        EMPTY_SHARED_STATE.settings.telegramAgentNotificationsEnabled;
+    }
+
     this.store.set("settings", settings);
   }
 
@@ -161,6 +222,8 @@ export class StateManager {
     if (oldValue.themePreset !== newValue.themePreset) {
       setTheme(newValue.themePreset);
     }
+
+    getNotificationManager().handleSettingsChange(newValue, oldValue);
 
     // Update the menu, which contains state
     setupAppMenu();

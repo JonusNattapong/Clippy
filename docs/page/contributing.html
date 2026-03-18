@@ -3,23 +3,108 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Contributing — Cliplala</title>
+    <title>Contributing — Clippy</title>
     <link rel="stylesheet" href="https://unpkg.com/98.css" />
-    <style>body{padding:20px;background:#008080;color:#111;font-family:Segoe UI, Tahoma, sans-serif}.window{max-width:980px;margin:0 auto}</style>
+    <style>
+      body {
+        padding: 20px;
+        background: #008080;
+        font-family:
+          "Tahoma", "Pixelated MS Sans Serif", "MS Sans Serif", sans-serif;
+      }
+      .window {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .window-body {
+        background: #fff;
+        color: #000;
+      }
+      .window-body h1,
+      .window-body h2,
+      .window-body h3 {
+        color: #000;
+      }
+      .window-body code {
+        background: #c0c0c0;
+        padding: 2px 4px;
+        border: 1px solid #888;
+      }
+      .window-body pre {
+        background: #fff;
+        padding: 10px;
+        border: 1px solid #888;
+        overflow-x: auto;
+      }
+      .window-body a {
+        color: #0000ff;
+      }
+      .nav-links {
+        margin-top: 20px;
+        padding-top: 10px;
+        border-top: 1px solid #888;
+      }
+      .nav-links a {
+        margin-right: 15px;
+        color: #0000ff;
+      }
+    </style>
   </head>
   <body>
     <div class="window">
-      <h1>Contributing</h1>
-      <p>Thanks for wanting to contribute! A few guidelines:</p>
-      <ul>
-        <li>Run <code>npm run lint</code> to format TypeScript files with Prettier.</li>
-        <li>Create PRs against <code>main</code> and include screenshots if UI changes.</li>
-        <li>Do not add tests unless they provide clear value for the change.</li>
-      </ul>
-      <h2>Development workflow</h2>
-      <pre><code>npm ci
+      <div class="title-bar">
+        <div class="title-bar-text">Contributing — Clippy</div>
+        <div class="title-bar-controls">
+          <button type="button" aria-label="Minimize"></button>
+          <button type="button" aria-label="Maximize"></button>
+          <button type="button" aria-label="Close"></button>
+        </div>
+      </div>
+      <div class="window-body">
+        <h1>Contributing</h1>
+        <p>Thanks for wanting to contribute! A few guidelines:</p>
+
+        <ul>
+          <li>
+            Run <code>npm run lint</code> to format TypeScript files with
+            Prettier.
+          </li>
+          <li>
+            Create PRs against <code>main</code> and include screenshots if UI
+            changes.
+          </li>
+          <li>
+            Do not add tests unless they provide clear value for the change.
+          </li>
+          <li>Follow the existing code style (see AGENTS.md).</li>
+        </ul>
+
+        <h2>Development workflow</h2>
+        <pre><code>npm ci
 npm run lint
-npm test</code></pre>
+npm test
+npm run start</code></pre>
+
+        <h2>Project Structure</h2>
+        <ul>
+          <li><code>src/main/</code> - Electron main process</li>
+          <li><code>src/renderer/</code> - React UI</li>
+          <li><code>src/sharedState.ts</code> - Shared state types</li>
+          <li><code>AGENTS.md</code> - Developer guidelines</li>
+        </ul>
+
+        <h2>Code Style</h2>
+        <ul>
+          <li>Files: kebab-case (e.g., <code>ipc-messages.ts</code>)</li>
+          <li>Components: PascalCase (e.g., <code>App.tsx</code>)</li>
+          <li>Use Prettier for formatting</li>
+          <li>TypeScript strict mode</li>
+        </ul>
+
+        <div class="nav-links">
+          <a href="../index.html">← Back to Home</a>
+        </div>
+      </div>
     </div>
   </body>
 </html>

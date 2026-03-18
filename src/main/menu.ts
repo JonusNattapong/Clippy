@@ -204,13 +204,13 @@ function getHelpMenu(): MenuItemConstructorOptions[] {
     {
       label: "Open Clippy Website",
       click: () => {
-        shell.openExternal("https://felixrieseberg.github.io/clippy/");
+        shell.openExternal("https://jonusnattapong.github.io/Clippy/");
       },
     },
     {
       label: "Report an Issue",
       click: () => {
-        shell.openExternal("https://github.com/felixrieseberg/clippy/issues");
+        shell.openExternal("https://github.com/JonusNattapong/Clippy/issues");
       },
     },
     {

@@ -1,6 +1,7 @@
 export const IpcMessages = {
   // Window messages
   TOGGLE_CHAT_WINDOW: "clippy_toggle_chat_window",
+  TOGGLE_POSTIT_WINDOW: "clippy_toggle_postit_window",
   MINIMIZE_CHAT_WINDOW: "clippy_minimize_chat_window",
   MAXIMIZE_CHAT_WINDOW: "clippy_maximize_chat_window",
   MINIMIZE_MAIN_WINDOW: "clippy_minimize_main_window",
@@ -31,6 +32,7 @@ export const IpcMessages = {
   APP_EXPORT_BACKUP: "clippy_app_export_backup",
   APP_IMPORT_BACKUP: "clippy_app_import_backup",
   APP_OPEN_POWERSHELL_LOG: "clippy_app_open_powershell_log",
+  APP_SEND_TELEGRAM_NOTIFICATION: "clippy_app_send_telegram_notification",
 
   // Chat messages
   CHAT_GET_CHAT_RECORDS: "clippy_chat_get_chat_records",
@@ -63,6 +65,11 @@ export const IpcMessages = {
   MEMORY_HANDLE_COMMAND: "clippy_memory_handle_command",
   MEMORY_RUN_MAINTENANCE: "clippy_memory_run_maintenance",
   MEMORY_DELETE_ALL: "clippy_memory_delete_all",
+  MEMORY_TOGGLE_PIN: "clippy_memory_toggle_pin",
+  MEMORY_GET_PINNED: "clippy_memory_get_pinned",
+  MEMORY_GET_PENDING: "clippy_memory_get_pending",
+  MEMORY_APPROVE: "clippy_memory_approve",
+  MEMORY_REJECT: "clippy_memory_reject",
 
   // Identity & User Profile
   IDENTITY_GET: "clippy_identity_get",
@@ -77,4 +84,11 @@ export const IpcMessages = {
   // Web Tools
   WEB_SEARCH: "clippy_web_search",
   FETCH_URL: "clippy_fetch_url",
+  // Ollama
+  CHECK_OLLAMA: "clippy_check_ollama",
+  // Provider helpers
+  TEST_PROVIDER_CONNECTION: "clippy_test_provider_connection",
+  LIST_PROVIDER_MODELS: "clippy_list_provider_models",
+  // Skills
+  CHECK_SKILL_STATUSES: "clippy_check_skill_statuses",
 };

@@ -15,12 +15,11 @@
   },
   "keywords": [],
   "author": {
-    "name": "Felix Rieseberg",
-    "email": "fr@makenotion.com"
+    "name": "JonusNattapong"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/felixrieseberg/clippy"
+    "url": "https://github.com/JonusNattapong/Clippy"
   },
   "license": "SEE LICENSE IN LICENSE.md",
   "devDependencies": {
@@ -38,6 +37,7 @@
     "@typescript-eslint/eslint-plugin": "^5.62.0",
     "@typescript-eslint/parser": "^5.62.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "@rollup/plugin-commonjs": "^24.0.0",
     "dotenv": "^16.5.0",
     "electron": "35.1.4",
     "eslint": "^8.57.1",

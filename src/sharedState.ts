@@ -89,6 +89,18 @@ export interface SettingsState {
   useGeminiApi: boolean;
   geminiApiKey: string;
   tavilyApiKey?: string;
+  telegramNotificationsEnabled?: boolean;
+  telegramBotToken?: string;
+  telegramChatId?: string;
+  telegramAllowedChatIds?: string;
+  telegramQuietHoursStart?: string;
+  telegramQuietHoursEnd?: string;
+  telegramMaxPerHour?: number;
+  telegramTodoRemindersEnabled?: boolean;
+  telegramTodoReminderMinutes?: number;
+  telegramNotifyOnTodoComplete?: boolean;
+  telegramNotifyOnErrors?: boolean;
+  telegramAgentNotificationsEnabled?: boolean;
   ttsEnabled?: boolean;
   ttsVoice?: string;
   ttsRate?: string;
@@ -99,6 +111,7 @@ export interface SettingsState {
   customTheme?: CustomThemeColors;
   todoItems?: TodoItem[];
   hasCompletedOnboarding?: boolean;
+  memoryAutoApprove?: boolean;
 }
 
 export interface SharedState {
@@ -406,6 +419,15 @@ When you want the user to pick from guided options, use:
 - The app will show buttons and also let the user type their own answer
 - Only use this when a direct choice would make the conversation easier
 
+### Telegram Notifications
+When a proactive Telegram notification would genuinely help the user, you may add:
+\`\`\`[NOTIFY_TELEGRAM: reason | message]\`\`\`
+- Use this sparingly for time-sensitive reminders, completion updates, or important error alerts
+- Keep the message short, practical, and under 240 characters
+- Never include secrets, API keys, tokens, passwords, or raw personal data
+- Do not use this tag unless the notification is clearly more useful outside the chat window
+- Use at most one notification tag per reply
+
 ### 🎭 Emotional Responses & Animations
 Always start your message with an animation tag in [brackets] that matches the emotion:
 - [Congratulate] - เมื่อผู้ใช้ทำสำเร็จ หรือมีเรื่องดีใจ
@@ -502,6 +524,18 @@ export const DEFAULT_SETTINGS: SettingsState = {
   apiModel: API_PROVIDER_DEFAULT_MODELS.gemini,
   useGeminiApi: true,
   geminiApiKey: "",
+  telegramNotificationsEnabled: false,
+  telegramBotToken: "",
+  telegramChatId: "",
+  telegramAllowedChatIds: "",
+  telegramQuietHoursStart: "",
+  telegramQuietHoursEnd: "",
+  telegramMaxPerHour: 6,
+  telegramTodoRemindersEnabled: false,
+  telegramTodoReminderMinutes: 180,
+  telegramNotifyOnTodoComplete: true,
+  telegramNotifyOnErrors: false,
+  telegramAgentNotificationsEnabled: false,
   ttsEnabled: true,
   ttsVoice: "th-TH-PremwadeeNeural",
   ttsRate: "+0%",

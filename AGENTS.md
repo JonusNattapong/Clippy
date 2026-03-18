@@ -5,7 +5,7 @@ This file provides guidance for AI agents working on the Clippy codebase.
 ## Project Overview
 
 Clippy is an Electron desktop application that brings back the 90s office assistant as an AI companion.
-It uses React for the UI, TypeScript for type safety, and connects to various AI providers (Gemini, OpenAI, Anthropic, OpenRouter).
+It uses React for the UI, TypeScript for type safety, and connects to various AI providers (Gemini, OpenAI, Anthropic, OpenRouter, Ollama).
 
 **Tech Stack:**
 
@@ -95,19 +95,45 @@ The project uses Prettier with default settings. Run `npm run lint` to format:
 
 ```
 src/
-├── main/           # Electron main process
-├── renderer/       # React UI (frontend)
-├── helpers/        # Shared utility functions
-├── types/          # TypeScript type definitions
-├── ipc-messages.ts # IPC communication definitions
-├── sharedState.ts  # Shared state between processes
-└── debugState.ts   # Debug state utilities
+├── main/                    # Electron main process
+│   ├── skills/              # Skills/Plugins system
+│   │   ├── index.ts         # Public API exports
+│   │   ├── types.ts         # TypeScript interfaces
+│   │   ├── registry.ts      # Skill registry & loader
+│   │   ├── system.skill.ts  # System skill
+│   │   └── web.skill.ts     # Web skill
+│   ├── chat-provider.ts     # AI chat providers
+│   ├── desktop-tools.ts    # Desktop commands implementation
+│   ├── web-tools.ts        # Web search tools
+│   ├── memory.ts           # Memory management
+│   ├── memory-vector-store.ts # Vector store for memories
+│   ├── tts.ts              # Text-to-speech
+│   ├── windows.ts          # Window management
+│   ├── chats.ts            # Chat history management
+│   ├── state.ts            # App state
+│   └── ipc.ts              # IPC handlers
+├── renderer/               # React UI (frontend)
+│   ├── components/         # React components (Chat.tsx, Settings.tsx, etc.)
+│   ├── hooks/              # Custom React hooks
+│   │   ├── useCommandParser.ts    # Command parsing logic (desktop & web commands)
+│   │   └── useMemoryCommands.ts   # Memory command handling
+│   ├── helpers/            # Helper functions
+│   │   └── filterMessageContent.ts # Message filtering & parsing (memory, stats, tools, todo, choice)
+│   ├── contexts/           # React contexts
+│   │   ├── ChatContext.tsx
+│   │   ├── SharedStateContext.tsx
+│   │   └── BubbleViewContext.tsx
+│   └── api/                # API integrations
+├── helpers/                # Shared utilities
+│   └── mood-engine.ts      # Mood calculation engine
+├── types/                  # TypeScript definitions
+└── ipc-messages.ts         # IPC communication definitions
 
-templates/          # Clippy identity & personality templates
-├── SOUL.md         # Clippy's core personality
-├── IDENTITY.md     # Name, vibe, emoji
-├── USER.md         # User profile template
-└── TOOLS.md        # Capabilities & features
+templates/                  # Clippy identity & personality templates
+├── SOUL.md                 # Clippy's core personality
+├── IDENTITY.md             # Name, vibe, emoji
+├── USER.md                 # User profile template
+└── TOOLS.md                # Capabilities & features
 ```
 
 ### Key Files
@@ -132,11 +158,12 @@ User data is stored in:
 | `chats/`               | Chat history                           |
 | `identity.json`        | Clippy identity (editable in Settings) |
 | `user.json`            | User profile (editable in Settings)    |
+| `skills/`              | Custom skills                          |
 | `logs/`                | PowerShell command logs                |
 
 ## Desktop Commands
 
-AI can execute desktop tools via special chat commands. These are handled in `src/renderer/components/Chat.tsx`.
+AI can execute desktop tools via special chat commands. These are handled in `src/renderer/hooks/useCommandParser.ts`.
 
 ### Available Commands
 
@@ -175,9 +202,24 @@ AI can execute desktop tools via special chat commands. These are handled in `sr
 
 ### Adding New Commands
 
-1. Add tool to `src/main/desktop-tools.ts` or `src/main/web-tools.ts`
-2. Add command pattern in `src/renderer/components/Chat.tsx` `handleDesktopCommand` function
+1. Add tool implementation to `src/main/desktop-tools.ts` or `src/main/web-tools.ts`
+2. Add command pattern in `src/renderer/hooks/useCommandParser.ts`:
+   - Desktop commands: add to `desktopCommandPatterns` array
+   - Web commands: add to `webCommandPatterns` array
 3. The tool is exposed via IPC `DESKTOP_TOOL_EXECUTE` or `WEB_SEARCH`/`FETCH_URL` in `src/main/ipc.ts`
+
+## Message Parsing Features
+
+Clippy's AI responses can include special commands that get parsed by `src/renderer/helpers/filterMessageContent.ts`:
+
+| Format                                           | Purpose                                   |
+| ------------------------------------------------ | ----------------------------------------- |
+| `[MEMORY_UPDATE:category\|content\|importance]`  | Save to memory                            |
+| `[STATS_UPDATE:{bond:±X, happiness:±Y}]`         | Update mood stats                         |
+| `[TOOL_CALL:tool_name\|arg1=value1,arg2=value2]` | Execute tools                             |
+| `[TODO_ADD:title\|note]`                         | Add todo item                             |
+| `[CHOICE:prompt\|option1\|option2\|...]`         | Show choice dialog                        |
+| `[AnimationKey]`                                 | Set animation (e.g., `[Wave]`, `[Think]`) |
 
 ## Development Workflow
 
@@ -207,3 +249,4 @@ Create a `.env` file based on `.env.example` for API keys and configuration.
 - Use electron-log for logging in main process
 - Store user data locally using electron-store
 - The docs site lives in `docs/` and is deployed separately from the Electron app
+- When adding new features, consider extracting logic into hooks (`src/renderer/hooks/`) and helpers (`src/renderer/helpers/`) for better testability
