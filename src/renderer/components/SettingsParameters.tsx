@@ -1,75 +1,73 @@
 import { useCallback, useEffect, useState } from "react";
 import { clippyApi } from "../clippyApi";
-import { useSharedState } from "../contexts/SharedStateContext";
+import { useSharedState, useTranslation } from "../contexts/SharedStateContext";
 import { DEFAULT_SYSTEM_PROMPT } from "../../sharedState";
 
 export const SettingsParameters: React.FC = () => {
   const { settings } = useSharedState();
+  const t = useTranslation();
   const [tempSystemPrompt, setTempSystemPrompt] = useState(
-    settings.systemPrompt,
+    settings.systemPrompt || "",
   );
-  const [tempTopK, setTempTopK] = useState(settings.topK);
-  const [tempTemperature, setTempTemperature] = useState(settings.temperature);
+  const [tempTopK, setTempTopK] = useState(settings.topK || 10);
+  const [tempTemperature, setTempTemperature] = useState(
+    settings.temperature || 0.7,
+  );
+  const [saved, setSaved] = useState(false);
 
-  // Update settings on unmount so that the user editing preferences
-  // doesn't rapidly reload the model
   useEffect(() => {
-    return () => {
-      const isNewSettings =
-        tempSystemPrompt !== settings.systemPrompt ||
-        tempTopK !== settings.topK ||
-        tempTemperature !== settings.temperature;
+    setTempSystemPrompt(settings.systemPrompt || "");
+    setTempTopK(settings.topK || 10);
+    setTempTemperature(settings.temperature || 0.7);
+  }, [settings.systemPrompt, settings.topK, settings.temperature]);
 
-      if (isNewSettings) {
-        clippyApi.setState("settings", {
-          ...settings,
-          systemPrompt: tempSystemPrompt,
-          topK: tempTopK,
-          temperature: tempTemperature,
-        });
-      }
-    };
-  }, [tempSystemPrompt, tempTopK, tempTemperature]);
+  const handleSave = useCallback(async () => {
+    await clippyApi.setState("settings", {
+      ...settings,
+      systemPrompt: tempSystemPrompt,
+      topK: tempTopK,
+      temperature: tempTemperature,
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }, [settings, tempSystemPrompt, tempTopK, tempTemperature]);
 
   const handleSystemPromptReset = useCallback(() => {
-    const confirmed = window.confirm(
-      "Are you sure you want to reset the system prompt to the default? This will overwrite any customizations you have made.",
-    );
+    const confirmed = window.confirm(t.confirm_reset_prompt);
 
     if (confirmed) {
       setTempSystemPrompt(DEFAULT_SYSTEM_PROMPT);
     }
-  }, []);
+  }, [t.confirm_reset_prompt]);
 
   return (
-    <>
+    <div className="settings-page">
+      <div className="settings-page-intro">
+        <h3>{t.prompts}</h3>
+        <p>{t.prompts_description}</p>
+      </div>
       <fieldset>
-        <legend>Prompts</legend>
+        <legend>{t.prompts}</legend>
         <div className="field-row-stacked">
-          <label htmlFor="systemPrompt">
-            System Prompt. The key "[LIST OF ANIMATIONS]" will be automatically
-            replaced by a full list of all available animations.
-          </label>
+          <label htmlFor="systemPrompt">{t.system_prompt_label}</label>
           <textarea
             id="systemPrompt"
             rows={8}
             style={{ resize: "vertical" }}
             value={tempSystemPrompt}
-            onChange={(e) => {
-              setTempSystemPrompt(e.target.value);
-            }}
+            onChange={(e) => setTempSystemPrompt(e.target.value)}
           />
         </div>
-        <div className="field-row-stacked">
-          <button onClick={handleSystemPromptReset} style={{ width: 100 }}>
-            Reset
+        <div className="field-row-stacked settings-actions-row">
+          <button type="button" onClick={handleSystemPromptReset}>
+            {t.reset}
           </button>
         </div>
       </fieldset>
       <fieldset style={{ marginTop: "20px" }}>
-        <legend>Parameters</legend>
-        <div className="field-row">
-          <label htmlFor="topK">Top K</label>
+        <legend>{t.parameters}</legend>
+        <div className="field-row settings-inline-field settings-number-field">
+          <label htmlFor="topK">{t.top_k}</label>
           <input
             id="topK"
             type="number"
@@ -78,8 +76,8 @@ export const SettingsParameters: React.FC = () => {
             onChange={(e) => setTempTopK(parseFloat(e.target.value))}
           />
         </div>
-        <div className="field-row">
-          <label htmlFor="temperature">Temperature</label>
+        <div className="field-row settings-inline-field settings-number-field">
+          <label htmlFor="temperature">{t.temperature}</label>
           <input
             id="temperature"
             type="number"
@@ -89,6 +87,23 @@ export const SettingsParameters: React.FC = () => {
           />
         </div>
       </fieldset>
-    </>
+      <div
+        style={{
+          marginTop: "15px",
+          display: "flex",
+          gap: "10px",
+          alignItems: "center",
+        }}
+      >
+        <button type="button" onClick={handleSave}>
+          {saved ? "Saved!" : "Save Changes"}
+        </button>
+        {saved && (
+          <span style={{ color: "#5cb85c", fontSize: "14px" }}>
+            Settings saved successfully!
+          </span>
+        )}
+      </div>
+    </div>
   );
 };

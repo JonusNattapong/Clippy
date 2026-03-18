@@ -1,8 +1,8 @@
 import { useChat } from "../contexts/ChatContext";
 import { TableView } from "./TableView";
 import { formatDistance } from "date-fns";
-import { clippyApi } from "../clippyApi";
 import { useState } from "react";
+import { useTranslation } from "../contexts/SharedStateContext";
 
 export type SettingsTab = "general" | "model" | "advanced" | "about";
 
@@ -18,6 +18,7 @@ export const Chats: React.FC<SettingsProps> = ({ onClose }) => {
     deleteChat,
     deleteAllChats,
   } = useChat();
+  const t = useTranslation();
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedChatIndex, setSelectedChatIndex] = useState<number | null>(
     null,
@@ -48,7 +49,7 @@ export const Chats: React.FC<SettingsProps> = ({ onClose }) => {
   };
 
   const handleDeleteChat = async (chatId: string) => {
-    if (!confirm("Are you sure you want to delete this chat?")) {
+    if (!confirm(t.confirm_delete_chat)) {
       return;
     }
 
@@ -76,11 +77,7 @@ export const Chats: React.FC<SettingsProps> = ({ onClose }) => {
   };
 
   const handleDeleteAllChats = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to delete ALL chats? This cannot be undone.",
-      )
-    ) {
+    if (!confirm(t.confirm_delete_all)) {
       return;
     }
 
@@ -96,8 +93,8 @@ export const Chats: React.FC<SettingsProps> = ({ onClose }) => {
   };
 
   const columns = [
-    { key: "preview", header: "Preview" },
-    { key: "lastUpdated", header: "Last Updated" },
+    { key: "preview", header: t.preview },
+    { key: "lastUpdated", header: t.last_updated },
   ];
 
   return (
@@ -118,22 +115,22 @@ export const Chats: React.FC<SettingsProps> = ({ onClose }) => {
           alignItems: "center",
         }}
       >
-        <h1>Chats</h1>
+        <h1>{t.chats}</h1>
         <div style={{ display: "flex", gap: "8px" }}>
           <button
             onClick={handleRestoreChat}
             disabled={selectedChatIndex === null}
           >
-            Restore Chat
+            {t.restore_chat}
           </button>
           <button
             onClick={handleDeleteSelected}
             disabled={isDeleting || selectedChatIndex === null}
           >
-            Delete Selected
+            {t.delete_selected}
           </button>
           <button onClick={handleDeleteAllChats} disabled={isDeleting}>
-            Delete All Chats
+            {t.delete_all_chats}
           </button>
         </div>
       </div>

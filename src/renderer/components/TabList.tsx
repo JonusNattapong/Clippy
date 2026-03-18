@@ -29,24 +29,25 @@ export function TabList({ tabs, activeTab, onTabChange }: TabListProps) {
   };
 
   return (
-    <div className="window-body">
-      <menu role="tablist">
+    <div className="settings-shell">
+      <div role="tablist" className="settings-tablist">
         {tabs.map((tab, index) => (
-          <li
-            key={index}
+          <button
+            key={tab.key}
+            type="button"
             role="tab"
             aria-selected={activeTabIndex === index}
+            className="settings-tab"
             onClick={() => handleTabClick(index)}
-            style={{
-              cursor: "pointer",
-            }}
           >
-            <a>{tab.label}</a>
-          </li>
+            {tab.label}
+          </button>
         ))}
-      </menu>
-      <div className="window" role="tabpanel">
-        <div className="window-body">{tabs[activeTabIndex]?.content}</div>
+      </div>
+      <div className="settings-panel" role="tabpanel">
+        <div className="settings-panel-body">
+          {tabs[activeTabIndex]?.content}
+        </div>
       </div>
     </div>
   );

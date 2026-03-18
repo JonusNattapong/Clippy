@@ -2,6 +2,9 @@ import Markdown from "react-markdown";
 import questionIcon from "../images/icons/question.png";
 import defaultClippy from "../images/animations/Default.png";
 import { MessageRecord } from "../../types/interfaces";
+import { useTranslation } from "../contexts/SharedStateContext";
+
+import { WelcomeMessageContent } from "./WelcomeMessageContent";
 
 export interface Message extends MessageRecord {
   id: string;
@@ -12,30 +15,50 @@ export interface Message extends MessageRecord {
 }
 
 export function Message({ message }: { message: Message }) {
+  const t = useTranslation();
+  const isWelcome = message.content === t.welcome_to_clippy;
+  const senderClass =
+    message.sender === "user" ? "message-user" : "message-assistant";
+
   return (
-    <div
-      className="message"
-      style={{ display: "flex", alignItems: "flex-start" }}
-    >
-      <img
-        src={message.sender === "user" ? questionIcon : defaultClippy}
-        alt={`${message.sender === "user" ? "You" : "Clippy"}`}
-        style={{ width: "24px", height: "24px", marginRight: "8px" }}
-      />
-      <div className="message-content">
-        {message.children ? (
-          message.children
-        ) : (
-          <Markdown
-            components={{
-              a: ({ node, ...props }) => (
-                <a target="_blank" rel="noopener noreferrer" {...props} />
-              ),
-            }}
-          >
-            {message.content}
-          </Markdown>
+    <div className={`message ${senderClass}`}>
+      <div className="message-avatar-wrap">
+        <img
+          className="message-avatar"
+          src={message.sender === "user" ? questionIcon : defaultClippy}
+          alt={`${message.sender === "user" ? "You" : "Clippy"}`}
+        />
+      </div>
+      <div className="message-body">
+        <div className="message-meta">
+          <span className="message-author">
+            {message.sender === "user" ? "You" : "Clippy"}
+          </span>
+        </div>
+        {message.images && message.images.length > 0 && (
+          <div className="message-images">
+            {message.images.map((img, index) => (
+              <img key={index} src={img} alt={`Attachment ${index + 1}`} />
+            ))}
+          </div>
         )}
+        <div className="message-content">
+          {isWelcome ? (
+            <WelcomeMessageContent />
+          ) : message.children ? (
+            message.children
+          ) : (
+            <Markdown
+              components={{
+                a: ({ node, ...props }) => (
+                  <a target="_blank" rel="noreferrer" {...props} />
+                ),
+              }}
+            >
+              {message.content}
+            </Markdown>
+          )}
+        </div>
       </div>
     </div>
   );

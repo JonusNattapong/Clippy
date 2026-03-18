@@ -8,8 +8,22 @@ import { SettingsAdvanced } from "./SettingsAdvanced";
 import { SettingsAppearance } from "./SettingsAppearance";
 import { SettingsAbout } from "./SettingsAbout";
 import { SettingsParameters } from "./SettingsParameters";
+import { SettingsMemory } from "./SettingsMemory";
+import { SettingsIdentity } from "./SettingsIdentity";
+import { SettingsUser } from "./SettingsUser";
+import { SettingsTTS } from "./SettingsTTS";
+import { useTranslation } from "../contexts/SharedStateContext";
 
-export type SettingsTab = "appearance" | "model" | "advanced" | "about";
+export type SettingsTab =
+  | "appearance"
+  | "model"
+  | "parameters"
+  | "memory"
+  | "identity"
+  | "aboutYou"
+  | "tts"
+  | "advanced"
+  | "about";
 
 export type SettingsProps = {
   onClose: () => void;
@@ -17,6 +31,7 @@ export type SettingsProps = {
 
 export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   const { currentView, setCurrentView } = useBubbleView();
+  const t = useTranslation();
   const [activeTab, setActiveTab] = useState<SettingsTab>(
     bubbleViewToSettingsTab(currentView),
   );
@@ -30,22 +45,33 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
   }, [currentView, activeTab]);
 
   const tabs = [
-    { label: "Appearance", key: "appearance", content: <SettingsAppearance /> },
-    { label: "Model", key: "model", content: <SettingsModel /> },
-    { label: "Parameters", key: "parameters", content: <SettingsParameters /> },
-    { label: "Advanced", key: "advanced", content: <SettingsAdvanced /> },
-    { label: "About", key: "about", content: <SettingsAbout /> },
+    { label: t.appearance, key: "appearance", content: <SettingsAppearance /> },
+    { label: t.ai_provider, key: "model", content: <SettingsModel /> },
+    { label: t.prompts, key: "parameters", content: <SettingsParameters /> },
+    { label: t.memory, key: "memory", content: <SettingsMemory /> },
+    { label: t.identity, key: "identity", content: <SettingsIdentity /> },
+    { label: t.about_you, key: "aboutYou", content: <SettingsUser /> },
+    { label: "Voice", key: "tts", content: <SettingsTTS /> },
+    { label: t.advanced, key: "advanced", content: <SettingsAdvanced /> },
+    { label: t.about, key: "about", content: <SettingsAbout /> },
   ];
 
   return (
     <>
+      <div className="settings-header">
+        <div className="settings-header-kicker">{t.clippy_control_panel}</div>
+        <h2>{t.settings}</h2>
+        <p>{t.settings_description}</p>
+      </div>
       <TabList
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(tab) => setCurrentView(`settings-${tab}` as BubbleView)}
       />
       <BubbleWindowBottomBar>
-        <button onClick={onClose}>Back to Chat</button>
+        <button type="button" onClick={onClose}>
+          {t.back_to_chat}
+        </button>
       </BubbleWindowBottomBar>
     </>
   );
@@ -67,6 +93,10 @@ function bubbleViewToSettingsTab(view: BubbleView): SettingsTab {
     "appearance",
     "model",
     "parameters",
+    "memory",
+    "identity",
+    "aboutYou",
+    "tts",
     "advanced",
     "about",
   ] as const;

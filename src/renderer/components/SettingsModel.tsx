@@ -1,166 +1,254 @@
-import { Column, TableView } from "./TableView";
-import { Progress } from "./Progress";
-import React, { useState } from "react";
-import { useSharedState } from "../contexts/SharedStateContext";
+import React, { useState, useEffect, useCallback } from "react";
+
+import {
+  API_PROVIDER_DEFAULT_MODELS,
+  API_PROVIDER_LABELS,
+  ApiProvider,
+  validateApiConfiguration,
+} from "../../sharedState";
 import { clippyApi } from "../clippyApi";
-import { prettyDownloadSpeed } from "../helpers/convert-download-speed";
-import { ManagedModel } from "../../models";
-import { isModelDownloading } from "../../helpers/model-helpers";
+import { useSharedState, useTranslation } from "../contexts/SharedStateContext";
+import { Checkbox } from "./Checkbox";
+
+const PROVIDERS: ApiProvider[] = [
+  "gemini",
+  "openai",
+  "anthropic",
+  "openrouter",
+];
+
+function getProviderKeyPlaceholder(provider: ApiProvider) {
+  switch (provider) {
+    case "openai":
+      return "Paste your OpenAI API key here...";
+    case "anthropic":
+      return "Paste your Anthropic API key here...";
+    case "openrouter":
+      return "Paste your OpenRouter API key here...";
+    case "gemini":
+    default:
+      return "Paste your Gemini API key here...";
+  }
+}
 
 export const SettingsModel: React.FC = () => {
-  const { models, settings } = useSharedState();
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const { settings } = useSharedState();
+  const t = useTranslation();
 
-  const columns: Array<Column> = [
-    { key: "default", header: "Loaded", width: 50 },
-    { key: "name", header: "Name" },
-    {
-      key: "size",
-      header: "Size",
-      render: (row) => `${row.size.toLocaleString()} MB`,
-    },
-    { key: "company", header: "Company" },
-    { key: "downloaded", header: "Downloaded" },
-  ];
+  const [useGeminiApi, setUseGeminiApi] = useState(
+    settings.useGeminiApi ?? true,
+  );
+  const [apiProvider, setApiProvider] = useState(
+    settings.apiProvider || "gemini",
+  );
+  const [apiKey, setApiKey] = useState(
+    settings.apiKey || settings.geminiApiKey || "",
+  );
+  const [apiModel, setApiModel] = useState(
+    settings.apiModel ||
+      API_PROVIDER_DEFAULT_MODELS[settings.apiProvider || "gemini"],
+  );
+  const [saved, setSaved] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
 
-  const modelKeys = Object.keys(models || {});
-  const data = modelKeys.map((modelKey) => {
-    const model = models?.[modelKey as keyof typeof models];
+  useEffect(() => {
+    setUseGeminiApi(settings.useGeminiApi ?? true);
+    setApiProvider(settings.apiProvider || "gemini");
+    setApiKey(settings.apiKey || settings.geminiApiKey || "");
+    setApiModel(
+      settings.apiModel ||
+        API_PROVIDER_DEFAULT_MODELS[settings.apiProvider || "gemini"],
+    );
+  }, [settings]);
 
-    return {
-      default: model?.name === settings.selectedModel ? "ｘ" : "",
-      name: model?.name,
-      company: model?.company,
-      size: model?.size,
-      downloaded: model.downloaded ? "Yes" : "No",
-    };
-  });
+  const hasApiKey = !!apiKey.trim();
 
-  // Variables
-  const selectedModel =
-    models?.[modelKeys[selectedIndex] as keyof typeof models] || null;
-  const isDownloading = isModelDownloading(selectedModel);
-  const isDefaultModel = selectedModel?.name === settings.selectedModel;
+  const handleSave = useCallback(async () => {
+    const validation = validateApiConfiguration(apiProvider, apiKey, apiModel);
+    if (!validation.isValid) {
+      setValidationMessage(
+        !apiModel.trim()
+          ? t.validation_model_required
+          : t.validation_api_invalid,
+      );
+      return;
+    }
 
-  // Handlers
-  // ---------------------------------------------------------------------------
-  const handleRowSelect = (index: number) => {
-    setSelectedIndex(index);
-  };
+    await clippyApi.setState("settings.useGeminiApi", useGeminiApi);
+    await clippyApi.setState("settings.apiProvider", apiProvider);
+    await clippyApi.setState("settings.apiKey", apiKey);
+    if (apiProvider === "gemini") {
+      await clippyApi.setState("settings.geminiApiKey", apiKey);
+    }
+    await clippyApi.setState("settings.apiModel", apiModel);
+    setValidationMessage("");
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }, [
+    apiKey,
+    apiModel,
+    apiProvider,
+    t.validation_api_invalid,
+    t.validation_model_required,
+    useGeminiApi,
+  ]);
 
-  const handleDownload = async () => {
-    if (selectedModel) {
-      await clippyApi.downloadModelByName(data[selectedIndex].name);
+  const handleProviderChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const nextProvider = event.target.value as ApiProvider;
+    setApiProvider(nextProvider);
+    if (!apiModel || apiModel === API_PROVIDER_DEFAULT_MODELS[apiProvider]) {
+      setApiModel(API_PROVIDER_DEFAULT_MODELS[nextProvider]);
     }
   };
 
-  const handleDeleteOrRemove = async () => {
-    if (selectedModel?.imported) {
-      await clippyApi.removeModelByName(selectedModel.name);
-    } else if (selectedModel) {
-      await clippyApi.deleteModelByName(selectedModel.name);
-    }
-  };
-
-  const handleMakeDefault = async () => {
-    if (selectedModel) {
-      clippyApi.setState("settings.selectedModel", selectedModel.name);
-    }
+  const handleUseDefaultModel = () => {
+    setApiModel(API_PROVIDER_DEFAULT_MODELS[apiProvider]);
   };
 
   return (
-    <div>
-      <p>
-        Select the model you want to use for your chat. The larger the model,
-        the more powerful the chat, but the slower it will be - and the more
-        memory it will use. Clippy uses models in the GGUF format.{" "}
-        <a
-          href="https://github.com/felixrieseberg/clippy?tab=readme-ov-file#downloading-more-models"
-          target="_blank"
-        >
-          More information.
-        </a>
-      </p>
+    <div className="settings-page">
+      <div className="settings-page-intro">
+        <h3>{t.ai_provider}</h3>
+        <p>{t.ai_provider_description}</p>
+      </div>
+      <fieldset>
+        <legend>{t.ai_provider}</legend>
+        <p style={{ marginBottom: 15 }}>{t.ai_provider_description}</p>
 
-      <button
-        style={{ marginBottom: 10 }}
-        onClick={() => clippyApi.addModelFromFile()}
-      >
-        Add model from file
-      </button>
-      <TableView
-        columns={columns}
-        data={data}
-        onRowSelect={handleRowSelect}
-        initialSelectedIndex={selectedIndex}
-      />
+        <Checkbox
+          id="useGeminiApi"
+          label={t.use_hosted_ai}
+          checked={useGeminiApi}
+          onChange={(checked) => setUseGeminiApi(checked)}
+        />
 
-      {selectedModel && (
-        <div
-          className="model-details sunken-panel"
-          style={{ marginTop: "20px", padding: "15px" }}
-        >
-          <strong>{selectedModel.name}</strong>
+        <div className="field-row" style={{ marginTop: 15 }}>
+          <label htmlFor="apiProvider" style={{ width: 100 }}>
+            {t.provider}:
+          </label>
+          <select
+            id="apiProvider"
+            value={apiProvider}
+            onChange={handleProviderChange}
+            disabled={!useGeminiApi}
+          >
+            {PROVIDERS.map((entry) => (
+              <option key={entry} value={entry}>
+                {API_PROVIDER_LABELS[entry]}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {selectedModel.description && <p>{selectedModel.description}</p>}
-
-          {selectedModel.homepage && (
-            <p>
-              <a
-                href={selectedModel.homepage}
-                target="_blank"
-                rel="noopener noreferrer"
+        <div className="field-row-stacked" style={{ marginTop: 15 }}>
+          <label htmlFor="apiKey" style={{ display: "block", marginBottom: 5 }}>
+            {t.api_key}:
+          </label>
+          <input
+            id="apiKey"
+            type="password"
+            style={{
+              width: "100%",
+            }}
+            value={apiKey}
+            placeholder={getProviderKeyPlaceholder(apiProvider)}
+            disabled={!useGeminiApi}
+            onChange={(e) => setApiKey(e.target.value)}
+          />
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              marginTop: 8,
+            }}
+          >
+            <span style={{ fontSize: "11px", opacity: 0.85 }}>
+              {hasApiKey ? t.key_saved : t.no_key_saved}
+            </span>
+            {hasApiKey && (
+              <button
+                type="button"
+                disabled={!useGeminiApi}
+                onClick={() => setApiKey("")}
               >
-                Visit Homepage
-              </a>
-            </p>
-          )}
-
-          <div style={{ marginTop: "15px", display: "flex", gap: "10px" }}>
-            {!selectedModel.downloaded ? (
-              <button disabled={isDownloading} onClick={handleDownload}>
-                Download Model
+                {t.clear_key}
               </button>
-            ) : (
-              <>
-                <button
-                  disabled={isDownloading || isDefaultModel}
-                  onClick={handleMakeDefault}
-                >
-                  {isDefaultModel
-                    ? "Clippy uses this model"
-                    : "Make Clippy use this model"}
-                </button>
-                <button onClick={handleDeleteOrRemove}>
-                  {selectedModel?.imported ? "Remove" : "Delete"} Model
-                </button>
-              </>
             )}
           </div>
-          <SettingsModelDownload model={selectedModel} />
+          <p style={{ fontSize: "11px", marginTop: 8, opacity: 0.8 }}>
+            {t.key_hint}
+          </p>
         </div>
-      )}
-    </div>
-  );
-};
 
-const SettingsModelDownload: React.FC<{
-  model?: ManagedModel;
-}> = ({ model }) => {
-  if (!model || !isModelDownloading(model)) {
-    return null;
-  }
+        <div className="field-row-stacked" style={{ marginTop: 15 }}>
+          <label
+            htmlFor="apiModel"
+            style={{ display: "block", marginBottom: 5 }}
+          >
+            {t.model}:
+          </label>
+          <input
+            id="apiModel"
+            type="text"
+            style={{
+              width: "100%",
+            }}
+            value={apiModel}
+            placeholder={API_PROVIDER_DEFAULT_MODELS[apiProvider]}
+            disabled={!useGeminiApi}
+            onChange={(e) => setApiModel(e.target.value)}
+          />
+          <div className="settings-actions-row">
+            <button
+              type="button"
+              disabled={!useGeminiApi}
+              onClick={handleUseDefaultModel}
+            >
+              {t.use_default_model}
+            </button>
+          </div>
+          <p style={{ fontSize: "11px", marginTop: 8, opacity: 0.8 }}>
+            {t.default_for} {API_PROVIDER_LABELS[apiProvider]}:{" "}
+            <code>{API_PROVIDER_DEFAULT_MODELS[apiProvider]}</code>
+          </p>
+        </div>
+      </fieldset>
 
-  const downloadSpeed = prettyDownloadSpeed(
-    model?.downloadState?.currentBytesPerSecond || 0,
-  );
+      <div
+        style={{
+          marginTop: "15px",
+          display: "flex",
+          gap: "10px",
+          alignItems: "center",
+        }}
+      >
+        <button type="button" onClick={handleSave}>
+          {saved ? t.saved : t.save_changes}
+        </button>
+        {validationMessage && (
+          <span style={{ color: "#b94a48", fontSize: "14px" }}>
+            {validationMessage}
+          </span>
+        )}
+        {saved && (
+          <span style={{ color: "#5cb85c", fontSize: "14px" }}>
+            {t.settings_saved_successfully}
+          </span>
+        )}
+      </div>
 
-  return (
-    <div style={{ marginTop: "15px" }}>
-      <p>
-        Downloading {model.name}... ({downloadSpeed}/s)
-      </p>
-      <Progress progress={model.downloadState?.percentComplete || 0} />
+      <div className="settings-callout">
+        <h4>{t.api_benefits_title}</h4>
+        <ul>
+          <li>{t.api_benefit_1}</li>
+          <li>{t.api_benefit_2}</li>
+          <li>{t.api_benefit_3}</li>
+          <li>{t.api_benefit_4}</li>
+        </ul>
+      </div>
     </div>
   );
 };

@@ -9,7 +9,10 @@ export type BubbleView =
   | "settings-model"
   | "settings-parameters"
   | "settings-advanced"
-  | "settings-about";
+  | "settings-about"
+  | "settings-memory"
+  | "settings-identity"
+  | "settings-aboutYou";
 
 type BubbleViewContextType = {
   currentView: BubbleView;

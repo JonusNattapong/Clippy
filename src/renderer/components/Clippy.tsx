@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 
 import { ANIMATIONS, Animation } from "../clippy-animations";
 import {
@@ -8,6 +9,7 @@ import {
 import { useChat } from "../contexts/ChatContext";
 import { log } from "../logging";
 import { useDebugState } from "../contexts/DebugContext";
+import { clippyApi } from "../clippyApi";
 
 const WAIT_TIME = 6000;
 
@@ -90,19 +92,71 @@ export function Clippy() {
     playAnimation(animationKey);
   }, [animationKey, playAnimation]);
 
+  const handlePointerDown = useCallback(
+    async (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      const position = await clippyApi.getMainWindowPosition();
+      if (!position) {
+        return;
+      }
+
+      const startMouseX = event.screenX;
+      const startMouseY = event.screenY;
+
+      let frameId: number | null = null;
+      let nextPosition = position;
+
+      const flushPosition = () => {
+        frameId = null;
+        void clippyApi.setMainWindowPosition(nextPosition.x, nextPosition.y);
+      };
+
+      const handlePointerMove = (moveEvent: PointerEvent) => {
+        nextPosition = {
+          x: position.x + (moveEvent.screenX - startMouseX),
+          y: position.y + (moveEvent.screenY - startMouseY),
+        };
+
+        if (frameId === null) {
+          frameId = window.requestAnimationFrame(flushPosition);
+        }
+      };
+
+      const stopDragging = () => {
+        if (frameId !== null) {
+          window.cancelAnimationFrame(frameId);
+          frameId = null;
+        }
+        window.removeEventListener("pointermove", handlePointerMove);
+        window.removeEventListener("pointerup", stopDragging);
+        window.removeEventListener("pointercancel", stopDragging);
+      };
+
+      window.addEventListener("pointermove", handlePointerMove);
+      window.addEventListener("pointerup", stopDragging);
+      window.addEventListener("pointercancel", stopDragging);
+    },
+    [],
+  );
+
   return (
     <div>
       <div
-        className="app-drag"
+        className="app-no-select"
+        onPointerDown={handlePointerDown}
         style={{
           position: "absolute",
           height: "93px",
           width: "124px",
           backgroundColor: enableDragDebug ? "blue" : "transparent",
-          opacity: 0.5,
-          zIndex: 5,
+          zIndex: 100,
+          cursor: "grab",
         }}
       >
+        {/* Chat Toggle Area */}
         <div
           className="app-no-drag"
           style={{
@@ -110,10 +164,11 @@ export function Clippy() {
             height: "80px",
             width: "45px",
             backgroundColor: enableDragDebug ? "red" : "transparent",
-            zIndex: 10,
+            zIndex: 110,
             right: "40px",
             top: "2px",
             cursor: "help",
+            border: "none",
           }}
           onClick={toggleChat}
         ></div>
@@ -123,6 +178,7 @@ export function Clippy() {
         src={animation.src}
         draggable={false}
         alt="Clippy"
+        style={{ position: "relative", zIndex: 6 }}
       />
     </div>
   );

@@ -56,6 +56,30 @@ export class ChatManager {
     return this.chatRecords;
   }
 
+  public async getAllChatsWithMessages(): Promise<ChatWithMessages[]> {
+    const chatIds = Object.keys(this.chatRecords);
+    const chats = await Promise.all(
+      chatIds.map((chatId) => this.getChatWithMessages(chatId)),
+    );
+
+    return chats.filter((chat): chat is ChatWithMessages => chat !== null);
+  }
+
+  public async importChats(chats: ChatWithMessages[]): Promise<void> {
+    this.chatRecords = {};
+    this.messageRecords = {};
+
+    await this.deleteAllChatsFromDisk();
+
+    for (const chat of chats) {
+      this.chatRecords[chat.chat.id] = chat.chat;
+      this.messageRecords[chat.chat.id] = chat.messages;
+      await this.writeChatToDisk(chat);
+    }
+
+    await this.writeChatsIndexToDisk();
+  }
+
   public async deleteChat(chatId: string): Promise<void> {
     delete this.chatRecords[chatId];
     delete this.messageRecords[chatId];

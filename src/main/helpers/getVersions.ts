@@ -1,6 +1,5 @@
 import { app } from "electron";
 import { Versions } from "../../types/interfaces";
-import { getPackageJson } from "./getPackage";
 
 /**
  * Get the versions of the application
@@ -8,17 +7,11 @@ import { getPackageJson } from "./getPackage";
  * @returns {Versions} The versions of the application
  */
 export async function getVersions(): Promise<Versions> {
-  const versions = {
+  const versions: Versions = {
     ...process.versions,
     clippy: app.getVersion(),
-    nodeLlamaCpp: await readPackageVersion("node-llama-cpp"),
-  } as Versions;
+    chromium: process.versions.chrome,
+  };
 
   return versions;
-}
-
-async function readPackageVersion(packageName: string): Promise<string | null> {
-  const packageJson = await getPackageJson(packageName);
-
-  return packageJson?.version || null;
 }

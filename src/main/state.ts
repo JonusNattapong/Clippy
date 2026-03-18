@@ -1,23 +1,53 @@
 import Store from "electron-store";
+import fs from "fs";
+import path from "path";
+import { app } from "electron";
 
-import { getChatWindow, getMainWindow, setFont, setFontSize } from "./windows";
+import {
+  getChatWindow,
+  getMainWindow,
+  setFont,
+  setFontSize,
+  setTheme,
+} from "./windows";
 import { IpcMessages } from "../ipc-messages";
-import { getModelManager, getModelPath, isModelOnDisk } from "./models";
-import { EMPTY_SHARED_STATE, SettingsState, SharedState } from "../sharedState";
-import { BUILT_IN_MODELS } from "../models";
+import {
+  API_PROVIDER_DEFAULT_MODELS,
+  ApiProvider,
+  EMPTY_SHARED_STATE,
+  SettingsState,
+  SharedState,
+} from "../sharedState";
 import { getLogger } from "./logger";
 import { setupAppMenu } from "./menu";
+
+function resolveDefaultApiKey(provider: ApiProvider): string {
+  switch (provider) {
+    case "openai":
+      return process.env.OPENAI_API_KEY || "";
+    case "anthropic":
+      return process.env.ANTHROPIC_API_KEY || "";
+    case "openrouter":
+      return process.env.OPENROUTER_API_KEY || "";
+    case "gemini":
+    default:
+      return (
+        process.env.GEMINI_API_KEY ||
+        process.env.GOOGLE_API_KEY ||
+        process.env.VITE_GEMINI_API_KEY ||
+        ""
+      );
+  }
+}
 
 export class StateManager {
   public store = new Store<SharedState>({
     defaults: {
       ...EMPTY_SHARED_STATE,
-      models: getModelManager().getInitialRendererModelState(),
     },
   });
 
   constructor() {
-    this.ensureCorrectModelState();
     this.ensureCorrectSettingsState();
 
     this.store.onDidAnyChange(this.onDidAnyChange);
@@ -28,21 +58,8 @@ export class StateManager {
     });
   }
 
-  public updateModelState() {
-    this.store.set("models", getModelManager().getRendererModelState());
-  }
-
   private ensureCorrectSettingsState() {
     const settings = this.store.get("settings");
-
-    // Default model exists?
-    if (settings.selectedModel) {
-      const model = this.store.get("models")[settings.selectedModel];
-
-      if (!model || !isModelOnDisk(model)) {
-        settings.selectedModel = undefined;
-      }
-    }
 
     if (settings.topK === undefined) {
       settings.topK = 10;
@@ -52,47 +69,66 @@ export class StateManager {
       settings.temperature = 0.7;
     }
 
+    if (!settings.apiProvider) {
+      settings.apiProvider = "gemini";
+    }
+
+    if (!settings.apiModel?.trim()) {
+      settings.apiModel = API_PROVIDER_DEFAULT_MODELS[settings.apiProvider];
+    }
+
+    if (!settings.apiKey?.trim() && settings.geminiApiKey?.trim()) {
+      settings.apiKey = settings.geminiApiKey.trim();
+    }
+
+    if (!settings.geminiApiKey?.trim() && settings.apiProvider === "gemini") {
+      settings.geminiApiKey = settings.apiKey || resolveDefaultApiKey("gemini");
+    }
+
+    if (!settings.apiKey?.trim()) {
+      settings.apiKey = resolveDefaultApiKey(settings.apiProvider);
+    }
+
+    if (
+      settings.apiProvider === "gemini" &&
+      settings.apiKey &&
+      !settings.geminiApiKey
+    ) {
+      settings.geminiApiKey = settings.apiKey;
+    }
+
+    if (settings.hasCompletedOnboarding === undefined) {
+      settings.hasCompletedOnboarding = hasExistingSetup(settings);
+    }
+
+    if (!settings.clippyMood) {
+      settings.clippyMood = EMPTY_SHARED_STATE.settings.clippyMood;
+    }
+
+    if (settings.clippyMoodIntensity === undefined) {
+      settings.clippyMoodIntensity =
+        EMPTY_SHARED_STATE.settings.clippyMoodIntensity;
+    }
+
+    if (settings.clippySocialBattery === undefined) {
+      settings.clippySocialBattery =
+        EMPTY_SHARED_STATE.settings.clippySocialBattery;
+    }
+
+    if (!settings.clippyResponseStyle) {
+      settings.clippyResponseStyle =
+        EMPTY_SHARED_STATE.settings.clippyResponseStyle;
+    }
+
+    if (!settings.clippyUserTone) {
+      settings.clippyUserTone = EMPTY_SHARED_STATE.settings.clippyUserTone;
+    }
+
+    if (!settings.powerShellMode) {
+      settings.powerShellMode = EMPTY_SHARED_STATE.settings.powerShellMode;
+    }
+
     this.store.set("settings", settings);
-  }
-
-  private ensureCorrectModelState() {
-    const models = this.store.get("models");
-
-    if (models === undefined || Object.keys(models).length === 0) {
-      this.store.set(
-        "models",
-        getModelManager().getInitialRendererModelState(),
-      );
-      return;
-    }
-
-    // Make sure we update the fs state for all models
-    for (const modelName of Object.keys(models)) {
-      const model = models[modelName];
-
-      if (model.imported) {
-        if (!isModelOnDisk(model)) {
-          delete models[modelName];
-        }
-      } else {
-        model.downloaded = isModelOnDisk(model);
-        model.path = getModelPath(model);
-      }
-    }
-
-    // Make sure all models from the constant are in state
-    for (const model of BUILT_IN_MODELS) {
-      if (!(model.name in models)) {
-        models[model.name] = getModelManager().getManagedModelFromModel(model);
-      } else {
-        models[model.name].description = model.description;
-        models[model.name].homepage = model.homepage;
-        models[model.name].size = model.size;
-        models[model.name].url = model.url;
-      }
-    }
-
-    this.store.set("models", models);
   }
 
   /**
@@ -122,6 +158,10 @@ export class StateManager {
       setFont(newValue.defaultFont);
     }
 
+    if (oldValue.themePreset !== newValue.themePreset) {
+      setTheme(newValue.themePreset);
+    }
+
     // Update the menu, which contains state
     setupAppMenu();
 
@@ -147,6 +187,30 @@ export class StateManager {
    */
   public onDidAnyChange(newValue: SharedState = this.store.store) {
     getMainWindow()?.webContents.send(IpcMessages.STATE_CHANGED, newValue);
+  }
+}
+
+function hasExistingSetup(settings: SettingsState) {
+  if (
+    settings.apiKey?.trim() ||
+    settings.geminiApiKey?.trim() ||
+    settings.tavilyApiKey?.trim() ||
+    settings.clippyPosition ||
+    settings.defaultFont !== EMPTY_SHARED_STATE.settings.defaultFont ||
+    settings.defaultFontSize !== EMPTY_SHARED_STATE.settings.defaultFontSize ||
+    settings.themePreset !== EMPTY_SHARED_STATE.settings.themePreset ||
+    settings.uiLanguage !== EMPTY_SHARED_STATE.settings.uiLanguage ||
+    JSON.stringify(settings.customTheme) !==
+      JSON.stringify(EMPTY_SHARED_STATE.settings.customTheme)
+  ) {
+    return true;
+  }
+
+  const chatsDir = path.join(app.getPath("userData"), "chats");
+  try {
+    return fs.existsSync(chatsDir) && fs.readdirSync(chatsDir).length > 0;
+  } catch {
+    return false;
   }
 }
 
