@@ -125,13 +125,59 @@ User data is stored in:
 
 ### Stored Files
 
-| File                   | Description                           |
-| ---------------------- | ------------------------------------- |
-| `config.json`          | App settings                          |
-| `memories/memory.json` | Long-term memories                    |
-| `chats/`               | Chat history                          |
+| File                   | Description                            |
+| ---------------------- | -------------------------------------- |
+| `config.json`          | App settings                           |
+| `memories/memory.json` | Long-term memories                     |
+| `chats/`               | Chat history                           |
 | `identity.json`        | Clippy identity (editable in Settings) |
-| `user.json`            | User profile (editable in Settings)   |
+| `user.json`            | User profile (editable in Settings)    |
+| `logs/`                | PowerShell command logs                |
+
+## Desktop Commands
+
+AI can execute desktop tools via special chat commands. These are handled in `src/renderer/components/Chat.tsx`.
+
+### Available Commands
+
+| Command              | Function                 | Example                 |
+| -------------------- | ------------------------ | ----------------------- |
+| `/run <command>`     | Run PowerShell command   | `/run Get-Process`      |
+| `/ls [path]`         | List directory contents  | `/ls` or `/ls C:\Users` |
+| `/list <path>`       | List directory (alias)   | `/list C:\Users`        |
+| `/read <file>`       | Read file content        | `/read notes.txt`       |
+| `/cat <file>`        | Read file (alias)        | `/cat config.json`      |
+| `/search <query>`    | Search for files (local) | `/search report`        |
+| `/find <query>`      | Search files (alias)     | `/find budget`          |
+| `/sysinfo`           | System information       | `/sysinfo`              |
+| `/ps [limit]`        | List processes           | `/ps 10`                |
+| `/clipboard`         | Read clipboard           | `/clipboard`            |
+| `/screenshot [name]` | Take screenshot          | `/screenshot`           |
+
+### Web Commands
+
+| Command           | Function              | Example                      |
+| ----------------- | --------------------- | ---------------------------- |
+| `/search <query>` | Search the web        | `/search weather Bangkok`    |
+| `/google <query>` | Google search (alias) | `/google Thai food`          |
+| `/fetch <url>`    | Fetch webpage content | `/fetch https://example.com` |
+| `/curl <url>`     | Fetch URL (alias)     | `/curl https://example.com`  |
+| `/wget <url>`     | Fetch URL (alias)     | `/wget https://example.com`  |
+
+**Note:** Web search requires Tavily API key configured in Settings.
+
+### Security
+
+- **Safe mode**: Only read-only PowerShell commands allowed
+- **Full mode**: Requires user confirmation before execution
+- **Blocked patterns**: Destructive commands are blocked (`Remove-Item`, `Stop-Process`, etc.)
+- **Logging**: All commands logged to `%APPDATA%\Clippy\logs\powershell-history.log`
+
+### Adding New Commands
+
+1. Add tool to `src/main/desktop-tools.ts` or `src/main/web-tools.ts`
+2. Add command pattern in `src/renderer/components/Chat.tsx` `handleDesktopCommand` function
+3. The tool is exposed via IPC `DESKTOP_TOOL_EXECUTE` or `WEB_SEARCH`/`FETCH_URL` in `src/main/ipc.ts`
 
 ## Development Workflow
 

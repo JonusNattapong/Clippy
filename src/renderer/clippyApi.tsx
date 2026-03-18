@@ -115,6 +115,13 @@ export type ClippyApi = {
     updates?: { bond?: number; happiness?: number },
     source?: string,
   ) => Promise<MemoryStats>;
+  recordActionOutcome: (payload: {
+    toolName: string;
+    args?: Record<string, unknown>;
+    success: boolean;
+    summary: string;
+    source?: string;
+  }) => Promise<MemoryStats>;
   handleMemoryCommand: (
     input: string,
     source?: string,

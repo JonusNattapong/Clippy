@@ -11,3 +11,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 ## Clippy
 
 The Clippy character, imagery, and associated assets are copyrighted by Microsoft Corporation. This project uses these assets under fair use for nostalgic/educational purposes. The MIT license above applies only to the code written for this project, not to any Microsoft-owned intellectual property.
+
+Additional notes:
+
+- This repository contains original code released under the MIT License above.
+- Any Microsoft-owned imagery, character designs, or trademarks included in this repository are used under fair use for educational and nostalgic purposes and are not covered by the MIT license. Users should ensure they have appropriate rights for any redistributed assets.

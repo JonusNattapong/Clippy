@@ -263,7 +263,9 @@ export function Bubble() {
 }
 
 function getMoodLabel(
-  mood: NonNullable<ReturnType<typeof useSharedState>["settings"]["clippyMood"]>,
+  mood: NonNullable<
+    ReturnType<typeof useSharedState>["settings"]["clippyMood"]
+  >,
   t: ReturnType<typeof useTranslation>,
 ) {
   switch (mood) {

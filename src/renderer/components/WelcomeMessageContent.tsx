@@ -34,7 +34,9 @@ export const WelcomeMessageContent: React.FC = () => {
         </p>
       </div>
 
-      <p style={{ fontSize: "12px", opacity: 0.8 }}>{t.click_clippy_head_tip}</p>
+      <p style={{ fontSize: "12px", opacity: 0.8 }}>
+        {t.click_clippy_head_tip}
+      </p>
 
       <button
         type="button"

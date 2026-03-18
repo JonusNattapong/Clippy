@@ -43,6 +43,12 @@ test("validateApiConfiguration rejects mismatched provider key prefix", () => {
   assert.equal(result.isValid, false);
 });
 
+test("validateApiConfiguration accepts ollama provider without api key", () => {
+  const result = validateApiConfiguration("ollama", "", "llama2");
+
+  assert.equal(result.isValid, true);
+});
+
 test("validateCustomTheme accepts valid hex values", () => {
   const result = validateCustomTheme(DEFAULT_CUSTOM_THEME);
 

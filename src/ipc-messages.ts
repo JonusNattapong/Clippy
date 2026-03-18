@@ -59,6 +59,7 @@ export const IpcMessages = {
   MEMORY_GET_STATS: "clippy_memory_get_stats",
   MEMORY_UPDATE_STATS: "clippy_memory_update_stats",
   MEMORY_PROCESS_TURN: "clippy_memory_process_turn",
+  MEMORY_RECORD_ACTION: "clippy_memory_record_action",
   MEMORY_HANDLE_COMMAND: "clippy_memory_handle_command",
   MEMORY_RUN_MAINTENANCE: "clippy_memory_run_maintenance",
   MEMORY_DELETE_ALL: "clippy_memory_delete_all",

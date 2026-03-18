@@ -17,6 +17,21 @@ export interface ToolResult {
   error?: string;
 }
 
+type ToolParameters = {
+  type: "object";
+  properties: Record<string, unknown>;
+  required: string[];
+};
+
+type DesktopAction = {
+  name: string;
+  description: string;
+  parameters: ToolParameters;
+  riskLevel: "low" | "medium" | "high";
+  shouldConfirm?: (args: Record<string, any>) => boolean;
+  execute: (args: Record<string, any>) => Promise<ToolResult>;
+};
+
 const APP_ALIASES: Record<string, string> = {
   notepad: "notepad.exe",
   calculator: "calc.exe",
@@ -95,171 +110,106 @@ const BLOCKED_POWERSHELL_PATTERNS = [
   /\bdiskpart\b/i,
 ];
 
-export const DESKTOP_TOOLS = {
-  open_app: {
-    name: "open_app",
-    description:
-      'Open an application on the computer. Use this when the user asks to open an app like " Calculator", "Notepad", etc.',
-    parameters: {
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-          description:
-            "Application name (e.g., notepad, calculator, chrome, edge)",
-        },
-      },
-      required: ["name"],
-    },
-  },
+const MAX_READ_FILE_SIZE = 1024 * 1024;
+const DESKTOP_SANDBOX_DIR = path.join(app.getPath("userData"), "agent-sandbox");
 
-  run_command: {
-    name: "run_command",
-    description:
-      "Run a PowerShell command. In safe mode only read-only inspection commands are allowed. In full mode, direct PowerShell is allowed but dangerous commands are still blocked and all executions are logged.",
-    parameters: {
-      type: "object",
-      properties: {
-        command: {
-          type: "string",
-          description: "The PowerShell command to run",
-        },
-      },
-      required: ["command"],
-    },
-  },
+function expandUserPath(inputPath: string): string {
+  if (inputPath === "~") {
+    return os.homedir();
+  }
 
-  search_files: {
-    name: "search_files",
-    description:
-      "Search for files in the user's home directory. Use this to find files by name.",
-    parameters: {
-      type: "object",
-      properties: {
-        query: {
-          type: "string",
-          description: "Search query/filename to find",
-        },
-      },
-      required: ["query"],
-    },
-  },
+  if (inputPath.startsWith(`~${path.sep}`)) {
+    return path.join(os.homedir(), inputPath.slice(2));
+  }
 
-  list_directory: {
-    name: "list_directory",
-    description:
-      "List files and folders in a directory. Default is user's home directory.",
-    parameters: {
-      type: "object",
-      properties: {
-        path: {
-          type: "string",
-          description: "Directory path to list (optional, defaults to home)",
-        },
-      },
-      required: [] as string[],
-    },
-  },
+  return inputPath;
+}
 
-  read_file: {
-    name: "read_file",
-    description:
-      "Read the content of a text file. Use this to read files like .txt, .md, .json, etc.",
-    parameters: {
-      type: "object",
-      properties: {
-        path: {
-          type: "string",
-          description: "Full path to the file",
-        },
-      },
-      required: ["path"],
-    },
-  },
+function normalizeRequestedPath(inputPath?: string): string {
+  const fallback = os.homedir();
+  const rawPath = (inputPath || fallback).trim() || fallback;
+  const expandedPath = expandUserPath(rawPath);
 
-  open_url: {
-    name: "open_url",
-    description:
-      "Open a URL in the default browser. Use this when user wants to open a link.",
-    parameters: {
-      type: "object",
-      properties: {
-        url: {
-          type: "string",
-          description: "The URL to open",
-        },
-      },
-      required: ["url"],
-    },
-  },
+  return path.resolve(expandedPath);
+}
 
-  write_file: {
-    name: "write_file",
-    description:
-      "Create or overwrite a text file. Use this to write notes, code, or any text content.",
-    parameters: {
-      type: "object",
-      properties: {
-        path: { type: "string", description: "Full path to the file" },
-        content: { type: "string", description: "Content to write" },
-      },
-      required: ["path", "content"],
-    },
-  },
+function ensureDesktopSandboxDir(): string {
+  if (!fs.existsSync(DESKTOP_SANDBOX_DIR)) {
+    fs.mkdirSync(DESKTOP_SANDBOX_DIR, { recursive: true });
+  }
 
-  get_system_info: {
-    name: "get_system_info",
-    description:
-      "Get system information like CPU, memory, disk space, and OS details.",
-    parameters: {
-      type: "object",
-      properties: {},
-      required: [] as string[],
-    },
-  },
+  return DESKTOP_SANDBOX_DIR;
+}
 
-  list_processes: {
-    name: "list_processes",
-    description:
-      "List running processes. Useful to see what applications are running.",
-    parameters: {
-      type: "object",
-      properties: {
-        limit: {
-          type: "number",
-          description: "Number of processes to show (default 20)",
-        },
-      },
-      required: [] as string[],
-    },
-  },
+function isPathWithin(parentPath: string, childPath: string): boolean {
+  const relativePath = path.relative(parentPath, childPath);
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && !path.isAbsolute(relativePath))
+  );
+}
 
-  clipboard_read: {
-    name: "clipboard_read",
-    description:
-      "Read the current clipboard content. Shows text that's been copied.",
-    parameters: {
-      type: "object",
-      properties: {},
-      required: [] as string[],
-    },
-  },
+function getReadableRoots(): string[] {
+  const roots = [
+    os.homedir(),
+    app.getPath("documents"),
+    app.getPath("downloads"),
+    app.getPath("desktop"),
+    app.getPath("userData"),
+    ensureDesktopSandboxDir(),
+  ];
 
-  take_screenshot: {
-    name: "take_screenshot",
-    description: "Take a screenshot and save it. Returns the file path.",
-    parameters: {
-      type: "object",
-      properties: {
-        name: {
-          type: "string",
-          description: "Optional filename (without extension)",
-        },
-      },
-      required: [] as string[],
-    },
-  },
-};
+  return Array.from(new Set(roots.map((root) => path.resolve(root))));
+}
+
+function isReadablePath(targetPath: string): boolean {
+  const normalizedPath = path.resolve(targetPath);
+  return getReadableRoots().some((root) => isPathWithin(root, normalizedPath));
+}
+
+function resolveReadablePath(inputPath?: string): string {
+  const normalizedPath = normalizeRequestedPath(inputPath);
+
+  if (!isReadablePath(normalizedPath)) {
+    throw new Error(
+      "Access denied. This path is outside the allowed local workspace roots.",
+    );
+  }
+
+  return normalizedPath;
+}
+
+function resolveWritablePath(inputPath: string): string {
+  const trimmedPath = inputPath.trim();
+
+  if (!trimmedPath) {
+    throw new Error("Path is required.");
+  }
+
+  return path.isAbsolute(trimmedPath)
+    ? normalizeRequestedPath(trimmedPath)
+    : path.resolve(os.homedir(), trimmedPath);
+}
+
+async function confirmRiskyAction(options: {
+  title: string;
+  message: string;
+  detail: string;
+  confirmLabel?: string;
+}): Promise<boolean> {
+  const result = await dialog.showMessageBox(getMainWindow(), {
+    type: "warning",
+    buttons: [options.confirmLabel || "Continue", "Cancel"],
+    defaultId: 1,
+    cancelId: 1,
+    noLink: true,
+    title: options.title,
+    message: options.message,
+    detail: options.detail,
+  });
+
+  return result.response === 0;
+}
 
 export async function openApp(name: string): Promise<ToolResult> {
   try {
@@ -426,7 +376,7 @@ export async function searchFiles(query: string): Promise<ToolResult> {
 
 export async function listDirectory(dirPath?: string): Promise<ToolResult> {
   try {
-    const targetPath = dirPath || os.homedir();
+    const targetPath = resolveReadablePath(dirPath);
 
     if (!fs.existsSync(targetPath)) {
       return { success: false, error: "Directory does not exist" };
@@ -458,19 +408,21 @@ export async function listDirectory(dirPath?: string): Promise<ToolResult> {
 
 export async function readFileContent(filePath: string): Promise<ToolResult> {
   try {
-    if (!fs.existsSync(filePath)) {
+    const targetPath = resolveReadablePath(filePath);
+
+    if (!fs.existsSync(targetPath)) {
       return { success: false, error: "File does not exist" };
     }
 
-    const stats = await fs.promises.stat(filePath);
+    const stats = await fs.promises.stat(targetPath);
     if (stats.isDirectory()) {
       return { success: false, error: "Cannot read a directory" };
     }
-    if (stats.size > 1024 * 1024) {
+    if (stats.size > MAX_READ_FILE_SIZE) {
       return { success: false, error: "File too large (max 1MB)" };
     }
 
-    const content = await fs.promises.readFile(filePath, "utf-8");
+    const content = await fs.promises.readFile(targetPath, "utf-8");
     return { success: true, output: content };
   } catch (error) {
     return { success: false, error: String(error) };
@@ -496,12 +448,37 @@ export async function writeFile(
   content: string,
 ): Promise<ToolResult> {
   try {
-    const dir = path.dirname(filePath);
+    const targetPath = resolveWritablePath(filePath);
+    const dir = path.dirname(targetPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    await fs.promises.writeFile(filePath, content, "utf-8");
-    return { success: true, output: `File written: ${filePath}` };
+    await fs.promises.writeFile(targetPath, content, "utf-8");
+    return {
+      success: true,
+      output: `File written: ${targetPath}`,
+    };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function openFileOrFolder(
+  targetPath: string,
+): Promise<ToolResult> {
+  try {
+    const resolvedPath = resolveReadablePath(targetPath);
+
+    if (!fs.existsSync(resolvedPath)) {
+      return { success: false, error: "Path does not exist" };
+    }
+
+    const errorMessage = await shell.openPath(resolvedPath);
+    if (errorMessage) {
+      return { success: false, error: errorMessage };
+    }
+
+    return { success: true, output: `Opened ${resolvedPath}` };
   } catch (error) {
     return { success: false, error: String(error) };
   }
@@ -589,36 +566,251 @@ export async function takeScreenshot(name?: string): Promise<ToolResult> {
   }
 }
 
+const desktopActionRegistry: Record<string, DesktopAction> = {
+  open_app: {
+    name: "open_app",
+    description:
+      'Open an application on the computer. Use this when the user asks to open an app like "Calculator" or "Notepad".',
+    parameters: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description:
+            "Application name (for example notepad, calculator, chrome, edge)",
+        },
+      },
+      required: ["name"],
+    },
+    riskLevel: "medium",
+    shouldConfirm: () => true,
+    execute: async (args) => openApp(String(args.name || "")),
+  },
+  run_command: {
+    name: "run_command",
+    description:
+      "Run a PowerShell command. In safe mode only read-only inspection commands are allowed. In full mode, direct PowerShell is allowed but dangerous commands are still blocked and all executions are logged.",
+    parameters: {
+      type: "object",
+      properties: {
+        command: {
+          type: "string",
+          description: "The PowerShell command to run",
+        },
+      },
+      required: ["command"],
+    },
+    riskLevel: "high",
+    execute: async (args) => runCommand(String(args.command || "")),
+  },
+  search_files: {
+    name: "search_files",
+    description:
+      "Search for files in the user's home directory. Use this to find files by name.",
+    parameters: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Search query or filename to find",
+        },
+      },
+      required: ["query"],
+    },
+    riskLevel: "low",
+    execute: async (args) => searchFiles(String(args.query || "")),
+  },
+  list_directory: {
+    name: "list_directory",
+    description:
+      "List files and folders in an allowed local directory. Defaults to the user's home directory.",
+    parameters: {
+      type: "object",
+      properties: {
+        path: {
+          type: "string",
+          description: "Directory path to list (optional, defaults to home)",
+        },
+      },
+      required: [],
+    },
+    riskLevel: "low",
+    execute: async (args) => listDirectory(args.path),
+  },
+  read_file: {
+    name: "read_file",
+    description:
+      "Read the content of a text file from an allowed local directory.",
+    parameters: {
+      type: "object",
+      properties: {
+        path: {
+          type: "string",
+          description: "Full path to the file",
+        },
+      },
+      required: ["path"],
+    },
+    riskLevel: "low",
+    execute: async (args) => readFileContent(String(args.path || "")),
+  },
+  write_file: {
+    name: "write_file",
+    description:
+      "Create or overwrite a local text file. Always requires user confirmation before writing.",
+    parameters: {
+      type: "object",
+      properties: {
+        path: {
+          type: "string",
+          description:
+            "Absolute path, or a path relative to the user's home directory",
+        },
+        content: { type: "string", description: "Content to write" },
+      },
+      required: ["path", "content"],
+    },
+    riskLevel: "medium",
+    shouldConfirm: () => true,
+    execute: async (args) =>
+      writeFile(String(args.path || ""), String(args.content || "")),
+  },
+  open_file_or_folder: {
+    name: "open_file_or_folder",
+    description:
+      "Open a local file or folder from an allowed local directory in the default app or file manager.",
+    parameters: {
+      type: "object",
+      properties: {
+        path: {
+          type: "string",
+          description: "Full path to the file or folder",
+        },
+      },
+      required: ["path"],
+    },
+    riskLevel: "medium",
+    shouldConfirm: () => true,
+    execute: async (args) => openFileOrFolder(String(args.path || "")),
+  },
+  open_url: {
+    name: "open_url",
+    description:
+      "Open a URL in the default browser. Use this when the user wants to open a link.",
+    parameters: {
+      type: "object",
+      properties: {
+        url: {
+          type: "string",
+          description: "The URL to open",
+        },
+      },
+      required: ["url"],
+    },
+    riskLevel: "medium",
+    shouldConfirm: () => true,
+    execute: async (args) => openUrl(String(args.url || "")),
+  },
+  get_system_info: {
+    name: "get_system_info",
+    description:
+      "Get system information like CPU, memory, disk space, and OS details.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+    riskLevel: "low",
+    execute: async () => getSystemInfo(),
+  },
+  list_processes: {
+    name: "list_processes",
+    description:
+      "List running processes. Useful to see what applications are running.",
+    parameters: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "Number of processes to show (default 20)",
+        },
+      },
+      required: [],
+    },
+    riskLevel: "low",
+    execute: async (args) => listProcesses(args.limit),
+  },
+  clipboard_read: {
+    name: "clipboard_read",
+    description:
+      "Read the current clipboard content. Shows text that's been copied.",
+    parameters: {
+      type: "object",
+      properties: {},
+      required: [],
+    },
+    riskLevel: "low",
+    execute: async () => clipboardRead(),
+  },
+  take_screenshot: {
+    name: "take_screenshot",
+    description: "Take a screenshot and save it. Returns the file path.",
+    parameters: {
+      type: "object",
+      properties: {
+        name: {
+          type: "string",
+          description: "Optional filename (without extension)",
+        },
+      },
+      required: [],
+    },
+    riskLevel: "medium",
+    shouldConfirm: () => true,
+    execute: async (args) => takeScreenshot(args.name),
+  },
+};
+
+export const DESKTOP_TOOLS = Object.fromEntries(
+  Object.entries(desktopActionRegistry).map(([name, action]) => [
+    name,
+    {
+      name: action.name,
+      description: action.description,
+      parameters: action.parameters,
+      riskLevel: action.riskLevel,
+    },
+  ]),
+);
+
 export async function executeTool(
   toolName: string,
   args: Record<string, any>,
 ): Promise<ToolResult> {
-  switch (toolName) {
-    case "open_app":
-      return openApp(args.name);
-    case "run_command":
-      return runCommand(args.command);
-    case "search_files":
-      return searchFiles(args.query);
-    case "list_directory":
-      return listDirectory(args.path);
-    case "read_file":
-      return readFileContent(args.path);
-    case "open_url":
-      return openUrl(args.url);
-    case "write_file":
-      return writeFile(args.path, args.content);
-    case "get_system_info":
-      return getSystemInfo();
-    case "list_processes":
-      return listProcesses(args.limit);
-    case "clipboard_read":
-      return clipboardRead();
-    case "take_screenshot":
-      return takeScreenshot(args.name);
-    default:
-      return { success: false, error: `Unknown tool: ${toolName}` };
+  const action = desktopActionRegistry[toolName];
+
+  if (!action) {
+    return { success: false, error: `Unknown tool: ${toolName}` };
   }
+
+  if (action.shouldConfirm?.(args)) {
+    const confirmed = await confirmRiskyAction({
+      title: "Confirm Desktop Action",
+      message:
+        "Clippy is requesting permission to perform a desktop action that can affect your local environment.",
+      detail: `${toolName}\n\n${JSON.stringify(args, null, 2)}`,
+      confirmLabel: "Allow",
+    });
+
+    if (!confirmed) {
+      return {
+        success: false,
+        error: "Desktop action was cancelled by the user.",
+      };
+    }
+  }
+
+  return action.execute(args);
 }
 
 async function appendCommandLog(

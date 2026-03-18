@@ -456,6 +456,23 @@ export function setupIpcListeners() {
     },
   );
   ipcMain.handle(
+    IpcMessages.MEMORY_RECORD_ACTION,
+    (
+      _,
+      payload: {
+        toolName: string;
+        args?: Record<string, unknown>;
+        success: boolean;
+        summary: string;
+        source?: string;
+      },
+    ) => {
+      const stats = getMemoryManager().recordActionOutcome(payload);
+      syncMemoryStatsToSettings(stats);
+      return stats;
+    },
+  );
+  ipcMain.handle(
     IpcMessages.MEMORY_HANDLE_COMMAND,
     (_, input: string, source?: string) =>
       getMemoryManager().handleExplicitMemoryCommand(input, source),

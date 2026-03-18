@@ -182,6 +182,13 @@ const clippyApi: ClippyApi = {
       updates,
       source,
     ),
+  recordActionOutcome: (payload: {
+    toolName: string;
+    args?: Record<string, unknown>;
+    success: boolean;
+    summary: string;
+    source?: string;
+  }) => ipcRenderer.invoke(IpcMessages.MEMORY_RECORD_ACTION, payload),
   handleMemoryCommand: (input: string, source?: string) =>
     ipcRenderer.invoke(IpcMessages.MEMORY_HANDLE_COMMAND, input, source),
   runMemoryMaintenance: () =>

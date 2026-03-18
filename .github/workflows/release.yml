@@ -1,75 +1,27 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
-      - v*
+      - "v*"
 
 jobs:
-  build:
-    name: Build (${{ matrix.os }} - ${{ matrix.arch }})
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        arch: [x64, arm64]
-        exclude:
-          - os: ubuntu-latest
-            arch: arm64
-          - os: windows-latest
-            arch: arm64
-          - os: windows-latest
-            arch: ia32
-
+  make:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
+      - uses: actions/checkout@v4
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22.x
-          cache: npm
-
-      - name: Set macOS signing certs
-        if: matrix.os == 'macos-latest'
-        run: chmod +x tools/add-macos-cert.sh && ./tools/add-macos-cert.sh
-        env:
-          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
-          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
-
-      - name: Install Windows dependencies
-        if: matrix.os == 'windows-latest'
-        run: "nuget install Microsoft.Windows.SDK.BuildTools -Version 10.0.26100.1742 -x ; nuget install Microsoft.Trusted.Signing.Client -Version 1.0.60 -x"
-        shell: pwsh
-
+          node-version: "18"
       - name: Install dependencies
         run: npm ci
-
-      - name: Build release artifacts
-        run: npm run make -- --arch=${{ matrix.arch }}
-        shell: bash
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          AZURE_CODE_SIGNING_ACCOUNT_NAME: ${{ secrets.AZURE_CODE_SIGNING_ACCOUNT_NAME }}
-          AZURE_CODE_SIGNING_CERTIFICATE_PROFILE_NAME: ${{ secrets.AZURE_CODE_SIGNING_CERTIFICATE_PROFILE_NAME }}
-          DEBUG: "*"
-
-      - name: Publish draft release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+      - name: Build
+        run: npm run build
+      - name: Create release
+        uses: softprops/action-gh-release@v1
         with:
-          draft: true
-          files: |
-            out/**/*.deb
-            out/**/*.dmg
-            out/**/*setup*.exe
-            out/**/*.rpm
-            out/**/*.zip
+          tag_name: ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

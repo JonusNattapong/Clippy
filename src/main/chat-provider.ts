@@ -1,5 +1,10 @@
+import { app } from "electron";
+import fs from "node:fs";
+import path from "node:path";
+
 import { ApiProvider } from "../sharedState";
 import { MessageRecord } from "../types/interfaces";
+import { getMemoryManager } from "./memory";
 
 export type StreamChatOptions = {
   provider: ApiProvider;
@@ -20,6 +25,41 @@ type ChatMessage = {
     | string
     | Array<{ type: string; text?: string; image_url?: { url: string } }>;
 };
+
+type IdentityData = {
+  name?: string;
+  vibe?: string;
+  emoji?: string;
+  mission?: string;
+};
+
+type UserData = {
+  name?: string;
+  nickname?: string;
+  pronouns?: string;
+  timezone?: string;
+  language?: string;
+  communicationStyle?: string;
+  responseLength?: string;
+  tone?: string;
+  topicsToAvoid?: string;
+  notes?: string;
+};
+
+const DEFAULT_IDENTITY: IdentityData = {
+  name: "Clippy",
+  vibe: "Warm, friendly, caring, slightly playful",
+  emoji: "📎",
+  mission: "To be the kind of AI friend that actually remembers what matters",
+};
+
+const DEFAULT_USER: UserData = {
+  language: "Thai / English",
+  responseLength: "Medium",
+  tone: "Casual",
+};
+
+const templateCache = new Map<string, string>();
 
 function extractGeminiText(payload: {
   candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
@@ -104,6 +144,144 @@ function buildHistory(
   }
 
   return [...historyMessages, { role: "user", content: message }];
+}
+
+function readProjectTemplate(fileName: string): string {
+  const cached = templateCache.get(fileName);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  try {
+    const templatePath = path.join(app.getAppPath(), "templates", fileName);
+    const content = fs.readFileSync(templatePath, "utf8").trim();
+    templateCache.set(fileName, content);
+    return content;
+  } catch {
+    templateCache.set(fileName, "");
+    return "";
+  }
+}
+
+function readLocalJson<T>(fileName: string, defaults: T): T {
+  try {
+    const filePath = path.join(app.getPath("userData"), fileName);
+    if (!fs.existsSync(filePath)) {
+      return defaults;
+    }
+
+    const raw = fs.readFileSync(filePath, "utf8");
+    return { ...defaults, ...JSON.parse(raw) };
+  } catch {
+    return defaults;
+  }
+}
+
+function buildIdentityContext(): string {
+  const identity = readLocalJson<IdentityData>(
+    "identity.json",
+    DEFAULT_IDENTITY,
+  );
+  const template = readProjectTemplate("IDENTITY.md");
+  const lines = [
+    "Current assistant identity:",
+    `Name: ${identity.name || DEFAULT_IDENTITY.name}`,
+    `Emoji: ${identity.emoji || DEFAULT_IDENTITY.emoji}`,
+    `Vibe: ${identity.vibe || DEFAULT_IDENTITY.vibe}`,
+    `Mission: ${identity.mission || DEFAULT_IDENTITY.mission}`,
+  ];
+
+  return [template, lines.join("\n")].filter(Boolean).join("\n\n");
+}
+
+function buildUserProfileContext(): string {
+  const user = readLocalJson<UserData>("user.json", DEFAULT_USER);
+  const template = readProjectTemplate("USER.md");
+  const lines = [
+    user.name ? `Name: ${user.name}` : "",
+    user.nickname ? `Nickname: ${user.nickname}` : "",
+    user.pronouns ? `Pronouns: ${user.pronouns}` : "",
+    user.timezone ? `Timezone: ${user.timezone}` : "",
+    user.language ? `Language: ${user.language}` : "",
+    user.communicationStyle
+      ? `Communication style: ${user.communicationStyle}`
+      : "",
+    user.responseLength
+      ? `Preferred response length: ${user.responseLength}`
+      : "",
+    user.tone ? `Preferred tone: ${user.tone}` : "",
+    user.topicsToAvoid ? `Topics to avoid: ${user.topicsToAvoid}` : "",
+    user.notes ? `User notes: ${user.notes}` : "",
+  ].filter(Boolean);
+
+  if (lines.length === 0) {
+    return template;
+  }
+
+  return [template, "Current user profile:", lines.join("\n")]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function buildSoulContext(): string {
+  return readProjectTemplate("SOUL.md");
+}
+
+function buildMoodContext(): string {
+  const stats = getMemoryManager().getStats();
+
+  return [
+    "Current relationship and mood state:",
+    `Bond level: ${stats.bondLevel}/100`,
+    `Happiness: ${stats.happiness}/100`,
+    `Primary mood: ${stats.mood.primary}`,
+    `Response style: ${stats.mood.responseStyle}`,
+    `User tone: ${stats.mood.userTone}`,
+    `Mood summary: ${stats.mood.summary}`,
+  ].join("\n");
+}
+
+async function buildMemoryContext(query: string): Promise<string> {
+  let memories;
+  try {
+    memories = await getMemoryManager().getRelevantMemoriesForQuery(query, 6);
+  } catch {
+    return "";
+  }
+
+  if (memories.length === 0) {
+    return "";
+  }
+
+  const lines = memories.map((memory, index) => {
+    const updatedAt = new Date(memory.updatedAt).toISOString().slice(0, 10);
+    return `${index + 1}. [${memory.category}] importance=${memory.importance} updated=${updatedAt} ${memory.content}`;
+  });
+
+  return [
+    "Relevant memory context about the user and prior interactions:",
+    ...lines,
+    "Use this context when it helps, but do not mention memory metadata unless the user asks.",
+  ].join("\n");
+}
+
+async function buildAugmentedSystemPrompt(
+  options: StreamChatOptions,
+): Promise<string> {
+  const sections = [
+    buildSoulContext(),
+    buildIdentityContext(),
+    buildUserProfileContext(),
+    buildMoodContext(),
+    options.systemPrompt?.trim() || "",
+  ].filter(Boolean);
+  const memoryContext = await buildMemoryContext(options.message);
+
+  if (memoryContext) {
+    sections.push(memoryContext);
+  }
+
+  return sections.join("\n\n");
 }
 
 async function parseResponseError(response: Response): Promise<Error> {
@@ -737,18 +915,23 @@ export async function transcribeAudio(
 }
 
 export async function* streamChatCompletion(options: StreamChatOptions) {
-  switch (options.provider) {
+  const nextOptions: StreamChatOptions = {
+    ...options,
+    systemPrompt: await buildAugmentedSystemPrompt(options),
+  };
+
+  switch (nextOptions.provider) {
     case "openai":
-      yield* streamOpenAi(options);
+      yield* streamOpenAi(nextOptions);
       return;
     case "anthropic":
-      yield* streamAnthropicMessages(options);
+      yield* streamAnthropicMessages(nextOptions);
       return;
     case "openrouter":
-      yield* streamOpenRouter(options);
+      yield* streamOpenRouter(nextOptions);
       return;
     case "gemini":
     default:
-      yield* streamGemini(options);
+      yield* streamGemini(nextOptions);
   }
 }

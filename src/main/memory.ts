@@ -11,6 +11,7 @@ import {
   MemoryStats,
 } from "../types/interfaces";
 import { buildMoodState, DEFAULT_MOOD_STATE } from "../helpers/mood-engine";
+import { getMemoryVectorStore } from "./memory-vector-store";
 
 type ExtractedMemoryCandidate = {
   content: string;
@@ -175,6 +176,136 @@ export class MemoryManager {
       .slice(0, Math.max(4, Math.ceil(limit / 3)));
 
     return [...shortTerm, ...longTerm].slice(0, limit);
+  }
+
+  public async getRelevantMemoriesForQuery(
+    query: string,
+    limit: number = 8,
+  ): Promise<Memory[]> {
+    const normalizedQuery = query.trim().toLowerCase();
+    const tokens = normalizedQuery
+      .split(/[\s,.;:!?()[\]{}"'`~@#$%^&*+=\\/|<>-]+/)
+      .map((token) => token.trim())
+      .filter((token) => token.length >= 2);
+
+    const preferredCategories = this.inferCategoriesFromQuery(normalizedQuery);
+    const memories = this.getAllMemories();
+    const now = Date.now();
+    const semanticMatches = await getMemoryVectorStore().findRelevantMemories(
+      query,
+      memories,
+      limit * 2,
+    );
+    const semanticScores = new Map(
+      semanticMatches.map((match) => [match.memoryId, match.score]),
+    );
+
+    const scored = memories
+      .map((memory) => {
+        const content = memory.content.toLowerCase();
+        const key = (memory.key || "").toLowerCase();
+        let score = 0;
+        const semanticScore = semanticScores.get(memory.id) || 0;
+
+        if (normalizedQuery) {
+          if (
+            content.includes(normalizedQuery) ||
+            key.includes(normalizedQuery)
+          ) {
+            score += 18;
+          }
+        }
+
+        for (const token of tokens) {
+          if (content.includes(token)) {
+            score += 4;
+          }
+          if (key.includes(token)) {
+            score += 2;
+          }
+        }
+
+        if (preferredCategories.has(memory.category)) {
+          score += 8;
+        }
+
+        score += semanticScore * 20;
+        score += memory.importance * 2;
+
+        const recencyDays = Math.max(
+          0,
+          (now - memory.updatedAt) / (1000 * 60 * 60 * 24),
+        );
+        score += Math.max(0, 10 - Math.min(recencyDays, 10));
+
+        return { memory, score };
+      })
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) {
+          return b.score - a.score;
+        }
+        if (b.memory.importance !== a.memory.importance) {
+          return b.memory.importance - a.memory.importance;
+        }
+        return b.memory.updatedAt - a.memory.updatedAt;
+      });
+
+    return scored.slice(0, limit).map(({ memory }) => memory);
+  }
+
+  public recordActionOutcome(params: {
+    toolName: string;
+    args?: Record<string, unknown>;
+    success: boolean;
+    summary: string;
+    source?: string;
+  }): MemoryStats {
+    const actionSummary = params.summary.trim();
+
+    this.createMemory(
+      actionSummary,
+      "event",
+      params.success ? 6 : 4,
+      params.source,
+      `action:${params.toolName}:${Date.now()}`,
+      "short_term",
+      Date.now() + 1000 * 60 * 60 * 24 * 7,
+    );
+
+    const current = this.getStats();
+    const moodBoost = params.success ? 4 : -6;
+    const bondBoost = params.success ? 1 : -1;
+    const batteryShift = params.success ? -1 : -4;
+
+    const nextStats: MemoryStats = {
+      ...current,
+      bondLevel: this.clamp(current.bondLevel + bondBoost, 0, 100),
+      happiness: this.clamp(current.happiness + moodBoost, 0, 100),
+      lastInteractionAt: Date.now(),
+      mood: {
+        ...current.mood,
+        socialBattery: this.clamp(
+          current.mood.socialBattery + batteryShift,
+          0,
+          100,
+        ),
+        updatedAt: Date.now(),
+        summary: params.success
+          ? `Felt encouraged after successfully using ${params.toolName}.`
+          : `Felt a little drained after ${params.toolName} did not go as planned.`,
+      },
+    };
+
+    nextStats.mood = buildMoodState(
+      nextStats,
+      `Tool action: ${params.toolName}`,
+      actionSummary,
+    );
+
+    this.memoryBank.stats = nextStats;
+    this.saveToDisk();
+    return this.getStats();
   }
 
   public getStats(): MemoryStats {
@@ -526,6 +657,44 @@ export class MemoryManager {
         stats: { ...DEFAULT_STATS },
       };
     }
+  }
+
+  private inferCategoriesFromQuery(query: string): Set<MemoryCategory> {
+    const categories = new Set<MemoryCategory>();
+
+    if (
+      /\b(prefer|preference|like|love|hate|favorite|ชอบ|ไม่ชอบ|โปรด)\b/i.test(
+        query,
+      )
+    ) {
+      categories.add("preference");
+    }
+
+    if (
+      /\b(friend|relationship|bond|close|care|รัก|สนิท|ความสัมพันธ์)\b/i.test(
+        query,
+      )
+    ) {
+      categories.add("relationship");
+    }
+
+    if (
+      /\b(event|happened|yesterday|today|ล่าสุด|เมื่อวาน|วันนี้|เหตุการณ์)\b/i.test(
+        query,
+      )
+    ) {
+      categories.add("event");
+    }
+
+    if (
+      /\b(name|fact|remember|about me|ข้อมูล|ชื่อ|จำไว้|เรื่องของฉัน)\b/i.test(
+        query,
+      )
+    ) {
+      categories.add("fact");
+    }
+
+    return categories;
   }
 
   private saveToDisk(): void {

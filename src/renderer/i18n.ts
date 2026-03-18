@@ -576,7 +576,8 @@ export const translations: Record<Language, Translations> = {
     tts_voice: "Voice",
     tts_speed: "Speed",
     tts_preview: "Preview",
-    tts_preview_description: 'Click "Test Voice" to hear how Clippy will sound.',
+    tts_preview_description:
+      'Click "Test Voice" to hear how Clippy will sound.',
     tts_test_voice: "Test Voice",
     tts_playing: "Playing...",
     tts_save_settings: "Save Settings",
@@ -746,7 +747,8 @@ export const translations: Record<Language, Translations> = {
     create: "สร้าง",
     memories: "ความจำ",
     no_memories_found: "ไม่พบความจำที่ตรงกับการค้นหา",
-    no_memories_yet: "ยังไม่มีความจำถูกบันทึกไว้ ลองคุยกับ Clippy ให้มากขึ้นสิ!",
+    no_memories_yet:
+      "ยังไม่มีความจำถูกบันทึกไว้ ลองคุยกับ Clippy ให้มากขึ้นสิ!",
     memory_review: "ตรวจทานความจำ",
     run_cleanup_now: "จัดระเบียบตอนนี้",
     potential_conflicts: "ความจำที่อาจขัดกัน",

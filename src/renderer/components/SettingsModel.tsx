@@ -10,26 +10,13 @@ import { clippyApi } from "../clippyApi";
 import { useSharedState, useTranslation } from "../contexts/SharedStateContext";
 import { Checkbox } from "./Checkbox";
 
-const PROVIDERS: ApiProvider[] = [
+// Cloud providers (require API key)
+const CLOUD_PROVIDERS: ApiProvider[] = [
   "gemini",
   "openai",
   "anthropic",
   "openrouter",
 ];
-
-function getProviderKeyPlaceholder(provider: ApiProvider) {
-  switch (provider) {
-    case "openai":
-      return "Paste your OpenAI API key here...";
-    case "anthropic":
-      return "Paste your Anthropic API key here...";
-    case "openrouter":
-      return "Paste your OpenRouter API key here...";
-    case "gemini":
-    default:
-      return "Paste your Gemini API key here...";
-  }
-}
 
 export const SettingsModel: React.FC = () => {
   const { settings } = useSharedState();
@@ -38,33 +25,46 @@ export const SettingsModel: React.FC = () => {
   const [useGeminiApi, setUseGeminiApi] = useState(
     settings.useGeminiApi ?? true,
   );
+  // When useGeminiApi is true, we show cloud provider selection
+  // When false, we use Ollama (local provider)
   const [apiProvider, setApiProvider] = useState(
-    settings.apiProvider || "gemini",
+    // If useGeminiApi is false, we force Ollama
+    useGeminiApi ? settings.apiProvider || "gemini" : "ollama",
   );
   const [apiKey, setApiKey] = useState(
+    // For Ollama, we don't use the API key field (but we still store it in state for consistency)
     settings.apiKey || settings.geminiApiKey || "",
   );
   const [apiModel, setApiModel] = useState(
     settings.apiModel ||
-      API_PROVIDER_DEFAULT_MODELS[settings.apiProvider || "gemini"],
+      API_PROVIDER_DEFAULT_MODELS[
+        useGeminiApi ? settings.apiProvider || "gemini" : "ollama"
+      ],
   );
   const [saved, setSaved] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
 
   useEffect(() => {
+    // Sync with settings
     setUseGeminiApi(settings.useGeminiApi ?? true);
-    setApiProvider(settings.apiProvider || "gemini");
+    // When useGeminiApi is false, we ignore the saved apiProvider and use Ollama
+    setApiProvider(useGeminiApi ? settings.apiProvider || "gemini" : "ollama");
     setApiKey(settings.apiKey || settings.geminiApiKey || "");
     setApiModel(
       settings.apiModel ||
-        API_PROVIDER_DEFAULT_MODELS[settings.apiProvider || "gemini"],
+        API_PROVIDER_DEFAULT_MODELS[
+          useGeminiApi ? settings.apiProvider || "gemini" : "ollama"
+        ],
     );
-  }, [settings]);
+  }, [settings, useGeminiApi]); // Added useGeminiApi to dependencies
 
   const hasApiKey = !!apiKey.trim();
 
   const handleSave = useCallback(async () => {
-    const validation = validateApiConfiguration(apiProvider, apiKey, apiModel);
+    // For Ollama, we don't validate the API key (it's not required)
+    const validation = useGeminiApi
+      ? validateApiConfiguration(apiProvider, apiKey, apiModel)
+      : { isValid: true }; // Ollama doesn't need API key validation
     if (!validation.isValid) {
       setValidationMessage(
         !apiModel.trim()
@@ -74,10 +74,15 @@ export const SettingsModel: React.FC = () => {
       return;
     }
 
+    // When useGeminiApi is false, we are using Ollama so we save the provider as ollama
     await clippyApi.setState("settings.useGeminiApi", useGeminiApi);
-    await clippyApi.setState("settings.apiProvider", apiProvider);
+    await clippyApi.setState(
+      "settings.apiProvider",
+      useGeminiApi ? apiProvider : "ollama",
+    );
     await clippyApi.setState("settings.apiKey", apiKey);
-    if (apiProvider === "gemini") {
+    // For gemini provider, we also save to geminiApiKey for backward compatibility
+    if (useGeminiApi && apiProvider === "gemini") {
       await clippyApi.setState("settings.geminiApiKey", apiKey);
     }
     await clippyApi.setState("settings.apiModel", apiModel);
@@ -96,16 +101,38 @@ export const SettingsModel: React.FC = () => {
   const handleProviderChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
-    const nextProvider = event.target.value as ApiProvider;
-    setApiProvider(nextProvider);
-    if (!apiModel || apiModel === API_PROVIDER_DEFAULT_MODELS[apiProvider]) {
-      setApiModel(API_PROVIDER_DEFAULT_MODELS[nextProvider]);
+    // Only change provider if useGeminiApi is true (cloud provider selected)
+    if (useGeminiApi) {
+      const nextProvider = event.target.value as ApiProvider;
+      setApiProvider(nextProvider);
+      if (!apiModel || apiModel === API_PROVIDER_DEFAULT_MODELS[apiProvider]) {
+        setApiModel(API_PROVIDER_DEFAULT_MODELS[nextProvider]);
+      }
     }
   };
 
   const handleUseDefaultModel = () => {
-    setApiModel(API_PROVIDER_DEFAULT_MODELS[apiProvider]);
+    setApiModel(
+      API_PROVIDER_DEFAULT_MODELS[useGeminiApi ? apiProvider : "ollama"],
+    );
   };
+
+  // Get placeholder for API key input
+  function getProviderKeyPlaceholder(provider: ApiProvider) {
+    switch (provider) {
+      case "openai":
+        return "Paste your OpenAI API key here...";
+      case "anthropic":
+        return "Paste your Anthropic API key here...";
+      case "openrouter":
+        return "Paste your OpenRouter API key here...";
+      case "ollama":
+        return "No API key needed for local Ollama";
+      case "gemini":
+      default:
+        return "Paste your Gemini API key here...";
+    }
+  }
 
   return (
     <div className="settings-page">
@@ -124,24 +151,27 @@ export const SettingsModel: React.FC = () => {
           onChange={(checked) => setUseGeminiApi(checked)}
         />
 
-        <div className="field-row" style={{ marginTop: 15 }}>
-          <label htmlFor="apiProvider" style={{ width: 100 }}>
-            {t.provider}:
-          </label>
-          <select
-            id="apiProvider"
-            value={apiProvider}
-            onChange={handleProviderChange}
-            disabled={!useGeminiApi}
-          >
-            {PROVIDERS.map((entry) => (
-              <option key={entry} value={entry}>
-                {API_PROVIDER_LABELS[entry]}
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* When using cloud AI provider, show provider selection */}
+        {useGeminiApi && (
+          <div className="field-row" style={{ marginTop: 15 }}>
+            <label htmlFor="apiProvider" style={{ width: 100 }}>
+              {t.provider}:
+            </label>
+            <select
+              id="apiProvider"
+              value={apiProvider}
+              onChange={handleProviderChange}
+            >
+              {CLOUD_PROVIDERS.map((entry) => (
+                <option key={entry} value={entry}>
+                  {API_PROVIDER_LABELS[entry]}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
+        {/* API key input - disabled when using Ollama (local provider) */}
         <div className="field-row-stacked" style={{ marginTop: 15 }}>
           <label htmlFor="apiKey" style={{ display: "block", marginBottom: 5 }}>
             {t.api_key}:
@@ -153,8 +183,10 @@ export const SettingsModel: React.FC = () => {
               width: "100%",
             }}
             value={apiKey}
-            placeholder={getProviderKeyPlaceholder(apiProvider)}
-            disabled={!useGeminiApi}
+            placeholder={getProviderKeyPlaceholder(
+              useGeminiApi ? apiProvider : "ollama",
+            )}
+            disabled={!useGeminiApi} // Disabled when using Ollama (local provider)
             onChange={(e) => setApiKey(e.target.value)}
           />
           <div
@@ -171,7 +203,7 @@ export const SettingsModel: React.FC = () => {
             {hasApiKey && (
               <button
                 type="button"
-                disabled={!useGeminiApi}
+                disabled={!useGeminiApi} // Only allow clearing when not using Ollama
                 onClick={() => setApiKey("")}
               >
                 {t.clear_key}
@@ -183,6 +215,7 @@ export const SettingsModel: React.FC = () => {
           </p>
         </div>
 
+        {/* Model input */}
         <div className="field-row-stacked" style={{ marginTop: 15 }}>
           <label
             htmlFor="apiModel"
@@ -197,22 +230,26 @@ export const SettingsModel: React.FC = () => {
               width: "100%",
             }}
             value={apiModel}
-            placeholder={API_PROVIDER_DEFAULT_MODELS[apiProvider]}
-            disabled={!useGeminiApi}
+            placeholder={
+              API_PROVIDER_DEFAULT_MODELS[useGeminiApi ? apiProvider : "ollama"]
+            }
             onChange={(e) => setApiModel(e.target.value)}
           />
           <div className="settings-actions-row">
-            <button
-              type="button"
-              disabled={!useGeminiApi}
-              onClick={handleUseDefaultModel}
-            >
+            <button type="button" onClick={handleUseDefaultModel}>
               {t.use_default_model}
             </button>
           </div>
           <p style={{ fontSize: "11px", marginTop: 8, opacity: 0.8 }}>
-            {t.default_for} {API_PROVIDER_LABELS[apiProvider]}:{" "}
-            <code>{API_PROVIDER_DEFAULT_MODELS[apiProvider]}</code>
+            {t.default_for}{" "}
+            {useGeminiApi ? API_PROVIDER_LABELS[apiProvider] : "Ollama"}:{" "}
+            <code>
+              {
+                API_PROVIDER_DEFAULT_MODELS[
+                  useGeminiApi ? apiProvider : "ollama"
+                ]
+              }
+            </code>
           </p>
         </div>
       </fieldset>

@@ -1,7 +1,7 @@
 {
   "name": "clippy",
   "productName": "Clippy",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Clippy",
   "main": ".vite/build/main.js",
   "scripts": {
@@ -50,6 +50,7 @@
     "vite": "^5.4.14"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.8.1",
     "98.css": "^0.1.21",
     "date-fns": "^4.1.0",
     "electron-context-menu": "^4.0.5",

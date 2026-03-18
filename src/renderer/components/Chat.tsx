@@ -26,7 +26,9 @@ function getErrorMessage(error: unknown, t: Translations): string {
   }
 
   return (
-    t.clippy_is_responding.replace("...", "") + " " + t.saving.replace("...", "")
+    t.clippy_is_responding.replace("...", "") +
+    " " +
+    t.saving.replace("...", "")
   ); // Fallback "Something went wrong" equivalent
 }
 
@@ -63,6 +65,163 @@ export function Chat({ style }: ChatProps) {
     await clippyApi.setState("settings.todoItems", nextTodoItems);
   }, []);
 
+  const handleDesktopCommand = useCallback(
+    async (
+      message: string,
+    ): Promise<{ handled: boolean; response?: string }> => {
+      const trimmed = message.trim();
+
+      const desktopCommandPatterns: Array<{
+        pattern: RegExp;
+        toolName: string;
+        getArgs: (match: RegExpMatchArray) => Record<string, unknown>;
+      }> = [
+        {
+          pattern: /^\/run\s+(.+)$/i,
+          toolName: "run_command",
+          getArgs: (match) => ({ command: match[1] }),
+        },
+        {
+          pattern: /^\/ls\s*(.*)$/i,
+          toolName: "list_directory",
+          getArgs: (match) => ({ path: match[1] || undefined }),
+        },
+        {
+          pattern: /^\/list\s+(.+)$/i,
+          toolName: "list_directory",
+          getArgs: (match) => ({ path: match[1] }),
+        },
+        {
+          pattern: /^\/read\s+(.+)$/i,
+          toolName: "read_file",
+          getArgs: (match) => ({ path: match[1] }),
+        },
+        {
+          pattern: /^\/cat\s+(.+)$/i,
+          toolName: "read_file",
+          getArgs: (match) => ({ path: match[1] }),
+        },
+        {
+          pattern: /^\/search\s+(.+)$/i,
+          toolName: "search_files",
+          getArgs: (match) => ({ query: match[1] }),
+        },
+        {
+          pattern: /^\/find\s+(.+)$/i,
+          toolName: "search_files",
+          getArgs: (match) => ({ query: match[1] }),
+        },
+        {
+          pattern: /^\/sysinfo$/i,
+          toolName: "get_system_info",
+          getArgs: () => ({}),
+        },
+        {
+          pattern: /^\/ps(?:\s+(\d+))?$/i,
+          toolName: "list_processes",
+          getArgs: (match) => ({
+            limit: match[1] ? parseInt(match[1], 10) : 20,
+          }),
+        },
+        {
+          pattern: /^\/clipboard$/i,
+          toolName: "clipboard_read",
+          getArgs: () => ({}),
+        },
+        {
+          pattern: /^\/screenshot(?:\s+(.+))?$/i,
+          toolName: "take_screenshot",
+          getArgs: (match) => ({ name: match[1] || undefined }),
+        },
+      ];
+
+      const webCommandPatterns: Array<{
+        pattern: RegExp;
+        type: "search" | "fetch";
+        getArgs: (match: RegExpMatchArray) => Record<string, unknown>;
+      }> = [
+        {
+          pattern: /^\/(?:web)?search\s+(.+)$/i,
+          type: "search",
+          getArgs: (match) => ({ query: match[1] }),
+        },
+        {
+          pattern: /^\/(?:google)\s+(.+)$/i,
+          type: "search",
+          getArgs: (match) => ({ query: match[1] }),
+        },
+        {
+          pattern: /^\/(?:fetch|curl|wget)\s+(.+)$/i,
+          type: "fetch",
+          getArgs: (match) => ({ url: match[1] }),
+        },
+      ];
+
+      for (const { pattern, toolName, getArgs } of desktopCommandPatterns) {
+        const match = trimmed.match(pattern);
+        if (match) {
+          try {
+            const args = getArgs(match);
+            const result = await clippyApi.executeTool(toolName, args);
+
+            if (result.success) {
+              return {
+                handled: true,
+                response: `✅ ${result.output || "Done"}`,
+              };
+            } else {
+              return {
+                handled: true,
+                response: `❌ ${result.error || "Error"}`,
+              };
+            }
+          } catch (error) {
+            return {
+              handled: true,
+              response: `❌ Error: ${error instanceof Error ? error.message : String(error)}`,
+            };
+          }
+        }
+      }
+
+      for (const { pattern, type, getArgs } of webCommandPatterns) {
+        const match = trimmed.match(pattern);
+        if (match) {
+          try {
+            const args = getArgs(match);
+            let result: { success: boolean; output?: string; error?: string };
+
+            if (type === "search") {
+              result = await clippyApi.webSearch(String(args.query), 5);
+            } else {
+              result = await clippyApi.fetchUrl(String(args.url));
+            }
+
+            if (result.success) {
+              return {
+                handled: true,
+                response: result.output || "Done",
+              };
+            } else {
+              return {
+                handled: true,
+                response: `❌ ${result.error || "Error"}`,
+              };
+            }
+          } catch (error) {
+            return {
+              handled: true,
+              response: `❌ Error: ${error instanceof Error ? error.message : String(error)}`,
+            };
+          }
+        }
+      }
+
+      return { handled: false };
+    },
+    [],
+  );
+
   const handleSendMessage = useCallback(
     async (message: string, images?: string[]) => {
       if (status !== "idle") {
@@ -95,6 +254,19 @@ export function Chat({ style }: ChatProps) {
           await addMessage({
             id: crypto.randomUUID(),
             content: memoryCommandResult.response || "",
+            sender: "clippy",
+            createdAt: Date.now(),
+          });
+          setStatus("idle");
+          return;
+        }
+
+        const desktopCommandResult = await handleDesktopCommand(message);
+        if (desktopCommandResult.handled) {
+          setAnimationKey("Writing");
+          await addMessage({
+            id: crypto.randomUUID(),
+            content: desktopCommandResult.response || "",
             sender: "clippy",
             createdAt: Date.now(),
           });
@@ -244,6 +416,25 @@ export function Chat({ style }: ChatProps) {
 
               console.log(`[Tool] ${toolCall.tool}:`, result);
 
+              const toolSummary = result.success
+                ? `Action success: ${toolCall.tool} ${JSON.stringify(toolCall.args)} -> ${(result.output || "success").slice(0, 240)}`
+                : `Action result: ${toolCall.tool} ${JSON.stringify(toolCall.args)} -> ${(result.error || "failed").slice(0, 240)}`;
+
+              try {
+                await clippyApi.recordActionOutcome({
+                  toolName: toolCall.tool,
+                  args: toolCall.args,
+                  success: result.success,
+                  summary: toolSummary,
+                  source: assistantMessage.id,
+                });
+              } catch (memoryError) {
+                console.error(
+                  `[Tool Memory Error] ${toolCall.tool}:`,
+                  memoryError,
+                );
+              }
+
               if (!result.success && result.error) {
                 console.error(`[Tool Error] ${toolCall.tool}:`, result.error);
               }
@@ -319,6 +510,7 @@ export function Chat({ style }: ChatProps) {
       setAnimationKey,
       t,
       persistTodoItems,
+      handleDesktopCommand,
     ],
   );
 

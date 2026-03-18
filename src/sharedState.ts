@@ -1,6 +1,11 @@
 import { ClippyMood, ClippyResponseStyle, UserTone } from "./types/interfaces";
 
-export type ApiProvider = "gemini" | "openai" | "anthropic" | "openrouter";
+export type ApiProvider =
+  | "gemini"
+  | "openai"
+  | "anthropic"
+  | "openrouter"
+  | "ollama";
 export type PowerShellMode = "safe" | "full";
 
 export type DefaultFont =
@@ -106,6 +111,7 @@ export const API_PROVIDER_DEFAULT_MODELS: Record<ApiProvider, string> = {
   openai: "gpt-5-mini-preview",
   anthropic: "claude-3-sonnet-5",
   openrouter: "openai/gpt-4o-mini",
+  ollama: "llama3.2:latest",
 };
 
 export const API_PROVIDER_LABELS: Record<ApiProvider, string> = {
@@ -113,6 +119,7 @@ export const API_PROVIDER_LABELS: Record<ApiProvider, string> = {
   openai: "OpenAI",
   anthropic: "Anthropic",
   openrouter: "OpenRouter",
+  ollama: "Ollama",
 };
 
 export const DEFAULT_CUSTOM_THEME: CustomThemeColors = {
@@ -254,6 +261,13 @@ export function validateApiConfiguration(
     return {
       isValid: false,
       message: "Model is required.",
+    };
+  }
+
+  // Ollama doesn't require an API key as it runs locally
+  if (provider === "ollama") {
+    return {
+      isValid: true,
     };
   }
 
