@@ -67,6 +67,57 @@ src/
 └── ipc-messages.ts          # IPC communication
 ```
 
+## Architecture
+
+```mermaid
+flowchart LR
+  U[User] -->|interacts| R(Renderer\nReact UI)
+  R -->|IPC: send message| IPC[Preload / contextBridge]
+  IPC --> M(Main Process\nElectron)
+
+  subgraph MAIN["Main Process (Electron)"]
+    M --> Skills[Skills / Plugins]
+    M --> Tools[Desktop & Web Tools]
+    M --> Router[Request Router / Provider Selector]
+    M --> Memory[Local Memory Store\n%APPDATA% / files]
+    M --> TTS[Text-to-Speech (edge-tts / node-edge-tts)]
+    M --> Windows[Windows / App lifecycle]
+  end
+
+  subgraph PROVIDERS["Model Providers"]
+    L[Local Models\n(ollama / llama.cpp / GGUF)]
+    G[Gemini / Google]
+    O[OpenAI]
+    A[Anthropic]
+    OR[OpenRouter]
+  end
+
+  Router -->|choose provider| L
+  Router --> G
+  Router --> O
+  Router --> A
+  Router --> OR
+
+  Skills -->|call provider| Router
+  Skills -->|use| Tools
+  Tools -->|system commands / screenshots| OS[Operating System]
+
+  Router -->|response| Memory
+  Skills --> Memory
+  Memory --> M
+  M -->|send response| IPC
+  IPC --> R
+  R -->|render message| U
+
+  M -->|send text| TTS --> Audio[Speakers]
+
+  Tools --> Fetch[Web fetcher\nTavily / fetch_url]
+  Fetch --> PROVIDERS
+
+  classDef main fill:#f9f,stroke:#333,stroke-width:1px;
+  class MAIN main;
+```
+
 ## Important Scripts
 
 | Script            | Description                     |
@@ -177,7 +228,7 @@ See [`docs/skills.md`](docs/skills.md) for full documentation.
 - [`USAGE.md`](USAGE.md) - Usage examples
 - [`API.md`](API.md) - API documentation
 - [`docs/skills.md`](docs/skills.md) - Skills system documentation
-- [`TH-th/README.th.md`](TH-th/README.th.md) - Thai translation
+- [`docs/lang/TH-th/README.th.md`](docs/lang/TH-th/README.th.md) - Thai translation
 
 ## Acknowledgements
 
