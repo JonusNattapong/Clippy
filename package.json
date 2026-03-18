@@ -10,7 +10,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "prettier --write --ext .ts,.tsx .",
-    "test": "node -r ts-node/register --test tests/**/*.test.ts",
+    "test": "node -r ts-node/register --test \"tests/**/*.test.ts\"",
     "extract-animations": "./tools/extract-animations.sh -j ./assets/animations/clippy/animations.json -s ./assets/animations/clippy/map.png -o src/renderer/images/animations"
   },
   "keywords": [],
