@@ -1,3 +1,8 @@
+#
+<p align="center">
+  <img src="assets/icon.png" alt="Clippy" width="120" />
+</p>
+
 # Clippy
 
 Clippy brings back the 90s office assistant as a modern AI desktop companion.
@@ -173,6 +178,16 @@ See [`docs/skills.md`](docs/skills.md) for full documentation.
 - [`API.md`](API.md) - API documentation
 - [`docs/skills.md`](docs/skills.md) - Skills system documentation
 - [`TH-th/README.th.md`](TH-th/README.th.md) - Thai translation
+
+## Acknowledgements
+
+Thanks to:
+
+- I am so grateful to Microsoft - not only for everything they've done for Electron, but also for giving us one of the most iconic characters and designs of computing history.
+- [Kevan Atteberry](https://www.kevanatteberry.com/) for Clippy
+- [Jordan Scales (@jdan)](https://github.com/jdan) for the Windows 98 design
+- [Pooya Parsa (@pi0)](https://github.com/pi0) for being the (as far as I know) person to extract the length of each frame from the Clippy spritesheet.
+
 ## License
 
 This repository's source code is licensed under the MIT License. See [`LICENSE.md`](LICENSE.md) for the full license text.
