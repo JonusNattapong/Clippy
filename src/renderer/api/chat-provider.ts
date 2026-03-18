@@ -8,6 +8,12 @@ export type StreamChatOptions = {
   systemPrompt: string;
   message: string;
   images?: string[];
+  attachments?: {
+    name: string;
+    type: string;
+    size: number;
+    content: string;
+  }[];
   history: MessageRecord[];
   temperature?: number;
   topK?: number;
@@ -90,6 +96,7 @@ export async function* streamChatCompletion(options: StreamChatOptions) {
       systemPrompt: options.systemPrompt,
       message: options.message,
       images: options.images,
+      attachments: options.attachments,
       history: options.history,
       temperature: options.temperature,
       topK: options.topK,

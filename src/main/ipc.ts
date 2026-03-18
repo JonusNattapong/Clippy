@@ -108,6 +108,12 @@ type StreamStartPayload = {
   systemPrompt: string;
   message: string;
   images?: string[];
+  attachments?: {
+    name: string;
+    type: string;
+    size: number;
+    content: string;
+  }[];
   history: ChatWithMessages["messages"];
   temperature?: number;
   topK?: number;
@@ -424,6 +430,7 @@ export function setupIpcListeners() {
             systemPrompt: payload.systemPrompt,
             message: payload.message,
             images: payload.images,
+            attachments: payload.attachments,
             history: payload.history,
             temperature: payload.temperature,
             topK: payload.topK,

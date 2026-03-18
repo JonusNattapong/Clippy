@@ -14,6 +14,12 @@ export type StreamChatOptions = {
   systemPrompt: string;
   message: string;
   images?: string[];
+  attachments?: {
+    name: string;
+    type: string;
+    size: number;
+    content: string;
+  }[];
   history: MessageRecord[];
   temperature?: number;
   topK?: number;
@@ -108,6 +114,7 @@ function buildHistory(
   history: MessageRecord[],
   message: string,
   images?: string[],
+  attachments?: { name: string; type: string; size: number; content: string }[],
 ): ChatMessage[] {
   const historyMessages: ChatMessage[] = history
     .filter((entry) => entry.content)
@@ -132,19 +139,36 @@ function buildHistory(
       };
     });
 
+  let finalMessage = message;
+  if (attachments && attachments.length > 0) {
+    const attachmentList = attachments
+      .map(
+        (a) =>
+          `[Attached file: ${a.name} (${a.type}, ${formatFileSize(a.size)})]`,
+      )
+      .join("\n");
+    finalMessage = `${finalMessage}\n\n${attachmentList}`;
+  }
+
   if (images && images.length > 0) {
     const content: Array<{
       type: string;
       text?: string;
       image_url?: { url: string };
-    }> = [{ type: "text", text: message }];
+    }> = [{ type: "text", text: finalMessage }];
     for (const img of images) {
       content.push({ type: "image_url", image_url: { url: img } });
     }
     return [...historyMessages, { role: "user", content }];
   }
 
-  return [...historyMessages, { role: "user", content: message }];
+  return [...historyMessages, { role: "user", content: finalMessage }];
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
 function readProjectTemplate(fileName: string): string {
@@ -447,9 +471,12 @@ async function* streamGemini(options: StreamChatOptions) {
           },
         ]
       : []),
-    ...buildHistory(options.history, options.message, options.images).map(
-      buildGeminiContent,
-    ),
+    ...buildHistory(
+      options.history,
+      options.message,
+      options.images,
+      options.attachments,
+    ).map(buildGeminiContent),
   ];
 
   const finalModel = resolveGeminiModelName(options.model);
@@ -561,7 +588,12 @@ async function* streamOpenAi(options: StreamChatOptions) {
     ...(options.systemPrompt
       ? [{ role: "system", content: options.systemPrompt }]
       : []),
-    ...buildHistory(options.history, options.message, options.images),
+    ...buildHistory(
+      options.history,
+      options.message,
+      options.images,
+      options.attachments,
+    ),
   ];
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -625,7 +657,12 @@ async function* streamOpenRouter(options: StreamChatOptions) {
     ...(options.systemPrompt
       ? [{ role: "system", content: options.systemPrompt }]
       : []),
-    ...buildHistory(options.history, options.message, options.images),
+    ...buildHistory(
+      options.history,
+      options.message,
+      options.images,
+      options.attachments,
+    ),
   ];
 
   let finalModel = options.model.trim().toLowerCase();
@@ -718,7 +755,12 @@ async function* streamKilo(options: StreamChatOptions) {
     ...(options.systemPrompt
       ? [{ role: "system", content: options.systemPrompt }]
       : []),
-    ...buildHistory(options.history, options.message, options.images),
+    ...buildHistory(
+      options.history,
+      options.message,
+      options.images,
+      options.attachments,
+    ),
   ];
 
   const apiKey = process.env.KILO_API_KEY;
@@ -757,7 +799,12 @@ async function* streamOllama(options: StreamChatOptions) {
     ...(options.systemPrompt
       ? [{ role: "system", content: options.systemPrompt }]
       : []),
-    ...buildHistory(options.history, options.message, options.images),
+    ...buildHistory(
+      options.history,
+      options.message,
+      options.images,
+      options.attachments,
+    ),
   ];
 
   const model = options.model || "llama3.2:latest";
@@ -863,6 +910,7 @@ async function* streamAnthropicMessages(options: StreamChatOptions) {
     options.history,
     options.message,
     options.images,
+    options.attachments,
   ).map(buildAnthropicContent);
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {

@@ -82,6 +82,12 @@ export type ClippyApi = {
     systemPrompt: string;
     message: string;
     images?: string[];
+    attachments?: {
+      name: string;
+      type: string;
+      size: number;
+      content: string;
+    }[];
     history: MessageRecord[];
     temperature?: number;
     topK?: number;

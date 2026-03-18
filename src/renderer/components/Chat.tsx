@@ -189,6 +189,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
           model,
           message,
           images,
+          attachments: files,
           history: messages,
           systemPrompt,
           temperature: settings.temperature,
