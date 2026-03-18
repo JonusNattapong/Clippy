@@ -1,0 +1,93 @@
+name: Update Docs Release Links
+
+on:
+  release:
+    types:
+      - published
+      - edited
+      - released
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update download links in docs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("node:fs");
+            const path = require("node:path");
+
+            const release = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            const htmlPath = path.join(process.env.GITHUB_WORKSPACE, "docs", "index.html");
+            let html = fs.readFileSync(htmlPath, "utf8");
+
+            const findAssetUrl = (matcher) => {
+              const asset = release.data.assets.find((item) => matcher.test(item.name));
+              return asset ? asset.browser_download_url : null;
+            };
+
+            const replacements = [
+              {
+                id: "download-macos-arm64",
+                url: findAssetUrl(/darwin-arm64.*\.zip$/i),
+              },
+              {
+                id: "download-macos-x64",
+                url: findAssetUrl(/darwin-x64.*\.zip$/i),
+              },
+              {
+                id: "download-windows-x64",
+                url: findAssetUrl(/win32-x64.*\.zip$/i),
+              },
+              {
+                id: "download-linux-rpm-x64",
+                url: findAssetUrl(/x86_64\.rpm$/i),
+              },
+              {
+                id: "download-linux-deb-x64",
+                url: findAssetUrl(/amd64\.deb$/i),
+              },
+            ];
+
+            for (const replacement of replacements) {
+              if (!replacement.url) {
+                core.warning(`No release asset found for ${replacement.id}`);
+                continue;
+              }
+
+              const pattern = new RegExp(`(<a\\s+id="${replacement.id}"[^>]*href=")([^"]*)(")`, "i");
+              html = html.replace(pattern, `$1${replacement.url}$3`);
+            }
+
+            html = html.replace(
+              /(<span id="latest-release-version">)([^<]*)(<\/span>)/i,
+              `$1${release.data.tag_name}$3`,
+            );
+
+            fs.writeFileSync(htmlPath, html);
+
+      - name: Commit docs updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/index.html
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore: update docs download links for latest release"
+          git push

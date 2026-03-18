@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 
+import { getThemeCssVariables } from "../../sharedState";
 import { clippyApi } from "../clippyApi";
 import { WindowContext } from "../contexts/WindowContext";
 import { useChat } from "../contexts/ChatContext";
@@ -29,22 +30,48 @@ export function WindowPortal({
   const [externalWindow, setExternalWindow] = useState<Window | null>(null);
   const { isChatWindowOpen, setIsChatWindowOpen } = useChat();
   const { settings } = useSharedState();
+  const lastVisibilityRef = useRef<boolean | null>(null);
+
+  const applyThemeToContainer = () => {
+    if (!containerDiv) {
+      return;
+    }
+
+    containerDiv.setAttribute("data-theme", settings.themePreset || "classic");
+    const themeStyles = getThemeCssVariables(
+      settings.themePreset,
+      settings.customTheme,
+    );
+    Object.entries(themeStyles).forEach(([key, value]) => {
+      containerDiv?.style.setProperty(key, value);
+    });
+  };
 
   useEffect(() => {
-    if (settings.alwaysOpenChat && !_externalWindow) {
+    if (
+      (settings.alwaysOpenChat || !settings.hasCompletedOnboarding) &&
+      !_externalWindow
+    ) {
       setIsChatWindowOpen(true);
     }
-  }, [settings.alwaysOpenChat]);
+  }, [settings.alwaysOpenChat, settings.hasCompletedOnboarding]);
 
-  // Initialize the singleton container only once
+  useEffect(() => {
+    if (!containerDiv) {
+      return;
+    }
+
+    applyThemeToContainer();
+  }, [settings.themePreset, settings.customTheme]);
+
   useEffect(() => {
     if (!isInitialized) {
       containerDiv = document.createElement("div");
       containerDiv.className = "clippy";
+      applyThemeToContainer();
       isInitialized = true;
     }
 
-    // Create function for window management
     const showWindow = async () => {
       if (!_externalWindow || _externalWindow.closed) {
         const windowFeatures = `width=${width},height=${height},positionNextToParent`;
@@ -95,6 +122,13 @@ export function WindowPortal({
           setIsChatWindowOpen(false);
         });
 
+        // Force transparency on the new window
+        externalDoc.documentElement.style.background = "transparent";
+        externalDoc.body.style.background = "transparent";
+        externalDoc.body.style.margin = "0";
+        externalDoc.body.style.padding = "0";
+        externalDoc.body.style.overflow = "hidden";
+
         externalDoc.body.innerHTML = "";
         externalDoc.body.appendChild(containerDiv);
       } else {
@@ -104,35 +138,36 @@ export function WindowPortal({
       _externalWindow.focus();
     };
 
-    // Close window function
     const hideWindow = async () => {
-      // Don't destroy the window, just hide it
       if (_externalWindow && !_externalWindow.closed) {
         await clippyApi.toggleChatWindow();
       }
     };
 
-    // Show/hide based on prop
+    const lastVisibility = lastVisibilityRef.current;
+    const hasVisibilityChanged = lastVisibility !== isChatWindowOpen;
+
+    if (!hasVisibilityChanged) {
+      return;
+    }
+
+    lastVisibilityRef.current = isChatWindowOpen;
+
     if (isChatWindowOpen) {
       showWindow();
     } else {
       hideWindow();
     }
 
-    // Cleanup only on app unmount, not component unmount
     return () => {
-      // We don't close the window here anymore to maintain singleton
-      // The window will be closed when the app is closed
+      // Keep the singleton child window alive across re-renders.
     };
   }, [isChatWindowOpen, width, height, title]);
 
-  // Always render to the portal if it exists, regardless of visibility
   if (!containerDiv) {
     return null;
   }
 
-  // Wrap the children in the WindowContext provider
-  // This provides the external window to all children components
   const wrappedChildren = (
     <WindowContext.Provider value={{ currentWindow: externalWindow || window }}>
       {children}

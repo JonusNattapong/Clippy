@@ -1,0 +1,36 @@
+name: Feature Request
+description: Suggest an improvement for Clippy
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea. Clear use cases help us evaluate requests much faster.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Explain the user need or frustration behind the request.
+      placeholder: I want Clippy to remember the tone I prefer between sessions.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the change you would like to see.
+      placeholder: Add a preference that lets users choose concise or detailed replies by default.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Share any workarounds or other ideas you have considered.
+  - type: textarea
+    id: context
+    attributes:
+      label: Extra context
+      description: Add screenshots, mockups, or related links if helpful.
