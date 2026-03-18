@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   API_PROVIDER_DEFAULT_MODELS,
   API_PROVIDER_LABELS,
+  API_PROVIDER_MODELS,
   ApiProvider,
   validateApiConfiguration,
 } from "../../sharedState";
@@ -401,30 +402,43 @@ export const SettingsModel: React.FC = () => {
             }
             onChange={(e) => setApiModel(e.target.value)}
           />
-          {modelsList ? (
-            modelsList.length > 0 ? (
-              <div style={{ marginTop: 8 }}>
-                <label style={{ display: "block", marginBottom: 6 }}>
-                  Choose from detected models:
-                </label>
-                <select
-                  value={apiModel}
-                  onChange={(e) => setApiModel(e.target.value)}
-                  style={{ width: "100%" }}
-                >
-                  {modelsList.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div style={{ marginTop: 8, color: "#888" }}>
-                No models found.
-              </div>
-            )
-          ) : null}
+          {modelsList && modelsList.length > 0 ? (
+            <div style={{ marginTop: 8, marginBottom: 8 }}>
+              <label style={{ display: "block", marginBottom: 6 }}>
+                Detected models from provider:
+              </label>
+              <select
+                value={apiModel}
+                onChange={(e) => setApiModel(e.target.value)}
+                style={{ width: "100%" }}
+              >
+                {modelsList.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div style={{ marginTop: 8 }}>
+              <label style={{ display: "block", marginBottom: 6 }}>
+                Available models:
+              </label>
+              <select
+                value={apiModel}
+                onChange={(e) => setApiModel(e.target.value)}
+                style={{ width: "100%" }}
+              >
+                {API_PROVIDER_MODELS[
+                  useGeminiApi ? apiProvider : "ollama"
+                ]?.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="settings-actions-row">
             <button type="button" onClick={handleUseDefaultModel}>
               {t.use_default_model}
