@@ -50,7 +50,7 @@ npm run start
 Download the latest packaged release from the GitHub Releases page:
 
 - **Windows (PowerShell)**  
-  `powershell -Command "irm https://github.com/JonusNattapong/Clippy/releases/latest | Out-Null; Start-Process 'https://github.com/JonusNattapong/Clippy/releases/latest'"`  
+  `powershell -Command "irm https://github.com/JonusNattapong/Clippy/releases/latest | Out-Null; Start-Process 'https://github.com/JonusNattapong/Clippy/releases/latest'"`
 - **Windows (cmd.exe)**  
   `start https://github.com/JonusNattapong/Clippy/releases/latest`
 - **macOS / Linux**  
