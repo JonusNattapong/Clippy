@@ -42,7 +42,8 @@ cd Clippy
 npm ci
 cp .env.example .env
 # Edit .env to add API keys for cloud providers (GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY)
-# For Oll
+# For Ollama-only usage, you can leave cloud API keys empty
+```
 
 ## Quick Install
 
@@ -59,37 +60,34 @@ If you want a direct asset instead of the release page, use the platform links i
 
 ## Project Structure
 
-```
-src/
-├── bubble-message-config.ts      # Shared bubble message prompt/config
-├── ipc-messages.ts               # IPC communication definitions
-├── main/                         # Electron main process
-│   ├── skills/                   # Skills/Plugins system
-│   ├── chat-provider.ts          # LLM streaming + prompt augmentation
-│   ├── provider-service.ts       # Provider connection/model listing helpers
-│   ├── desktop-tools.ts          # Desktop commands implementation
-│   ├── web-tools.ts              # Web search tools
-│   ├── memory.ts                 # Memory manager + maintenance
-│   ├── memory-helpers.ts         # Memory extraction/policy helpers
-│   ├── memory-vector-store.ts    # Semantic retrieval index
-│   ├── notification-service.ts   # Telegram notification delivery
-│   ├── logger.ts                 # Main-process logging
-│   ├── tts.ts                    # Text-to-speech
-│   ├── windows.ts                # Window management
-│   ├── chats.ts                  # Chat history management
-│   ├── state.ts                  # App state
-│   └── ipc.ts                    # IPC handlers
-├── renderer/                     # React UI (frontend)
-│   ├── components/               # App windows and UI components
-│   ├── hooks/                    # React hooks (commands, errors, telegram)
-│   ├── helpers/                  # Parsing, labels, UI helpers
-│   ├── contexts/                 # Shared React contexts
-│   ├── api/                      # Renderer-side API integrations
-│   ├── clippyApi.tsx             # Typed renderer bridge
-│   └── preload.ts                # Electron preload bridge
-├── helpers/                      # Shared utilities
-└── types/                        # TypeScript contracts/interfaces
-```
+- `src/bubble-message-config.ts` - Shared bubble message prompt/config
+- `src/ipc-messages.ts` - IPC communication definitions
+- `src/main/` - Electron main process
+  - `skills/` - Skills/Plugins system
+  - `chat-provider.ts` - LLM streaming + prompt augmentation
+  - `provider-service.ts` - Provider connection/model listing helpers
+  - `desktop-tools.ts` - Desktop commands implementation
+  - `web-tools.ts` - Web search tools
+  - `memory.ts` - Memory manager + maintenance
+  - `memory-helpers.ts` - Memory extraction/policy helpers
+  - `memory-vector-store.ts` - Semantic retrieval index
+  - `notification-service.ts` - Telegram notification delivery
+  - `logger.ts` - Main-process logging
+  - `tts.ts` - Text-to-speech
+  - `windows.ts` - Window management
+  - `chats.ts` - Chat history management
+  - `state.ts` - App state
+  - `ipc.ts` - IPC handlers
+- `src/renderer/` - React UI (frontend)
+  - `components/` - App windows and UI components
+  - `hooks/` - React hooks (commands, errors, telegram)
+  - `helpers/` - Parsing, labels, UI helpers
+  - `contexts/` - Shared React contexts
+  - `api/` - Renderer-side API integrations
+  - `clippyApi.tsx` - Typed renderer bridge
+  - `preload.ts` - Electron preload bridge
+- `src/helpers/` - Shared utilities
+- `src/types/` - TypeScript contracts/interfaces
 
 ## Architecture
 
