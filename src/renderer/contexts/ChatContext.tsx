@@ -164,8 +164,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           setMessages((prev) => {
             if (
               prev.length >= 2 &&
-              prev[0].content === "Welcome to Clippy!" &&
-              prev[1].content === "Welcome to Clippy!"
+              prev[0].sender === "clippy" &&
+              prev[1].sender === "clippy" &&
+              prev[0].content === prev[1].content
             ) {
               return prev.slice(1);
             }
@@ -180,10 +181,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
     const waterInterval = setInterval(
       () => {
-        // Only add if not already in responding/thinking state and if last message isn't already a water reminder
         setMessages((prev) => {
-          const lastMsg = prev[prev.length - 1];
-          if (lastMsg?.content?.includes("อย่าลืมดื่มน้ำ")) return prev;
+          // Check if any water reminder was sent in the last 55 minutes
+          const waterReminderCooldown = 55 * 60 * 1000; // 55 minutes
+          const now = Date.now();
+          const hasRecentWaterReminder = prev.some(
+            (msg) =>
+              msg.content?.includes("อย่าลืมดื่มน้ำ") &&
+              now - msg.createdAt < waterReminderCooldown,
+          );
+          if (hasRecentWaterReminder) return prev;
 
           const waterMsg: Message = {
             id: crypto.randomUUID(),

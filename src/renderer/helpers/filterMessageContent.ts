@@ -7,9 +7,15 @@ import {
   getUserToneLabel,
 } from "./mood-labels";
 
-export type ChoicePrompt = {
+export type ChoiceStep = {
   prompt: string;
   options: string[];
+  stepIndex?: number;
+  totalSteps?: number;
+};
+
+export type ChoiceFlow = {
+  steps: ChoiceStep[];
 };
 
 export type FilteredContent = {
@@ -20,8 +26,64 @@ export type FilteredContent = {
   notifyTelegram?: { reason: string; message: string };
   toolCalls?: Array<{ tool: string; args: Record<string, string> }>;
   todoAdds: Array<{ title: string; note?: string }>;
-  choicePrompt: ChoicePrompt | null;
+  choiceFlow: ChoiceFlow | null;
 };
+
+function parseChoiceFlow(content: string): ChoiceFlow | null {
+  const choiceRegex = /\[CHOICE:\s*([^\]]+)\]/gi;
+  const steps: ChoiceStep[] = [];
+
+  for (const match of content.matchAll(choiceRegex)) {
+    const parts = match[1]
+      .split("|")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length < 2) {
+      continue;
+    }
+
+    let stepIndex: number | undefined;
+    let totalSteps: number | undefined;
+    let promptIndex = 0;
+    const maybeStepToken = parts[0].match(/^(\d+)\s*\/\s*(\d+)$/);
+
+    if (maybeStepToken) {
+      stepIndex = Math.max(parseInt(maybeStepToken[1], 10) - 1, 0);
+      totalSteps = Math.max(parseInt(maybeStepToken[2], 10), 1);
+      promptIndex = 1;
+    }
+
+    const prompt = parts[promptIndex]?.trim();
+    const options = parts.slice(promptIndex + 1).filter(Boolean);
+
+    if (!prompt || options.length === 0) {
+      continue;
+    }
+
+    steps.push({
+      prompt,
+      options,
+      stepIndex,
+      totalSteps,
+    });
+  }
+
+  if (steps.length === 0) {
+    return null;
+  }
+
+  const hasExplicitOrder = steps.some((step) => step.stepIndex !== undefined);
+  const sortedSteps = hasExplicitOrder
+    ? [...steps].sort(
+        (left, right) =>
+          (left.stepIndex ?? Number.MAX_SAFE_INTEGER) -
+          (right.stepIndex ?? Number.MAX_SAFE_INTEGER),
+      )
+    : steps;
+
+  return { steps: sortedSteps };
+}
 
 /**
  * Processes the raw AI response content to extract structured data and clean the text for display.
@@ -39,7 +101,7 @@ export function filterMessageContent(
   let notifyTelegram: FilteredContent["notifyTelegram"] | undefined;
   let toolCalls: FilteredContent["toolCalls"] = [];
   const todoAdds: Array<{ title: string; note?: string }> = [];
-  let choicePrompt: ChoicePrompt | null = null;
+  let choiceFlow: ChoiceFlow | null = null;
 
   // 1. Globally strip and extract Memory Updates
   const memoryRegex = /\[MEMORY_UPDATE:\s*([^|]+)\|([^|]+)\|\s*(\d+)\s*\]/gi;
@@ -115,20 +177,8 @@ export function filterMessageContent(
   }
   text = text.replace(todoRegex, "").trim();
 
-  const choiceRegex = /\[CHOICE:\s*([^\]|]+)((?:\|[^\]]+)+)\]/i;
-  const choiceMatch = text.match(choiceRegex);
-  if (choiceMatch) {
-    const prompt = choiceMatch[1].trim();
-    const options = choiceMatch[2]
-      .split("|")
-      .map((option) => option.trim())
-      .filter(Boolean);
-
-    if (prompt && options.length > 0) {
-      choicePrompt = { prompt, options };
-    }
-  }
-  text = text.replace(choiceRegex, "").trim();
+  choiceFlow = parseChoiceFlow(text);
+  text = text.replace(/\[CHOICE:\s*[^\]]+\]/gi, "").trim();
 
   // 3. Clean up generic internal tags
   text = text
@@ -156,7 +206,7 @@ export function filterMessageContent(
             tagContent === lowerKey + "ing" ||
             tagContent + "ing" === lowerKey ||
             (tagContent === "greeting" && lowerKey === "wave") ||
-            (tagContent === "thinking" && lowerKey === " think")
+            (tagContent === "thinking" && lowerKey === "think")
           ) {
             animationKey = key;
             break;
@@ -178,7 +228,7 @@ export function filterMessageContent(
     notifyTelegram,
     toolCalls,
     todoAdds,
-    choicePrompt,
+    choiceFlow,
   };
 }
 

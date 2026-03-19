@@ -599,6 +599,17 @@ When you want the user to pick from guided options, use:
 - The app will show buttons and also let the user type their own answer
 - Only use this when a direct choice would make the conversation easier
 
+For a real multi-step picker, emit multiple CHOICE tags in one reply:
+\`\`\`
+[CHOICE: 1/3 | Pick a setup style | Open-source self-hosted | Cloud-based | Mobile app]
+[CHOICE: 2/3 | What matters most first? | Speed | Lowest cost | Best UX]
+[CHOICE: 3/3 | How confident are you? | Ready to decide | Need a recommendation | Still exploring]
+\`\`\`
+- Use \`step/total\` at the start of each tag, like \`1/3\`
+- Keep every step self-contained with its own prompt and options
+- Use the same total for all steps in the sequence
+- Put all steps in the same assistant reply when you want the app to show a multi-step flow
+
 ### Telegram Notifications
 When a proactive Telegram notification would genuinely help the user, you may add:
 \`\`\`[NOTIFY_TELEGRAM: reason | message]\`\`\`

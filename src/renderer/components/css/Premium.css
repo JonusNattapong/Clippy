@@ -683,7 +683,7 @@ select:focus {
 
 .choice-dialog-panel,
 .todo-dialog-panel {
-  width: min(100%, 420px);
+  width: min(100%, 520px);
   max-height: min(100%, 460px);
   overflow-y: auto;
   background: var(--premium-panel);
@@ -703,6 +703,42 @@ select:focus {
   font-weight: 700;
 }
 
+.choice-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.choice-dialog-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0 0;
+  color: var(--premium-muted);
+  white-space: nowrap;
+}
+
+.choice-dialog-progress-button {
+  width: 32px;
+  min-width: 32px !important;
+  height: 32px;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+.choice-dialog-progress-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.choice-dialog-progress-label {
+  min-width: 58px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .choice-dialog-prompt {
   margin-top: 8px;
   margin-bottom: 14px;
@@ -711,7 +747,13 @@ select:focus {
   line-height: 1.5;
 }
 
-.choice-dialog-options,
+.choice-dialog-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.choice-dialog-footer,
 .todo-item-actions,
 .choice-dialog-actions {
   display: flex;
@@ -721,8 +763,67 @@ select:focus {
 
 .choice-dialog-option {
   width: 100%;
+  display: flex !important;
+  align-items: center;
+  gap: 14px;
+  min-height: 68px;
   justify-content: flex-start;
   text-align: left;
+  padding: 14px 16px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 251, 237, 0.96),
+    rgba(242, 234, 202, 0.92)
+  ) !important;
+}
+
+.choice-dialog-option.is-active {
+  border-color: var(--premium-accent) !important;
+  box-shadow:
+    0 0 0 2px var(--premium-accent-glow),
+    0 14px 24px rgba(27, 24, 15, 0.12) !important;
+  transform: translateY(-1px);
+}
+
+.choice-dialog-option.is-selected {
+  border-color: rgba(173, 133, 57, 0.56) !important;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 247, 214, 0.98),
+    rgba(236, 220, 165, 0.94)
+  ) !important;
+}
+
+.choice-dialog-option-number {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(173, 133, 57, 0.14);
+  color: var(--premium-text);
+  font-weight: 700;
+}
+
+.choice-dialog-option-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.choice-dialog-option-label {
+  display: block;
+  font-weight: 700;
+  color: var(--premium-text);
+  line-height: 1.45;
+}
+
+.choice-dialog-option-arrow {
+  color: var(--premium-muted);
+  font-size: 18px;
+  line-height: 1;
 }
 
 .choice-dialog-option-secondary {
@@ -733,11 +834,45 @@ select:focus {
   ) !important;
 }
 
+.choice-dialog-option-ghost {
+  background: rgba(255, 255, 255, 0.56) !important;
+}
+
+.choice-dialog-option-primary {
+  background: linear-gradient(
+    180deg,
+    rgba(191, 148, 63, 0.96),
+    rgba(155, 112, 38, 0.94)
+  ) !important;
+  color: #fffdf7 !important;
+}
+
+.choice-dialog-option-primary .choice-dialog-option-label,
+.choice-dialog-option-primary .choice-dialog-option-arrow {
+  color: inherit;
+}
+
 .choice-dialog-custom {
   margin-top: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.choice-dialog-custom textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+@media (max-width: 560px) {
+  .choice-dialog-header {
+    flex-direction: column;
+  }
+
+  .choice-dialog-progress {
+    align-self: stretch;
+    justify-content: flex-end;
+  }
 }
 
 .todo-dialog-header {

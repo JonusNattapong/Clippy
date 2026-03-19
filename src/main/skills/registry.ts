@@ -19,6 +19,7 @@ import {
 } from "./types";
 import { getStateManager } from "../state";
 import { getMainWindow } from "../windows";
+import { discoverSkillsFromMarkdown } from "./skill-loader";
 
 /**
  * Internal representation of a registered skill
@@ -371,6 +372,15 @@ class SkillRegistry {
       console.warn("Failed to discover built-in skills:", error);
     }
 
+    // Discover SKILL.md files from the project skills/ directory
+    const projectSkillsDir = path.join(app.getAppPath(), "skills");
+    const markdownSkills = discoverSkillsFromMarkdown(projectSkillsDir);
+
+    for (const skill of markdownSkills) {
+      // Wrap the skill in a factory function
+      factories.push(() => skill);
+    }
+
     return factories;
   }
 
@@ -387,6 +397,7 @@ class SkillRegistry {
 
       for (const entry of entries) {
         if (entry.isDirectory()) {
+          // Try loading TypeScript skill first
           const skillPath = path.join(this.skillsDir, entry.name, "index.js");
           if (fs.existsSync(skillPath)) {
             try {
@@ -399,6 +410,7 @@ class SkillRegistry {
               ) {
                 await this.register(module.createSkill);
               }
+              continue;
             } catch (error) {
               console.error(
                 `Failed to load user skill "${entry.name}":`,
@@ -406,6 +418,26 @@ class SkillRegistry {
               );
             }
           }
+
+          // Try loading SKILL.md format
+          const skillMdPath = path.join(this.skillsDir, entry.name, "SKILL.md");
+          if (fs.existsSync(skillMdPath)) {
+            const { loadSkillFromMarkdown } = await import(
+              "./skill-loader"
+            );
+            const skill = loadSkillFromMarkdown(skillMdPath);
+            if (skill) {
+              await this.register(() => skill);
+            }
+          }
+        }
+      }
+
+      // Also check for SKILL.md files directly in the skills directory
+      const markdownSkills = discoverSkillsFromMarkdown(this.skillsDir);
+      for (const skill of markdownSkills) {
+        if (!this.skills.has(skill.meta.id)) {
+          await this.register(() => skill);
         }
       }
     } catch (error) {

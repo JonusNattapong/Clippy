@@ -678,11 +678,31 @@ export function setupIpcListeners() {
     writeJsonFile(getUserPath(), data),
   );
 
-  // Desktop Tools
+  // Desktop Tools & Skills
   ipcMain.handle(
     IpcMessages.DESKTOP_TOOL_EXECUTE,
-    async (_, toolName: string, args: Record<string, any>) =>
-      executeTool(toolName, args),
+    async (_, toolName: string, args: Record<string, any>) => {
+      // Check if this is a skill action (contains a dot like "weather.get_weather")
+      const dotIndex = toolName.indexOf(".");
+      if (dotIndex > 0) {
+        const skillId = toolName.slice(0, dotIndex);
+        const actionName = toolName.slice(dotIndex + 1);
+
+        try {
+          const { getSkillRegistry } = await import("./skills");
+          const registry = getSkillRegistry();
+          return await registry.execute(skillId, actionName, args);
+        } catch (error) {
+          return {
+            success: false,
+            error: `Skill execution failed: ${error instanceof Error ? error.message : String(error)}`,
+          };
+        }
+      }
+
+      // Otherwise, use desktop tools
+      return executeTool(toolName, args);
+    },
   );
   ipcMain.handle(IpcMessages.DESKTOP_TOOL_GET_SCHEMA, () => DESKTOP_TOOLS);
 

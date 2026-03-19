@@ -6,6 +6,10 @@
  */
 
 export { getSkillRegistry, initSkillRegistry } from "./registry";
+export {
+  loadSkillFromMarkdown,
+  discoverSkillsFromMarkdown,
+} from "./skill-loader";
 
 export type {
   Skill,

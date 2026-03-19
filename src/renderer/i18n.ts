@@ -205,6 +205,12 @@ export interface Translations {
   todo_added: string;
   choose_one: string;
   type_your_own: string;
+  skip_choice: string;
+  choice_previous: string;
+  choice_next: string;
+  choice_finish: string;
+  choice_summary_intro: string;
+  choice_skipped_value: string;
   send_custom_choice: string;
   custom_reply_placeholder: string;
   social_battery: string;
@@ -535,6 +541,12 @@ export const translations: Record<Language, Translations> = {
     todo_added: "Added to your TODO list.",
     choose_one: "Choose one",
     type_your_own: "Type my own answer",
+    skip_choice: "Skip for now",
+    choice_previous: "Previous step",
+    choice_next: "Next step",
+    choice_finish: "Finish",
+    choice_summary_intro: "My choices:",
+    choice_skipped_value: "Skipped",
     send_custom_choice: "Send Reply",
     custom_reply_placeholder: "Type your own response...",
     social_battery: "Social Battery",
@@ -878,6 +890,12 @@ export const translations: Record<Language, Translations> = {
     todo_added: "เพิ่มเข้า TODO แล้ว",
     choose_one: "เลือกได้เลย",
     type_your_own: "พิมพ์คำตอบเอง",
+    skip_choice: "ข้ามไปก่อน",
+    choice_previous: "ขั้นก่อนหน้า",
+    choice_next: "ขั้นถัดไป",
+    choice_finish: "เสร็จแล้ว",
+    choice_summary_intro: "คำตอบที่เลือก:",
+    choice_skipped_value: "ข้าม",
     send_custom_choice: "ส่งคำตอบ",
     custom_reply_placeholder: "พิมพ์คำตอบของคุณเอง...",
     social_battery: "พลังเข้าสังคม",

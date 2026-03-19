@@ -98,6 +98,72 @@ export const desktopCommandPatterns: DesktopCommandPattern[] = [
     toolName: "take_screenshot",
     getArgs: (match) => ({ name: match[1] || undefined }),
   },
+  // Weather commands
+  {
+    pattern: /^\/weather\s+(.+)$/i,
+    toolName: "weather.get_weather",
+    getArgs: (match) => ({ location: match[1] }),
+  },
+  {
+    pattern: /^\/forecast\s+(.+)$/i,
+    toolName: "weather.get_weather",
+    getArgs: (match) => ({ location: match[1], show_forecast: true }),
+  },
+  // File conversion commands
+  {
+    pattern: /^\/convert\s+(\S+)\s+to\s+(png|jpg|jpeg|webp|gif|tiff|avif)$/i,
+    toolName: "file-conversion.convert_image",
+    getArgs: (match) => ({
+      input_path: match[1],
+      output_format: match[2].toLowerCase(),
+    }),
+  },
+  {
+    pattern: /^\/resize\s+(\S+)\s+(\d+)x(\d+)$/i,
+    toolName: "file-conversion.resize_image",
+    getArgs: (match) => ({
+      input_path: match[1],
+      width: parseInt(match[2], 10),
+      height: parseInt(match[3], 10),
+    }),
+  },
+  {
+    pattern: /^\/imginfo\s+(\S+)$/i,
+    toolName: "file-conversion.get_image_info",
+    getArgs: (match) => ({ input_path: match[1] }),
+  },
+  // System monitor commands
+  {
+    pattern: /^\/monitor$/i,
+    toolName: "system-monitor.get_system_stats",
+    getArgs: () => ({}),
+  },
+  {
+    pattern: /^\/monitor\s+--detailed$/i,
+    toolName: "system-monitor.get_system_stats",
+    getArgs: () => ({ detailed: true }),
+  },
+  {
+    pattern: /^\/top\s*(\d+)?$/i,
+    toolName: "system-monitor.get_top_processes",
+    getArgs: (match) => ({
+      limit: match[1] ? parseInt(match[1], 10) : 10,
+      sort_by: "cpu",
+    }),
+  },
+  {
+    pattern: /^\/topmem\s*(\d+)?$/i,
+    toolName: "system-monitor.get_top_processes",
+    getArgs: (match) => ({
+      limit: match[1] ? parseInt(match[1], 10) : 10,
+      sort_by: "memory",
+    }),
+  },
+  {
+    pattern: /^\/disk$/i,
+    toolName: "system-monitor.check_disk_space",
+    getArgs: () => ({}),
+  },
 ];
 
 export const webCommandPatterns: WebCommandPattern[] = [

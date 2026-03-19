@@ -16,7 +16,7 @@ import { useMemoryCommands } from "../hooks/useMemoryCommands";
 import {
   filterMessageContent,
   mergeTodoItems,
-  ChoicePrompt,
+  ChoiceFlow,
 } from "../helpers/filterMessageContent";
 
 export type ChatProps = {
@@ -43,9 +43,14 @@ export function Chat({ style }: ChatProps) {
   const { handleDesktopCommand } = useCommandParser();
   const { handleMemoryCommand } = useMemoryCommands();
 
-  const [pendingChoice, setPendingChoice] = useState<ChoicePrompt | null>(null);
+  const [pendingChoiceFlow, setPendingChoiceFlow] = useState<ChoiceFlow | null>(
+    null,
+  );
+  const [currentChoiceStepIndex, setCurrentChoiceStepIndex] = useState(0);
+  const [choiceAnswers, setChoiceAnswers] = useState<Record<number, string>>({});
   const [customChoiceText, setCustomChoiceText] = useState("");
   const [showCustomChoiceInput, setShowCustomChoiceInput] = useState(false);
+  const [focusedChoiceIndex, setFocusedChoiceIndex] = useState(0);
   const [streamingMessageContent, setStreamingMessageContent] =
     useState<string>("");
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -61,6 +66,51 @@ export function Chat({ style }: ChatProps) {
       block: "end",
     });
   }, [messageCount, streamingLength]);
+
+  useEffect(() => {
+    if (!pendingChoiceFlow) {
+      setCurrentChoiceStepIndex(0);
+      setChoiceAnswers({});
+      setFocusedChoiceIndex(0);
+      setShowCustomChoiceInput(false);
+      setCustomChoiceText("");
+      return;
+    }
+
+    setCurrentChoiceStepIndex(0);
+    setChoiceAnswers({});
+    setFocusedChoiceIndex(0);
+    setShowCustomChoiceInput(false);
+    setCustomChoiceText("");
+  }, [pendingChoiceFlow]);
+
+  const currentChoiceStep =
+    pendingChoiceFlow?.steps[currentChoiceStepIndex] ?? null;
+  const choiceStepCount = pendingChoiceFlow?.steps.length ?? 0;
+  const currentChoiceAnswer = currentChoiceStep
+    ? choiceAnswers[currentChoiceStepIndex] || ""
+    : "";
+  const currentChoiceAnswerIsCustom =
+    !!currentChoiceStep &&
+    !!currentChoiceAnswer &&
+    !currentChoiceStep.options.includes(currentChoiceAnswer);
+
+  useEffect(() => {
+    if (!currentChoiceStep) {
+      setFocusedChoiceIndex(0);
+      setShowCustomChoiceInput(false);
+      setCustomChoiceText("");
+      return;
+    }
+
+    const selectedOptionIndex = currentChoiceStep.options.findIndex(
+      (option) => option === currentChoiceAnswer,
+    );
+
+    setFocusedChoiceIndex(selectedOptionIndex >= 0 ? selectedOptionIndex : 0);
+    setShowCustomChoiceInput(currentChoiceAnswerIsCustom);
+    setCustomChoiceText(currentChoiceAnswerIsCustom ? currentChoiceAnswer : "");
+  }, [currentChoiceAnswer, currentChoiceAnswerIsCustom, currentChoiceStep]);
 
   const handleAbortMessage = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -81,7 +131,9 @@ export function Chat({ style }: ChatProps) {
         return;
       }
 
-      setPendingChoice(null);
+      setPendingChoiceFlow(null);
+      setCurrentChoiceStepIndex(0);
+      setChoiceAnswers({});
       setShowCustomChoiceInput(false);
       setCustomChoiceText("");
 
@@ -240,7 +292,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
           notifyTelegram,
           toolCalls,
           todoAdds,
-          choicePrompt,
+          choiceFlow,
         } = filterMessageContent(
           fullContent,
           { todoItems: settings.todoItems },
@@ -359,7 +411,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
 
         const assistantContent = [
           finalContent ||
-            choicePrompt?.prompt ||
+            choiceFlow?.steps[0]?.prompt ||
             (todoAdds.length > 0 ? t.todo_added : ""),
           ...toolOutputs,
         ]
@@ -408,7 +460,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
         }
 
         await addMessage(assistantMessage);
-        setPendingChoice(choicePrompt);
+        setPendingChoiceFlow(choiceFlow);
 
         try {
           const ttsEnabled = settings.ttsEnabled ?? false;
@@ -488,12 +540,76 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
     ],
   );
 
+  const finalizeChoiceFlow = useCallback(
+    async (answers: Record<number, string>) => {
+      if (!pendingChoiceFlow) {
+        return;
+      }
+
+      const summary = pendingChoiceFlow.steps
+        .map((step, index) => {
+          const answer = answers[index]?.trim() || t.choice_skipped_value;
+          return `${index + 1}. ${step.prompt}: ${answer}`;
+        })
+        .join("\n");
+
+      await handleSendMessage(`${t.choice_summary_intro}\n${summary}`);
+    },
+    [handleSendMessage, pendingChoiceFlow, t],
+  );
+
+  const advanceChoiceFlow = useCallback(
+    async (answer?: string) => {
+      if (!currentChoiceStep || !pendingChoiceFlow) {
+        return;
+      }
+
+      const nextAnswers = { ...choiceAnswers };
+      const trimmedAnswer = answer?.trim();
+
+      if (trimmedAnswer) {
+        nextAnswers[currentChoiceStepIndex] = trimmedAnswer;
+      } else {
+        delete nextAnswers[currentChoiceStepIndex];
+      }
+
+      setChoiceAnswers(nextAnswers);
+      setShowCustomChoiceInput(false);
+      setCustomChoiceText("");
+
+      if (currentChoiceStepIndex >= pendingChoiceFlow.steps.length - 1) {
+        await finalizeChoiceFlow(nextAnswers);
+        return;
+      }
+
+      setCurrentChoiceStepIndex((currentValue) =>
+        Math.min(currentValue + 1, pendingChoiceFlow.steps.length - 1),
+      );
+    },
+    [
+      choiceAnswers,
+      currentChoiceStep,
+      currentChoiceStepIndex,
+      finalizeChoiceFlow,
+      pendingChoiceFlow,
+    ],
+  );
+
   const handleChoiceSelection = useCallback(
     async (choice: string) => {
-      await handleSendMessage(choice);
+      await advanceChoiceFlow(choice);
     },
-    [handleSendMessage],
+    [advanceChoiceFlow],
   );
+
+  const handleSkipChoice = useCallback(async () => {
+    await advanceChoiceFlow();
+  }, [advanceChoiceFlow]);
+
+  const handleCustomChoiceToggle = useCallback(() => {
+    setShowCustomChoiceInput((currentValue) => !currentValue);
+    setCustomChoiceText(currentChoiceAnswerIsCustom ? currentChoiceAnswer : "");
+  }, [currentChoiceAnswer, currentChoiceAnswerIsCustom]);
 
   const handleCustomChoiceSubmit = useCallback(async () => {
     const trimmed = customChoiceText.trim();
@@ -501,8 +617,90 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
       return;
     }
 
-    await handleSendMessage(trimmed);
-  }, [customChoiceText, handleSendMessage]);
+    await advanceChoiceFlow(trimmed);
+  }, [advanceChoiceFlow, customChoiceText]);
+
+  useEffect(() => {
+    if (!currentChoiceStep) {
+      return;
+    }
+
+    const handleWindowKeyDown = (event: KeyboardEvent) => {
+      if (showCustomChoiceInput) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setShowCustomChoiceInput(false);
+          setCustomChoiceText("");
+        }
+        return;
+      }
+
+      if (
+        event.target instanceof HTMLElement &&
+        (event.target.tagName === "TEXTAREA" || event.target.tagName === "INPUT")
+      ) {
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        void handleSkipChoice();
+        return;
+      }
+
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+        event.preventDefault();
+        setFocusedChoiceIndex((currentValue) =>
+          (currentValue + 1) % currentChoiceStep.options.length,
+        );
+        return;
+      }
+
+      if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        setFocusedChoiceIndex((currentValue) =>
+          (currentValue - 1 + currentChoiceStep.options.length) %
+          currentChoiceStep.options.length,
+        );
+        return;
+      }
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        void handleChoiceSelection(currentChoiceStep.options[focusedChoiceIndex]);
+        return;
+      }
+
+      const optionNumber = Number.parseInt(event.key, 10);
+      if (
+        Number.isInteger(optionNumber) &&
+        optionNumber >= 1 &&
+        optionNumber <= currentChoiceStep.options.length
+      ) {
+        event.preventDefault();
+        void handleChoiceSelection(currentChoiceStep.options[optionNumber - 1]);
+      }
+    };
+
+    window.addEventListener("keydown", handleWindowKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleWindowKeyDown);
+    };
+  }, [
+    focusedChoiceIndex,
+    currentChoiceStep,
+    handleChoiceSelection,
+    handleSkipChoice,
+    showCustomChoiceInput,
+  ]);
+
+  const choiceCount = currentChoiceStep?.options.length ?? 0;
+  const activeChoiceIndex =
+    currentChoiceStep && choiceCount > 0
+      ? Math.min(focusedChoiceIndex, choiceCount - 1)
+      : 0;
+  const activeChoiceNumber = currentChoiceStepIndex + 1;
 
   return (
     <div style={style} className="chat-container">
@@ -523,37 +721,111 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
         <div ref={messagesEndRef} />
       </div>
       <ChatInput onSend={handleSendMessage} onAbort={handleAbortMessage} />
-      {pendingChoice && (
+      {pendingChoiceFlow && currentChoiceStep && (
         <div className="choice-dialog-backdrop">
           <div className="choice-dialog-panel">
-            <div className="choice-dialog-title">{t.choose_one}</div>
-            <div className="choice-dialog-prompt">{pendingChoice.prompt}</div>
-            <div className="choice-dialog-options">
-              {pendingChoice.options.map((option) => (
+            <div className="choice-dialog-header">
+              <div>
+                <div className="choice-dialog-title">{t.choose_one}</div>
+                <div className="choice-dialog-prompt">{currentChoiceStep.prompt}</div>
+              </div>
+              <div className="choice-dialog-progress" aria-live="polite">
                 <button
-                  key={option}
                   type="button"
-                  className="choice-dialog-option"
-                  onClick={() => void handleChoiceSelection(option)}
+                  className="choice-dialog-progress-button"
+                  onClick={() =>
+                    setCurrentChoiceStepIndex((currentValue) =>
+                      Math.max(currentValue - 1, 0),
+                    )
+                  }
+                  aria-label={t.choice_previous}
+                  disabled={currentChoiceStepIndex === 0}
                 >
-                  {option}
+                  {"<"}
                 </button>
-              ))}
-              <button
-                type="button"
-                className="choice-dialog-option choice-dialog-option-secondary"
-                onClick={() =>
-                  setShowCustomChoiceInput((currentValue) => !currentValue)
-                }
-              >
-                {t.type_your_own}
-              </button>
+                <span className="choice-dialog-progress-label">
+                  {activeChoiceNumber} of {choiceStepCount}
+                </span>
+                <button
+                  type="button"
+                  className="choice-dialog-progress-button"
+                  onClick={() =>
+                    setCurrentChoiceStepIndex((currentValue) =>
+                      Math.min(currentValue + 1, choiceStepCount - 1),
+                    )
+                  }
+                  aria-label={t.choice_next}
+                  disabled={currentChoiceStepIndex >= choiceStepCount - 1}
+                >
+                  {">"}
+                </button>
+              </div>
+            </div>
+            <div className="choice-dialog-options">
+              {currentChoiceStep.options.map((option, index) => {
+                const isActive = index === activeChoiceIndex;
+                const isSelected = option === currentChoiceAnswer;
+
+                return (
+                  <button
+                    key={`${index}-${option}`}
+                    type="button"
+                    className={`choice-dialog-option${isActive ? " is-active" : ""}${isSelected ? " is-selected" : ""}`}
+                    onClick={() => void handleChoiceSelection(option)}
+                    onMouseEnter={() => setFocusedChoiceIndex(index)}
+                    onFocus={() => setFocusedChoiceIndex(index)}
+                  >
+                    <span className="choice-dialog-option-number">
+                      {index + 1}
+                    </span>
+                    <span className="choice-dialog-option-copy">
+                      <span className="choice-dialog-option-label">{option}</span>
+                    </span>
+                    <span className="choice-dialog-option-arrow" aria-hidden="true">
+                      {">"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="choice-dialog-footer">
+              <div className="choice-dialog-options">
+                <button
+                  type="button"
+                  className="choice-dialog-option choice-dialog-option-secondary"
+                  onClick={handleCustomChoiceToggle}
+                >
+                  {t.type_your_own}
+                </button>
+                <button
+                  type="button"
+                  className="choice-dialog-option choice-dialog-option-ghost"
+                  onClick={() => void handleSkipChoice()}
+                >
+                  {t.skip_choice}
+                </button>
+                {currentChoiceStepIndex >= choiceStepCount - 1 && (
+                  <button
+                    type="button"
+                    className="choice-dialog-option choice-dialog-option-primary"
+                    onClick={() => void finalizeChoiceFlow(choiceAnswers)}
+                  >
+                    {t.choice_finish}
+                  </button>
+                )}
+              </div>
             </div>
             {showCustomChoiceInput && (
               <div className="choice-dialog-custom">
                 <textarea
                   value={customChoiceText}
                   onChange={(event) => setCustomChoiceText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && !event.shiftKey) {
+                      event.preventDefault();
+                      void handleCustomChoiceSubmit();
+                    }
+                  }}
                   placeholder={t.custom_reply_placeholder}
                   rows={3}
                 />
