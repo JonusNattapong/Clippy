@@ -227,7 +227,7 @@ a {
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -279,6 +279,40 @@ a {
   gap: 10px;
   margin-top: 18px;
 }
+
+/* Installer two-column layout */
+.installer-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  margin-top: 10px;
+}
+.installer-left {}
+.installer-right {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+}
+.installer-preview {
+  width: 100%;
+  background: #fffdf8;
+  border: 1px solid var(--header-border);
+  padding: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.installer-mockup-header {
+  font-weight: 800;
+  color: var(--text-main);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.shell-snippets.compact {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.shell-snippet.small { padding: 8px; }
 
 .download-buttons .button {
   display: flex;

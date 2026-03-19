@@ -206,7 +206,7 @@
                 <span
                   id="latest-release-version"
                   style="color: var(--accent-blue)"
-                  >v0.4.4</span
+                  >v0.5.1</span
                 >
               </p>
               <h3 style="font-size: 16px; margin-top: 24px">
@@ -247,23 +247,54 @@
                 later.
               </p>
 
-              <div class="download-buttons">
-                <a id="download-windows-x64" class="button" href="#">
-                  <img src="images/windows.png" alt="Windows" />
-                  <span>Download for Windows</span>
-                </a>
-                <a id="download-macos-arm64" class="button" href="#">
-                  <img src="images/macos.png" alt="macOS" />
-                  <span>macOS (Apple Silicon)</span>
-                </a>
-                <a id="download-linux-deb-x64" class="button" href="#">
-                  <img src="images/linux.png" alt="Linux" />
-                  <span>Linux (Debian/Ubuntu)</span>
-                </a>
-                <a id="download-linux-rpm-x64" class="button" href="#">
-                  <img src="images/linux.png" alt="Linux" />
-                  <span>Linux (RPM)</span>
-                </a>
+              <div class="installer-layout">
+                <div class="installer-left">
+                  <div class="download-buttons">
+                    <a id="download-windows-x64" class="button" href="#">
+                      <img src="images/windows.png" alt="Windows" />
+                      <span>Download for Windows</span>
+                    </a>
+                    <a id="download-macos-arm64" class="button" href="#">
+                      <img src="images/macos.png" alt="macOS" />
+                      <span>macOS (Apple Silicon)</span>
+                    </a>
+                    <a id="download-linux-deb-x64" class="button" href="#">
+                      <img src="images/linux.png" alt="Linux" />
+                      <span>Linux (Debian/Ubuntu)</span>
+                    </a>
+                    <a id="download-linux-rpm-x64" class="button" href="#">
+                      <img src="images/linux.png" alt="Linux" />
+                      <span>Linux (RPM)</span>
+                    </a>
+                  </div>
+
+                  <h4 style="margin-top:18px">Quick One-Line Install</h4>
+                  <div class="shell-snippets compact">
+                    <div class="shell-snippet small">
+                      <div class="shell-snippet-title">Windows (PowerShell)</div>
+                      <pre><code id="install-shell-windows-x64">curl -L -o Clippy-setup.exe https://example.com/Clippy-latest.exe; Start-Process .\Clippy-setup.exe</code></pre>
+                    </div>
+                    <div class="shell-snippet small">
+                      <div class="shell-snippet-title">macOS</div>
+                      <pre><code id="install-shell-macos-arm64">curl -L https://example.com/Clippy-macos.dmg -o Clippy.dmg</code></pre>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="installer-right">
+                  <div class="installer-preview">
+                    <div class="installer-mockup-header">Installer Wizard — Preview</div>
+                    <div class="installer-mockup-body">
+                      <img src="images/diagram_install_sketch.png" alt="Installer Preview" style="width:100%; max-width:420px; display:block; margin:0 auto; border-radius:6px; border:1px solid rgba(0,0,0,0.06)" />
+                      <ol style="margin-top:12px; font-size:14px">
+                        <li>Select installation type (Typical / Custom)</li>
+                        <li>Choose install directory</li>
+                        <li>Configure initial settings (provider, TTS)</li>
+                        <li>Finish and launch Clippy</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <h3 style="font-size: 16px; margin-top: 28px">
@@ -274,7 +305,7 @@
                 shown above.
               </p>
 
-              <div class="shell-snippets">
+              <div class="shell-snippets" style="margin-top:18px">
                 <div class="shell-snippet">
                   <div class="shell-snippet-title">Linux (Debian/Ubuntu)</div>
                   <pre><code id="install-shell-linux-deb">Loading latest Debian install command...</code></pre>
@@ -345,7 +376,7 @@
             </p>
             <h3 style="font-size: 16px; margin-top: 24px">Prerequisites</h3>
             <ul>
-              <li>Node.js (>=18)</li>
+              <li>Node.js (>=20)</li>
               <li>npm or pnpm</li>
               <li>Operating system: Windows/macOS/Linux</li>
             </ul>
@@ -676,6 +707,16 @@ npm run start</code></pre>
                 display: block;
               "
             />
+            <h3 style="font-size: 16px; margin-top: 24px">v0.5.1</h3>
+            <ul>
+              <li>Auto cover image generation for GitHub Releases</li>
+              <li>Improved provider and streaming system</li>
+              <li>Skills/Plugin system with registry and status checking</li>
+              <li>In-page documentation windows (iframe) instead of popups</li>
+              <li>TTS/Voice improvements with voice-to-text confirmation</li>
+              <li>IPC/Preload updates for Ollama and Skill status checking</li>
+            </ul>
+
             <h3 style="font-size: 16px; margin-top: 24px">v0.4.4</h3>
             <ul>
               <li>Modular Skills/Plugins system</li>

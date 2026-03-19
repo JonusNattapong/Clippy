@@ -1,7 +1,7 @@
 {
   "name": "clippy",
   "productName": "Clippy",
-  "version": "0.4.4",
+  "version": "0.5.1",
   "description": "Clippy",
   "main": ".vite/build/main.js",
   "scripts": {
