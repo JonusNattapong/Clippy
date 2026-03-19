@@ -5,13 +5,14 @@ export type BubbleView =
   | "chat"
   | "chats"
   | "settings"
-  | "settings-general"
+  | "settings-appearance"
   | "settings-model"
   | "settings-parameters"
   | "settings-advanced"
   | "settings-about"
   | "settings-memory"
   | "settings-identity"
+  | "settings-tts"
   | "settings-aboutYou";
 
 type BubbleViewContextType = {

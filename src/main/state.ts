@@ -30,6 +30,8 @@ function resolveDefaultApiKey(provider: ApiProvider): string {
       return process.env.ANTHROPIC_API_KEY || "";
     case "openrouter":
       return process.env.OPENROUTER_API_KEY || "";
+    case "kilo":
+      return process.env.KILO_API_KEY || "";
     case "ollama":
       return ""; // Ollama doesn't need an API key (runs locally)
     case "gemini":

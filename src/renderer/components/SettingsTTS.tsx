@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { clippyApi } from "../clippyApi";
 import { Checkbox } from "./Checkbox";
-import { useTranslation } from "../contexts/SharedStateContext";
+import { useSharedState, useTranslation } from "../contexts/SharedStateContext";
 
 const VOICE_OPTIONS = [
   {
@@ -60,24 +60,23 @@ const RATE_OPTIONS = [
 ];
 
 export const SettingsTTS: React.FC = () => {
+  const { settings } = useSharedState();
   const t = useTranslation();
   const [ttsVoice, setTtsVoice] = useState("th-TH-PremwadeeNeural");
   const [ttsRate, setTtsRate] = useState("+0%");
-  const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [ttsEnabled, setTtsEnabled] = useState(false);
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
 
   useEffect(() => {
-    const loadSettings = async () => {
-      const voice = await clippyApi.getState("settings.ttsVoice");
-      const rate = await clippyApi.getState("settings.ttsRate");
-      const enabled = await clippyApi.getState("settings.ttsEnabled");
-      if (voice) setTtsVoice(voice);
-      if (rate) setTtsRate(rate);
-      if (enabled !== undefined) setTtsEnabled(enabled);
-    };
-    loadSettings();
-  }, []);
+    if (settings.ttsVoice) setTtsVoice(settings.ttsVoice);
+    else setTtsVoice("th-TH-PremwadeeNeural");
+
+    if (settings.ttsRate) setTtsRate(settings.ttsRate);
+    else setTtsRate("+0%");
+
+    setTtsEnabled(settings.ttsEnabled ?? false);
+  }, [settings.ttsEnabled, settings.ttsRate, settings.ttsVoice]);
 
   const handleSave = async () => {
     await clippyApi.setState("settings.ttsVoice", ttsVoice);
@@ -90,7 +89,21 @@ export const SettingsTTS: React.FC = () => {
   const handleTest = async () => {
     setTesting(true);
     try {
-      const testText = "สวัสดีครับ! นี่คือการทดสอบเสียงพูดภาษาไทย";
+      const testText = (() => {
+        if (ttsVoice.startsWith("en-")) {
+          return "Hello! This is a quick voice preview for Clippy.";
+        }
+        if (ttsVoice.startsWith("ja-")) {
+          return "こんにちは。これは Clippy の音声プレビューです。";
+        }
+        if (ttsVoice.startsWith("ko-")) {
+          return "안녕하세요. 이것은 클리피 음성 미리보기입니다.";
+        }
+        if (ttsVoice.startsWith("zh-")) {
+          return "你好，这是 Clippy 的语音预览。";
+        }
+        return "สวัสดีครับ นี่คือตัวอย่างเสียงของ Clippy";
+      })();
       await clippyApi.ttsSpeak(testText, ttsVoice);
     } catch (error) {
       console.error("TTS Test Error:", error);

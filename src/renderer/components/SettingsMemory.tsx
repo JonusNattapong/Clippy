@@ -687,9 +687,9 @@ export const SettingsMemory: React.FC = () => {
         <div className="field-row" style={{ marginBottom: "10px" }}>
           <input
             type="text"
-            placeholder={t.search_memories}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t.search_memories}
             style={{ flex: 1 }}
           />
         </div>

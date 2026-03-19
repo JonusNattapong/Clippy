@@ -24,23 +24,17 @@ export const SettingsModel: React.FC = () => {
   const { settings } = useSharedState();
   const t = useTranslation();
 
-  const [useGeminiApi, setUseGeminiApi] = useState(
-    settings.useGeminiApi ?? true,
-  );
-  // When useGeminiApi is true, we show cloud provider selection
-  // When false, we use Ollama (local provider)
+  const [useHostedAi, setUseHostedAi] = useState(settings.useGeminiApi ?? true);
   const [apiProvider, setApiProvider] = useState(
-    // If useGeminiApi is false, we force Ollama
-    useGeminiApi ? settings.apiProvider || "gemini" : "ollama",
+    useHostedAi ? settings.apiProvider || "gemini" : "ollama",
   );
   const [apiKey, setApiKey] = useState(
-    // For Ollama, we don't use the API key field (but we still store it in state for consistency)
     settings.apiKey || settings.geminiApiKey || "",
   );
   const [apiModel, setApiModel] = useState(
     settings.apiModel ||
       API_PROVIDER_DEFAULT_MODELS[
-        useGeminiApi ? settings.apiProvider || "gemini" : "ollama"
+        useHostedAi ? settings.apiProvider || "gemini" : "ollama"
       ],
   );
   const [saved, setSaved] = useState(false);
@@ -61,9 +55,8 @@ export const SettingsModel: React.FC = () => {
   const [skillStatusFilter, setSkillStatusFilter] = useState<
     "all" | "loaded" | "unloaded" | "error"
   >("all");
-  // Ollama detection
   const [ollamaHost, setOllamaHost] = useState<string>(
-    (settings as any).ollamaHost ||
+    settings.ollamaHost ||
       (typeof process !== "undefined"
         ? (process.env as any)?.OLLAMA_HOST
         : undefined) ||
@@ -86,18 +79,26 @@ export const SettingsModel: React.FC = () => {
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsList, setModelsList] = useState<string[] | null>(null);
   useEffect(() => {
-    // Sync with settings
-    setUseGeminiApi(settings.useGeminiApi ?? true);
-    // When useGeminiApi is false, we ignore the saved apiProvider and use Ollama
-    setApiProvider(useGeminiApi ? settings.apiProvider || "gemini" : "ollama");
+    const nextUseHostedAi = settings.useGeminiApi ?? true;
+    setUseHostedAi(nextUseHostedAi);
+    setApiProvider(
+      nextUseHostedAi ? settings.apiProvider || "gemini" : "ollama",
+    );
     setApiKey(settings.apiKey || settings.geminiApiKey || "");
     setApiModel(
       settings.apiModel ||
         API_PROVIDER_DEFAULT_MODELS[
-          useGeminiApi ? settings.apiProvider || "gemini" : "ollama"
+          nextUseHostedAi ? settings.apiProvider || "gemini" : "ollama"
         ],
     );
-  }, [settings, useGeminiApi]); // Added useGeminiApi to dependencies
+    setOllamaHost(
+      settings.ollamaHost ||
+        (typeof process !== "undefined"
+          ? (process.env as any)?.OLLAMA_HOST
+          : undefined) ||
+        "http://localhost:11434",
+    );
+  }, [settings]);
 
   useEffect(() => {
     // Fetch skills status on mount
@@ -124,7 +125,7 @@ export const SettingsModel: React.FC = () => {
 
   // Auto-fetch models when provider or API key changes
   useEffect(() => {
-    const currentProvider = useGeminiApi ? apiProvider : "ollama";
+    const currentProvider = useHostedAi ? apiProvider : "ollama";
     const hasApiKey = apiKey.trim().length > 0;
     const isLocalProvider = currentProvider === "ollama";
 
@@ -141,7 +142,7 @@ export const SettingsModel: React.FC = () => {
         let res: { ok: boolean; models?: string[]; message?: string } | null =
           null;
         if (isLocalProvider) {
-          res = await clippyApi.getOllamaModels();
+          res = await clippyApi.getOllamaModels(ollamaHost);
         } else {
           res = await clippyApi.listProviderModels(currentProvider, { apiKey });
         }
@@ -170,7 +171,7 @@ export const SettingsModel: React.FC = () => {
       mounted = false;
       clearTimeout(timeout);
     };
-  }, [apiProvider, apiKey, ollamaHost, useGeminiApi]);
+  }, [apiProvider, apiKey, ollamaHost, useHostedAi]);
 
   useEffect(() => {
     // Auto-check Ollama on mount or when saved host changes
@@ -198,10 +199,10 @@ export const SettingsModel: React.FC = () => {
   const hasApiKey = !!apiKey.trim();
 
   const handleSave = useCallback(async () => {
-    // For Ollama, we don't validate the API key (it's not required)
-    const validation = useGeminiApi
+    const normalizedOllamaHost = ollamaHost.trim() || "http://localhost:11434";
+    const validation = useHostedAi
       ? validateApiConfiguration(apiProvider, apiKey, apiModel)
-      : { isValid: true }; // Ollama doesn't need API key validation
+      : { isValid: true };
     if (!validation.isValid) {
       setValidationMessage(
         !apiModel.trim()
@@ -211,18 +212,18 @@ export const SettingsModel: React.FC = () => {
       return;
     }
 
-    // When useGeminiApi is false, we are using Ollama so we save the provider as ollama
-    await clippyApi.setState("settings.useGeminiApi", useGeminiApi);
+    await clippyApi.setState("settings.useGeminiApi", useHostedAi);
     await clippyApi.setState(
       "settings.apiProvider",
-      useGeminiApi ? apiProvider : "ollama",
+      useHostedAi ? apiProvider : "ollama",
     );
     await clippyApi.setState("settings.apiKey", apiKey);
-    // For gemini provider, we also save to geminiApiKey for backward compatibility
-    if (useGeminiApi && apiProvider === "gemini") {
+    await clippyApi.setState("settings.ollamaHost", normalizedOllamaHost);
+    if (useHostedAi && apiProvider === "gemini") {
       await clippyApi.setState("settings.geminiApiKey", apiKey);
     }
     await clippyApi.setState("settings.apiModel", apiModel);
+    setOllamaHost(normalizedOllamaHost);
     setValidationMessage("");
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -230,16 +231,16 @@ export const SettingsModel: React.FC = () => {
     apiKey,
     apiModel,
     apiProvider,
+    ollamaHost,
     t.validation_api_invalid,
     t.validation_model_required,
-    useGeminiApi,
+    useHostedAi,
   ]);
 
   const handleProviderChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
-    // Only change provider if useGeminiApi is true (cloud provider selected)
-    if (useGeminiApi) {
+    if (useHostedAi) {
       const nextProvider = event.target.value as ApiProvider;
       setApiProvider(nextProvider);
       if (!apiModel || apiModel === API_PROVIDER_DEFAULT_MODELS[apiProvider]) {
@@ -250,7 +251,7 @@ export const SettingsModel: React.FC = () => {
 
   const handleUseDefaultModel = () => {
     setApiModel(
-      API_PROVIDER_DEFAULT_MODELS[useGeminiApi ? apiProvider : "ollama"],
+      API_PROVIDER_DEFAULT_MODELS[useHostedAi ? apiProvider : "ollama"],
     );
   };
 
@@ -286,12 +287,11 @@ export const SettingsModel: React.FC = () => {
         <Checkbox
           id="useGeminiApi"
           label={t.use_hosted_ai}
-          checked={useGeminiApi}
-          onChange={(checked) => setUseGeminiApi(checked)}
+          checked={useHostedAi}
+          onChange={(checked) => setUseHostedAi(checked)}
         />
 
-        {/* When using cloud AI provider, show provider selection */}
-        {useGeminiApi && (
+        {useHostedAi && (
           <div className="field-row" style={{ marginTop: 15 }}>
             <label htmlFor="apiProvider" style={{ width: 100 }}>
               {t.provider}:
@@ -310,7 +310,35 @@ export const SettingsModel: React.FC = () => {
           </div>
         )}
 
-        {/* API key input - disabled when using Ollama (local provider) */}
+        {!useHostedAi && (
+          <div className="field-row-stacked" style={{ marginTop: 15 }}>
+            <label
+              htmlFor="ollamaHost"
+              style={{ display: "block", marginBottom: 5 }}
+            >
+              Ollama Host:
+            </label>
+            <input
+              id="ollamaHost"
+              type="url"
+              style={{ width: "100%" }}
+              value={ollamaHost}
+              placeholder="http://localhost:11434"
+              onChange={(e) => setOllamaHost(e.target.value)}
+            />
+            <p style={{ fontSize: "11px", marginTop: 8, opacity: 0.8 }}>
+              Use this when Ollama runs on another machine or a custom port.
+            </p>
+            <p style={{ fontSize: "11px", marginTop: 4, opacity: 0.85 }}>
+              {ollamaChecking
+                ? "Checking Ollama connection..."
+                : ollamaInfo?.ok
+                  ? "Ollama is reachable."
+                  : ollamaInfo?.message || "Unable to reach Ollama yet."}
+            </p>
+          </div>
+        )}
+
         <div className="field-row-stacked" style={{ marginTop: 15 }}>
           <label htmlFor="apiKey" style={{ display: "block", marginBottom: 5 }}>
             {t.api_key}:
@@ -323,9 +351,9 @@ export const SettingsModel: React.FC = () => {
             }}
             value={apiKey}
             placeholder={getProviderKeyPlaceholder(
-              useGeminiApi ? apiProvider : "ollama",
+              useHostedAi ? apiProvider : "ollama",
             )}
-            disabled={!useGeminiApi} // Disabled when using Ollama (local provider)
+            disabled={!useHostedAi}
             onChange={(e) => setApiKey(e.target.value)}
           />
           <div
@@ -337,14 +365,14 @@ export const SettingsModel: React.FC = () => {
             }}
           >
             <span style={{ fontSize: "11px", opacity: 0.85 }}>
-              {hasApiKey ? t.key_saved : t.no_key_saved}
+              {useHostedAi
+                ? hasApiKey
+                  ? t.key_saved
+                  : t.no_key_saved
+                : "Local Ollama does not need an API key."}
             </span>
-            {hasApiKey && (
-              <button
-                type="button"
-                disabled={!useGeminiApi} // Only allow clearing when not using Ollama
-                onClick={() => setApiKey("")}
-              >
+            {useHostedAi && hasApiKey && (
+              <button type="button" onClick={() => setApiKey("")}>
                 {t.clear_key}
               </button>
             )}
@@ -370,7 +398,7 @@ export const SettingsModel: React.FC = () => {
               setTestResult(null);
               try {
                 const res = await clippyApi.testProviderConnection(
-                  useGeminiApi ? apiProvider : "ollama",
+                  useHostedAi ? apiProvider : "ollama",
                   { host: ollamaHost, apiKey },
                 );
                 setTestResult(res);
@@ -394,7 +422,7 @@ export const SettingsModel: React.FC = () => {
               setModelsList(null);
               try {
                 const res = await clippyApi.listProviderModels(
-                  useGeminiApi ? apiProvider : "ollama",
+                  useHostedAi ? apiProvider : "ollama",
                   { host: ollamaHost, apiKey },
                 );
                 if (res && res.ok && Array.isArray(res.models)) {
@@ -451,7 +479,7 @@ export const SettingsModel: React.FC = () => {
             }}
             value={apiModel}
             placeholder={
-              API_PROVIDER_DEFAULT_MODELS[useGeminiApi ? apiProvider : "ollama"]
+              API_PROVIDER_DEFAULT_MODELS[useHostedAi ? apiProvider : "ollama"]
             }
             onChange={(e) => setApiModel(e.target.value)}
           />
@@ -482,13 +510,13 @@ export const SettingsModel: React.FC = () => {
                 onChange={(e) => setApiModel(e.target.value)}
                 style={{ width: "100%" }}
               >
-                {API_PROVIDER_MODELS[
-                  useGeminiApi ? apiProvider : "ollama"
-                ]?.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
+                {API_PROVIDER_MODELS[useHostedAi ? apiProvider : "ollama"]?.map(
+                  (m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ),
+                )}
               </select>
             </div>
           )}
@@ -499,11 +527,11 @@ export const SettingsModel: React.FC = () => {
           </div>
           <p style={{ fontSize: "11px", marginTop: 8, opacity: 0.8 }}>
             {t.default_for}{" "}
-            {useGeminiApi ? API_PROVIDER_LABELS[apiProvider] : "Ollama"}:{" "}
+            {useHostedAi ? API_PROVIDER_LABELS[apiProvider] : "Ollama"}:{" "}
             <code>
               {
                 API_PROVIDER_DEFAULT_MODELS[
-                  useGeminiApi ? apiProvider : "ollama"
+                  useHostedAi ? apiProvider : "ollama"
                 ]
               }
             </code>

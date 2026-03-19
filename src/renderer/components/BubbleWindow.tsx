@@ -7,7 +7,6 @@ import { useBubbleView } from "../contexts/BubbleViewContext";
 import { Chats } from "./Chats";
 import { useSharedState, useTranslation } from "../contexts/SharedStateContext";
 import { FirstRunSetup } from "./FirstRunSetup";
-import { getMoodLabel } from "../helpers/mood-labels";
 
 export function Bubble() {
   const { currentView, setCurrentView } = useBubbleView();
@@ -16,7 +15,6 @@ export function Bubble() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isTodoListOpen, setIsTodoListOpen] = useState(false);
   const [pendingMemoryCount, setPendingMemoryCount] = useState(0);
-  const moodLabel = getMoodLabel(settings.clippyMood || "calm", t);
   const todoItems = settings.todoItems || [];
   const pendingTodoCount = todoItems.filter(
     (todoItem) => !todoItem.completed,
@@ -162,6 +160,49 @@ export function Bubble() {
               {t.settings}
             </button>
           )}
+          {!isFirstRun && (
+            <button
+              type="button"
+              className="title-action-button"
+              onClick={async () => {
+                // Toggle TTS on/off
+                const currentTtsEnabled = settings.ttsEnabled;
+                const newTtsEnabled = !currentTtsEnabled;
+                console.log(
+                  "TTS toggle clicked, current:",
+                  currentTtsEnabled,
+                  "new:",
+                  newTtsEnabled,
+                );
+                console.log("Settings object:", settings);
+                try {
+                  await clippyApi.setState(
+                    "settings.ttsEnabled",
+                    newTtsEnabled,
+                  );
+                  console.log("TTS state saved successfully");
+
+                  // Force refresh the settings by triggering a state update
+                  setTimeout(() => {
+                    console.log("Checking if state updated...");
+                  }, 100);
+                } catch (error) {
+                  console.error("Failed to save TTS state:", error);
+                }
+              }}
+              style={{
+                backgroundColor: settings.ttsEnabled ? "#5cb85c" : undefined,
+                color: settings.ttsEnabled ? "white" : undefined,
+              }}
+              title={
+                settings.ttsEnabled
+                  ? "TTS เปิดอยู่ (คลิกเพื่อปิด)"
+                  : "TTS ปิดอยู่ (คลิกเพื่อเปิด)"
+              }
+            >
+              🔊
+            </button>
+          )}
           <button
             type="button"
             aria-label="Minimize"
@@ -192,42 +233,6 @@ export function Bubble() {
           </button>
         </div>
       </div>
-      {!isFirstRun && (
-        <div className="stats-bar">
-          <div className="stat-item">
-            <span>{t.bond}:</span>
-            <div className="stat-progress">
-              <div
-                className="stat-fill bond-fill"
-                style={{ width: `${settings.bondLevel}%` }}
-              />
-            </div>
-          </div>
-          <div className="stat-item">
-            <span>{t.joy}:</span>
-            <div className="stat-progress">
-              <div
-                className="stat-fill joy-fill"
-                style={{ width: `${settings.happiness}%` }}
-              />
-            </div>
-          </div>
-          <div className="stat-item stat-item-mood">
-            <span>{t.current_mood}:</span>
-            <div className="mood-badge">
-              {moodLabel}
-              <small>
-                {" "}
-                {settings.clippyResponseStyle === "gentle"
-                  ? t.response_gentle
-                  : settings.clippyResponseStyle === "energetic"
-                    ? t.response_energetic
-                    : t.response_balanced}
-              </small>
-            </div>
-          </div>
-        </div>
-      )}
       <div
         className="window-content"
         style={currentView === "chat" ? { minHeight: 0 } : {}}

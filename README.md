@@ -12,12 +12,12 @@ Clippy brings back the 90s office assistant as a modern AI desktop companion.
 
 ## Summary
 
-Clippy is a desktop app inspired by Microsoft Clippy, reimagined as a modern AI assistant. Built with Electron, React and TypeScript, it connects to LLM providers (Gemini, OpenAI, Anthropic, OpenRouter, and Ollama) via API.
+Clippy is a desktop app inspired by Microsoft Clippy, reimagined as a modern AI assistant. Built with Electron, React and TypeScript, it connects to LLM providers (Gemini, OpenAI, Anthropic, OpenRouter, Ollama, and Local LLM via node-llama-cpp) via API.
 
 ## Features
 
 - **Local persistent memory** - Conversations and memories stored locally
-- **Multiple AI providers** - Gemini, OpenAI, Anthropic, OpenRouter, **Ollama (local)**
+- **Multiple AI providers** - Gemini, OpenAI, Anthropic, OpenRouter, **Ollama (local)**, **Local LLM (node-llama-cpp)**
 - **Skills/Plugins System** - Modular plugin architecture for extending capabilities
 - **Desktop commands** - Execute PowerShell commands, search files, take screenshots
 - **Web search** - Search the web using Tavily API
@@ -32,6 +32,7 @@ Clippy is a desktop app inspired by Microsoft Clippy, reimagined as a modern AI 
 - Node.js >= 18
 - npm or pnpm
 - For Ollama provider: Ollama installed and running (https://ollama.ai) with a model pulled (e.g., `ollama pull llama3.2`)
+- For Local LLM provider: GGUF model files downloaded to `%APPDATA%\Clippy\models\` (Windows) or `~/Library/Application Support/Clippy/models/` (macOS)
 
 ## Quick Start (Developer)
 
@@ -41,9 +42,7 @@ cd Clippy
 npm ci
 cp .env.example .env
 # Edit .env to add API keys for cloud providers (GEMINI_API_KEY, OPENAI_API_KEY, ANTHROPIC_API_KEY, OPENROUTER_API_KEY)
-# For Ollama (local), no API key is needed, but you must have Ollama installed and a model pulled (e.g., `ollama pull llama3.2`)
-npm run start
-```
+# For Oll
 
 ## Quick Install
 

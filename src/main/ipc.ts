@@ -340,10 +340,13 @@ export function setupIpcListeners() {
     return checkOllama(hostOverride);
   });
 
-  // Get Ollama models using ollama list CLI
-  ipcMain.handle(IpcMessages.GET_OLLAMA_MODELS, async () => {
-    return getOllamaModels();
-  });
+  // Get Ollama models from the configured Ollama host
+  ipcMain.handle(
+    IpcMessages.GET_OLLAMA_MODELS,
+    async (_, hostOverride?: string) => {
+      return getOllamaModels(hostOverride);
+    },
+  );
 
   // Test generic provider connection (openai, openrouter, ollama)
   ipcMain.handle(

@@ -235,7 +235,7 @@ export type ClippyApi = {
   ttsSpeakThai: (text: string) => Promise<string>;
   // Provider helpers
   checkOllama: (host?: string) => Promise<OllamaCheckResult>;
-  getOllamaModels: () => Promise<OllamaCheckResult>;
+  getOllamaModels: (host?: string) => Promise<OllamaCheckResult>;
   testProviderConnection: (
     provider: string,
     opts?: { host?: string; apiUrl?: string; apiKey?: string },

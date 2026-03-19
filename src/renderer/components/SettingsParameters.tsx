@@ -22,15 +22,21 @@ export const SettingsParameters: React.FC = () => {
   }, [settings.systemPrompt, settings.topK, settings.temperature]);
 
   const handleSave = useCallback(async () => {
-    await clippyApi.setState("settings", {
-      ...settings,
-      systemPrompt: tempSystemPrompt,
-      topK: tempTopK,
-      temperature: tempTemperature,
-    });
+    const normalizedTopK =
+      Number.isFinite(tempTopK) && tempTopK > 0 ? tempTopK : 10;
+    const normalizedTemperature =
+      Number.isFinite(tempTemperature) && tempTemperature >= 0
+        ? Math.min(tempTemperature, 2)
+        : 0.7;
+
+    await clippyApi.setState("settings.systemPrompt", tempSystemPrompt);
+    await clippyApi.setState("settings.topK", normalizedTopK);
+    await clippyApi.setState("settings.temperature", normalizedTemperature);
+    setTempTopK(normalizedTopK);
+    setTempTemperature(normalizedTemperature);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  }, [settings, tempSystemPrompt, tempTopK, tempTemperature]);
+  }, [tempSystemPrompt, tempTopK, tempTemperature]);
 
   const handleSystemPromptReset = useCallback(() => {
     const confirmed = window.confirm(t.confirm_reset_prompt);
@@ -96,11 +102,11 @@ export const SettingsParameters: React.FC = () => {
         }}
       >
         <button type="button" onClick={handleSave}>
-          {saved ? "Saved!" : "Save Changes"}
+          {saved ? t.saved : t.save_changes}
         </button>
         {saved && (
           <span style={{ color: "#5cb85c", fontSize: "14px" }}>
-            Settings saved successfully!
+            {t.settings_saved_successfully}
           </span>
         )}
       </div>

@@ -6,7 +6,8 @@ export type ApiProvider =
   | "anthropic"
   | "openrouter"
   | "ollama"
-  | "kilo";
+  | "kilo"
+  | "local";
 export type PowerShellMode = "safe" | "full";
 
 export type DefaultFont =
@@ -89,6 +90,7 @@ export interface SettingsState {
   apiModel: string;
   useGeminiApi: boolean;
   geminiApiKey: string;
+  ollamaHost?: string;
   tavilyApiKey?: string;
   telegramNotificationsEnabled?: boolean;
   telegramBotToken?: string;
@@ -127,6 +129,7 @@ export const API_PROVIDER_DEFAULT_MODELS: Record<ApiProvider, string> = {
   openrouter: "openai/gpt-4o-mini",
   ollama: "llama3.2:latest",
   kilo: "anthropic/claude-sonnet-4.5",
+  local: "llama-3.2-3b-instruct",
 };
 
 export const API_PROVIDER_LABELS: Record<ApiProvider, string> = {
@@ -136,6 +139,7 @@ export const API_PROVIDER_LABELS: Record<ApiProvider, string> = {
   openrouter: "OpenRouter",
   ollama: "Ollama",
   kilo: "Kilo AI Gateway",
+  local: "Local LLM (GGUF)",
 };
 
 export const API_PROVIDER_MODELS: Record<ApiProvider, string[]> = {
@@ -285,6 +289,29 @@ export const API_PROVIDER_MODELS: Record<ApiProvider, string[]> = {
     "kilo-auto/frontier",
     "kilo-auto/balanced",
     "kilo-auto/free",
+  ],
+  local: [
+    // Meta Llama
+    "llama-3.2-3b-instruct",
+    "llama-3.1-8b-instruct",
+    "llama-3.1-70b-instruct",
+    // Qwen
+    "qwen2.5-7b-instruct",
+    "qwen2.5-14b-instruct",
+    "qwen2.5-32b-instruct",
+    // Google Gemma
+    "gemma-2-2b-it",
+    "gemma-2-9b-it",
+    "gemma-2-27b-it",
+    // Microsoft Phi
+    "phi-3.5-mini-instruct",
+    "phi-4",
+    // Mistral
+    "mistral-7b-instruct",
+    "mixtral-8x7b-instruct",
+    // DeepSeek
+    "deepseek-coder-v2-lite",
+    "deepseek-r1-distill-7b",
   ],
 };
 
@@ -597,50 +624,44 @@ Always start your message with an animation tag in [brackets] that matches the e
 ### 💖 Bonding
 Be supportive, empathetic, and use a friendly Thai tone. You are more than a tool; you are a companion.
 
-### 🔧 Desktop Tools (via PowerShell)
-You can help your friend with their computer using PowerShell commands through the \`run_command\` tool!
+### 🔧 Desktop Tools
+When you need to inspect the computer or perform a desktop action, use TOOL_CALL tags in this exact format:
+\`\`\`[TOOL_CALL: tool_name | arg=value]\`\`\`
+For tools with no arguments, still include the pipe:
+\`\`\`[TOOL_CALL: get_system_info | ]\`\`\`
 
-**Just use run_command with PowerShell - the AI will figure out the right commands!**
+Prefer the safest specific tool first. Use \`run_command\` only when no safer built-in tool fits and the user explicitly wants a PowerShell action.
 
-**Examples:**
-- "เปิด Calculator" → run_command("Start-Process calc")
-- "ดูสเปคเครื่อง" → run_command("Get-ComputerInfo | Select-Object CsName, OsName, OsVersion, CsNumberOfProcessors, CsTotalPhysicalMemory")
-- "ดู process ที่รันอยู่" → run_command("Get-Process | Select-Object -First 20 Name, Id, CPU")
-- "ถ่ายหน้าจอ" → run_command("Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.Screen]::PrimaryScreen")
-- "ปรับเสียง" → run_command("(New-Object -ComObject WScript.Shell).SendKeys([char]173)")  
-- "restart เครื่อง" → run_command("Restart-Computer -Force")
-- "หาไฟล์" → run_command("Get-ChildItem -Path $env:USERPROFILE -Recurse -Filter '*report*' | Select-Object -First 20 FullName")
-- "ดู IP address" → run_command("Get-NetIPAddress")
-- "list ไฟล์ใน Desktop" → run_command("Get-ChildItem -Path $env:USERPROFILE\\Desktop")
-- "อ่านไฟล์" → run_command("Get-Content 'C:\\path\\to\\file.txt'")
-- "เขียนไฟล์" → run_command("Set-Content -Path 'C:\\path\\to\\file.txt' -Value 'Hello World'")
-- "copy ไฟล์" → run_command("Copy-Item -Path 'source.txt' -Destination 'backup.txt'")
-- "ลบไฟล์" → run_command("Remove-Item -Path 'file.txt' -Force")
-- "ดู clipboard" → run_command("Get-Clipboard")
-- "ส่ง notification" → run_command('[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]')
-- "ปิด program" → run_command("Stop-Process -Name notepad -Force")
-- "เปิด folder" → run_command("explorer.exe 'C:\\Users'")
-- "download file" → run_command("Invoke-WebRequest -Uri 'https://example.com/file.zip' -OutFile 'file.zip'")
-
-**Tip:** PowerShell is super powerful! You can do almost anything with it.
+**Common desktop tools:**
+- ดูสเปคเครื่อง → \`[TOOL_CALL: get_system_info | ]\`
+- ดู process ที่รันอยู่ → \`[TOOL_CALL: list_processes | limit=20]\`
+- ดู clipboard → \`[TOOL_CALL: clipboard_read | ]\`
+- list ไฟล์ในโฟลเดอร์ → \`[TOOL_CALL: list_directory | path=C:\\Users]\`
+- หาไฟล์ → \`[TOOL_CALL: search_files | query=report]\`
+- อ่านไฟล์ → \`[TOOL_CALL: read_file | path=C:\\path\\to\\file.txt]\`
+- ถ่าย screenshot → \`[TOOL_CALL: take_screenshot | name=desktop]\`
+- เปิดเว็บ → \`[TOOL_CALL: open_url | url=https://example.com]\`
+- เปิดแอป → \`[TOOL_CALL: open_app | name=calculator]\`
+- ใช้ PowerShell แบบเฉพาะเจาะจง → \`[TOOL_CALL: run_command | command=Get-Date]\`
 
 **Important:**
-- Only use run_command when the user explicitly asks
-- Explain what you're doing before running commands
-- If a command fails, apologize and explain the issue
+- If the user asks for current machine info, files, clipboard, or processes, call the relevant tool instead of only describing what you would do
+- Do not invent tool results
+- Do not expose TOOL_CALL tags outside the reply body beyond the exact tag syntax above
+- If a tool fails, explain the failure plainly and suggest the next step
 
 ### 🌐 Web Search
-When you need up-to-date information or don't know something, use web search! (Requires Tavily API key in Settings)
+When you need up-to-date information or don't know something, use TOOL_CALL tags for web tools. (Requires Tavily API key in Settings)
 
 **Available Tools:**
-- \`web_search(query, numResults?)\` - Search the web and get AI-generated answer
-- \`fetch_url(url)\` - Get content from a specific webpage
+- \`[TOOL_CALL: web_search | query=ข่าวล่าสุด, num_results=5]\` - Search the web and get results
+- \`[TOOL_CALL: fetch_url | url=https://example.com]\` - Get content from a specific webpage
 
 **Examples:**
-- "ข่าววันนี้" → web_search("ข่าวล่าสุด", 5)
-- "แมวมีกี่ชนิด" → web_search("how many cat species are there", 5)
-- "ดูเนื้อหาจากเว็บนี้" → fetch_url("https://example.com")
-- "หาข้อมูลเกี่ยวกับ Python" → web_search("Python programming language info", 5)
+- "ข่าววันนี้" → \`[TOOL_CALL: web_search | query=ข่าวล่าสุด, num_results=5]\`
+- "แมวมีกี่ชนิด" → \`[TOOL_CALL: web_search | query=how many cat species are there, num_results=5]\`
+- "ดูเนื้อหาจากเว็บนี้" → \`[TOOL_CALL: fetch_url | url=https://example.com]\`
+- "หาข้อมูลเกี่ยวกับ Python" → \`[TOOL_CALL: web_search | query=Python programming language info, num_results=5]\`
 
 **Note:** If Tavily API key is not configured, tell the user to add it in Settings.
 

@@ -1,12 +1,31 @@
-import "dotenv/config";
+import path from "path";
+import fs from "fs";
+import { app, BrowserWindow, session } from "electron";
 import { shouldQuit } from "./squirrel-startup";
 import { getLogger } from "./logger";
+
+// Load environment variables from .env file
+const envPath = path.resolve(app.getAppPath(), ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf8");
+  for (const line of envContent.split("\n")) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx > 0) {
+        const key = trimmed.substring(0, eqIdx);
+        const value = trimmed.substring(eqIdx + 1);
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
+      }
+    }
+  }
+}
 
 if (shouldQuit) {
   app.quit();
 }
-
-import { app, BrowserWindow, session } from "electron";
 import { setupIpcListeners } from "./ipc";
 import { createMainWindow, setupWindowListener } from "./windows";
 import { setupAutoUpdater } from "./update";

@@ -257,15 +257,8 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
           }
         }
 
-        const assistantMessage: Message = {
-          id: crypto.randomUUID(),
-          content:
-            finalContent ||
-            choicePrompt?.prompt ||
-            (todoAdds.length > 0 ? t.todo_added : ""),
-          sender: "clippy",
-          createdAt: Date.now(),
-        };
+        const assistantMessageId = crypto.randomUUID();
+        const toolOutputs: string[] = [];
 
         if (memoryUpdate) {
           try {
@@ -275,7 +268,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
                 category: memoryUpdate.category as any,
                 importance: memoryUpdate.importance,
               },
-              assistantMessage.id,
+              assistantMessageId,
               {
                 autoApprove: settings.memoryAutoApprove ?? false,
               },
@@ -308,6 +301,12 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
 
               console.log(`[Tool] ${toolCall.tool}:`, result);
 
+              toolOutputs.push(
+                result.success
+                  ? (result.output || `${toolCall.tool} completed.`).trim()
+                  : `Tool error (${toolCall.tool}): ${(result.error || "Unknown error").trim()}`,
+              );
+
               const toolSummary = result.success
                 ? `Action success: ${toolCall.tool} ${JSON.stringify(toolCall.args)} -> ${(result.output || "success").slice(0, 240)}`
                 : `Action result: ${toolCall.tool} ${JSON.stringify(toolCall.args)} -> ${(result.error || "failed").slice(0, 240)}`;
@@ -318,7 +317,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
                   args: toolCall.args,
                   success: result.success,
                   summary: toolSummary,
-                  source: assistantMessage.id,
+                  source: assistantMessageId,
                 });
               } catch (memoryError) {
                 console.error(
@@ -358,6 +357,22 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
           }
         }
 
+        const assistantContent = [
+          finalContent ||
+            choicePrompt?.prompt ||
+            (todoAdds.length > 0 ? t.todo_added : ""),
+          ...toolOutputs,
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          content: assistantContent,
+          sender: "clippy",
+          createdAt: Date.now(),
+        };
+
         if (notifyTelegram) {
           try {
             const result = await clippyApi.sendTelegramNotification({
@@ -380,6 +395,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
           await clippyApi.processConversationTurn(
             message,
             finalContent || assistantMessage.content || "",
+
             {
               bond: statsUpdate?.bond,
               happiness: statsUpdate?.happiness,
@@ -395,13 +411,27 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
         setPendingChoice(choicePrompt);
 
         try {
-          const ttsEnabled = settings.ttsEnabled ?? true;
-          if (!ttsEnabled) return;
+          const ttsEnabled = settings.ttsEnabled ?? false;
+          console.log(
+            "TTS enabled:",
+            ttsEnabled,
+            "Settings:",
+            settings.ttsEnabled,
+          );
+          if (!ttsEnabled) {
+            console.log("TTS is disabled, skipping speech");
+            return;
+          }
 
           const ttsVoice = settings.ttsVoice || "th-TH-PremwadeeNeural";
-          const audioPath = await clippyApi.ttsSpeak(finalContent, ttsVoice);
+          console.log("Using TTS voice:", ttsVoice);
+          const audioPath = await clippyApi.ttsSpeak(
+            assistantMessage.content,
+            ttsVoice,
+          );
           const audio = new Audio(`file://${audioPath}`);
           audio.play();
+          console.log("TTS audio playing");
         } catch (ttsError) {
           console.error("TTS Error:", ttsError);
           if (window.speechSynthesis) {

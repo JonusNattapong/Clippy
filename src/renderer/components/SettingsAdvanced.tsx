@@ -7,7 +7,6 @@ export const SettingsAdvanced: React.FC = () => {
   const { settings } = useSharedState();
   const t = useTranslation();
   const [tavilyKey, setTavilyKey] = useState("");
-  const [userMemory, setUserMemory] = useState("");
   const [disableAutoUpdate, setDisableAutoUpdate] = useState(false);
   const [powerShellMode, setPowerShellMode] = useState(
     settings.powerShellMode || "safe",
@@ -40,7 +39,6 @@ export const SettingsAdvanced: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setUserMemory(settings.userMemory || "");
     setDisableAutoUpdate(settings.disableAutoUpdate || false);
     setPowerShellMode(settings.powerShellMode || "safe");
     setTelegramEnabled(settings.telegramNotificationsEnabled || false);
@@ -62,7 +60,6 @@ export const SettingsAdvanced: React.FC = () => {
       settings.telegramAgentNotificationsEnabled || false,
     );
   }, [
-    settings.userMemory,
     settings.disableAutoUpdate,
     settings.powerShellMode,
     settings.telegramNotificationsEnabled,
@@ -81,7 +78,6 @@ export const SettingsAdvanced: React.FC = () => {
 
   const handleSave = useCallback(async () => {
     await clippyApi.setState("settings.tavilyApiKey", tavilyKey);
-    await clippyApi.setState("settings.userMemory", userMemory);
     await clippyApi.setState("settings.disableAutoUpdate", disableAutoUpdate);
     await clippyApi.setState("settings.powerShellMode", powerShellMode);
     await clippyApi.setState(
@@ -146,7 +142,6 @@ export const SettingsAdvanced: React.FC = () => {
     telegramQuietStart,
     telegramTodoReminderMinutes,
     telegramTodoRemindersEnabled,
-    userMemory,
   ]);
 
   const handleSendTelegramTest = useCallback(async () => {
@@ -292,16 +287,6 @@ export const SettingsAdvanced: React.FC = () => {
         <p style={{ fontSize: "11px", color: "#666", marginTop: "4px" }}>
           {t.auto_approve_memory_description}
         </p>
-        <textarea
-          style={{
-            width: "100%",
-            height: "80px",
-            marginTop: "10px",
-            resize: "none",
-          }}
-          value={userMemory}
-          onChange={(e) => setUserMemory(e.target.value)}
-        />
       </fieldset>
       <fieldset>
         <legend>{t.telegram_notifications}</legend>

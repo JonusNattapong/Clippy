@@ -6,6 +6,7 @@ import { ApiProvider } from "../sharedState";
 import { MessageRecord } from "../types/interfaces";
 import { getMemoryManager } from "./memory";
 import { MemoryRetrievalResult } from "../types/interfaces";
+import { generateText, loadModel, isModelLoaded } from "./local-llm";
 
 export type StreamChatOptions = {
   provider: ApiProvider;
@@ -256,13 +257,15 @@ function buildMoodContext(): string {
   const stats = getMemoryManager().getStats();
 
   return [
-    "Current relationship and mood state:",
-    `Bond level: ${stats.bondLevel}/100`,
-    `Happiness: ${stats.happiness}/100`,
-    `Primary mood: ${stats.mood.primary}`,
-    `Response style: ${stats.mood.responseStyle}`,
-    `User tone: ${stats.mood.userTone}`,
-    `Mood summary: ${stats.mood.summary}`,
+    "Internal relationship and mood guidance:",
+    "Use this only to guide tone and empathy.",
+    "Do not mention, quote, or expose these labels, scores, summaries, or any bracketed mood/response metadata unless the user explicitly asks about Clippy's internal state.",
+    `Bond level (internal): ${stats.bondLevel}/100`,
+    `Happiness (internal): ${stats.happiness}/100`,
+    `Primary mood (internal): ${stats.mood.primary}`,
+    `Response style (internal): ${stats.mood.responseStyle}`,
+    `User tone (internal): ${stats.mood.userTone}`,
+    `Mood summary (internal): ${stats.mood.summary}`,
   ].join("\n");
 }
 
@@ -763,12 +766,14 @@ async function* streamKilo(options: StreamChatOptions) {
     ),
   ];
 
-  const apiKey = process.env.KILO_API_KEY;
+  const apiKey = options.apiKey || process.env.KILO_API_KEY;
   if (!apiKey) {
-    throw new Error("KILO_API_KEY environment variable is not set");
+    throw new Error(
+      "Kilo API key is missing. Please set it in Settings > AI Provider.",
+    );
   }
 
-  const finalModel = options.model || "anthropic/claude-sonnet-4.5";
+  const finalModel = options.model || "kilo-auto/free";
 
   const response = await fetch(`${KILO_BASE_URL}/chat/completions`, {
     method: "POST",
@@ -1079,6 +1084,65 @@ export async function transcribeAudio(
   );
 }
 
+async function* streamLocal(options: StreamChatOptions) {
+  // Ensure model is loaded
+  if (!isModelLoaded()) {
+    try {
+      await loadModel(options.model);
+    } catch (error) {
+      throw new Error(
+        `Failed to load local model "${options.model}". Please download a GGUF model first. Error: ${error}`,
+      );
+    }
+  }
+
+  // Build the prompt from messages
+  const messages = [
+    ...(options.systemPrompt
+      ? [{ role: "system" as const, content: options.systemPrompt }]
+      : []),
+    ...buildHistory(
+      options.history,
+      options.message,
+      options.images,
+      options.attachments,
+    ),
+  ];
+
+  // Convert messages to a single prompt string
+  let prompt = "";
+  for (const msg of messages) {
+    const content =
+      typeof msg.content === "string"
+        ? msg.content
+        : msg.content
+            .map((c) => (c.type === "text" ? c.text || "" : "[Image]"))
+            .join(" ");
+
+    switch (msg.role) {
+      case "system":
+        prompt += `System: ${content}\n\n`;
+        break;
+      case "user":
+        prompt += `User: ${content}\n\n`;
+        break;
+      case "assistant":
+        prompt += `Assistant: ${content}\n\n`;
+        break;
+    }
+  }
+  prompt += "Assistant: ";
+
+  // Generate response
+  for await (const chunk of generateText(prompt, {
+    temperature: options.temperature,
+    topK: options.topK,
+    signal: options.signal,
+  })) {
+    yield chunk;
+  }
+}
+
 export async function* streamChatCompletion(options: StreamChatOptions) {
   const nextOptions: StreamChatOptions = {
     ...options,
@@ -1100,6 +1164,9 @@ export async function* streamChatCompletion(options: StreamChatOptions) {
       return;
     case "kilo":
       yield* streamKilo(nextOptions);
+      return;
+    case "local":
+      yield* streamLocal(nextOptions);
       return;
     case "gemini":
     default:

@@ -95,7 +95,7 @@ export function filterMessageContent(
       }
     }
 
-    if (Object.keys(args).length > 0) {
+    if (!argsStr || Object.keys(args).length > 0) {
       toolCalls.push({ tool: toolName, args });
     }
   }
