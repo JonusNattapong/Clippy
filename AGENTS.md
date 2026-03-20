@@ -200,6 +200,43 @@ AI can execute desktop tools via special chat commands. These are handled in `sr
 - **Blocked patterns**: Destructive commands are blocked (`Remove-Item`, `Stop-Process`, etc.)
 - **Logging**: All commands logged to `%APPDATA%\Clippy\logs\powershell-history.log`
 
+### Permissions System
+
+Clippy has a granular permissions system to control what actions are allowed. See `src/main/permissions.ts`.
+
+#### Permission Levels
+
+| Level          | Description                         |
+| -------------- | ----------------------------------- |
+| `none`         | No commands allowed                 |
+| `read-only`    | Only read operations                |
+| `limited`      | Read + limited write (default)      |
+| `full`         | All operations with confirmation    |
+| `unrestricted` | All operations without confirmation |
+
+#### Permission Categories
+
+| Category      | Description                  | Risk     |
+| ------------- | ---------------------------- | -------- |
+| `file_read`   | Read files and directories   | Low      |
+| `file_write`  | Write, create, modify files  | Medium   |
+| `file_delete` | Delete files and directories | High     |
+| `process`     | Start/stop processes         | High     |
+| `system`      | System information           | Low      |
+| `network`     | Web search, fetch, downloads | Medium   |
+| `registry`    | Windows Registry operations  | Critical |
+| `app_control` | Open/close applications      | Low      |
+| `screenshot`  | Take screenshots             | Low      |
+| `clipboard`   | Read/write clipboard         | Low      |
+
+#### Configuration
+
+Permissions can be configured in:
+
+- **UI**: Settings > Permissions
+- **Code**: `src/main/permissions.ts` - permission definitions and checking logic
+- **State**: `settings.permissionConfig` in sharedState
+
 ### Adding New Commands
 
 1. Add tool implementation to `src/main/desktop-tools.ts` or `src/main/web-tools.ts`

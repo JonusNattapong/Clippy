@@ -649,6 +649,39 @@ npm run start</code></pre>
                 animation
               </li>
             </ul>
+
+            <h3 style="font-size: 16px; margin-top: 24px">
+              Permissions System
+            </h3>
+            <p>
+              Clippy features a granular permissions system to control what
+              actions are allowed. Configure in Settings > Permissions.
+            </p>
+            <h4 style="font-size: 14px; margin-top: 16px">Permission Levels</h4>
+            <ul>
+              <li><code>None</code> - No commands allowed</li>
+              <li><code>Read Only</code> - Only read operations</li>
+              <li><code>Limited</code> - Read + limited write (default)</li>
+              <li><code>Full</code> - All operations with confirmation</li>
+              <li>
+                <code>Unrestricted</code> - All operations without confirmation
+              </li>
+            </ul>
+            <h4 style="font-size: 14px; margin-top: 16px">
+              Permission Categories
+            </h4>
+            <ul>
+              <li><strong>File Reading</strong> (Low risk)</li>
+              <li><strong>File Writing</strong> (Medium risk)</li>
+              <li><strong>File Deletion</strong> (High risk)</li>
+              <li><strong>Process Management</strong> (High risk)</li>
+              <li><strong>System Commands</strong> (Low risk)</li>
+              <li><strong>Network Operations</strong> (Medium risk)</li>
+              <li><strong>Registry Operations</strong> (Critical risk)</li>
+              <li><strong>Application Control</strong> (Low risk)</li>
+              <li><strong>Screenshots</strong> (Low risk)</li>
+              <li><strong>Clipboard</strong> (Low risk)</li>
+            </ul>
             <p>
               This architecture makes Clippy feel more interactive than a plain
               chat app: it can respond, remember, act, and adapt, all within the
