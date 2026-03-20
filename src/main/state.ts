@@ -193,6 +193,10 @@ export class StateManager {
         EMPTY_SHARED_STATE.settings.telegramAgentNotificationsEnabled;
     }
 
+    if (!settings.tavilyApiKey?.trim()) {
+      settings.tavilyApiKey = process.env.TAVILY_API_KEY || "";
+    }
+
     this.store.set("settings", settings);
   }
 

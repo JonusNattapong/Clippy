@@ -167,11 +167,13 @@ export function createWeatherSkill(): Skill {
             properties: {
               location: {
                 type: "string",
-                description: "City name or location (e.g., 'Bangkok', 'New York', 'Tokyo')",
+                description:
+                  "City name or location (e.g., 'Bangkok', 'New York', 'Tokyo')",
               },
               show_forecast: {
                 type: "boolean",
-                description: "Whether to include 7-day forecast (default: true)",
+                description:
+                  "Whether to include 7-day forecast (default: true)",
               },
             },
             required: ["location"],

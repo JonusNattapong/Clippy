@@ -75,7 +75,9 @@ function extractActionsFromMarkdown(body: string): Record<string, SkillAction> {
   const actions: Record<string, SkillAction> = {};
 
   // Look for ## Actions section
-  const actionsMatch = body.match(/##\s*Actions?\s*\n([\s\S]*?)(?=\n##|\n---|$)/i);
+  const actionsMatch = body.match(
+    /##\s*Actions?\s*\n([\s\S]*?)(?=\n##|\n---|$)/i,
+  );
   if (!actionsMatch) return actions;
 
   const actionsContent = actionsMatch[1];
@@ -95,7 +97,11 @@ function extractActionsFromMarkdown(body: string): Record<string, SkillAction> {
 
     // Extract parameters from code block
     const paramsMatch = block.match(/```(?:json|yaml)\s*\n([\s\S]*?)```/);
-    let parameters: { type: "object"; properties: Record<string, unknown>; required: string[] } = {
+    let parameters: {
+      type: "object";
+      properties: Record<string, unknown>;
+      required: string[];
+    } = {
       type: "object",
       properties: {},
       required: [],
@@ -116,7 +122,8 @@ function extractActionsFromMarkdown(body: string): Record<string, SkillAction> {
 
     // Extract risk level
     const riskMatch = block.match(/risk[_ ]?level:\s*(low|medium|high)/i);
-    const riskLevel = (riskMatch?.[1]?.toLowerCase() as "low" | "medium" | "high") || "low";
+    const riskLevel =
+      (riskMatch?.[1]?.toLowerCase() as "low" | "medium" | "high") || "low";
 
     actions[actionName] = {
       meta: {
@@ -146,7 +153,9 @@ export function loadSkillFromMarkdown(filePath: string): Skill | null {
     const { frontmatter, body } = parseFrontmatter(content);
 
     if (!frontmatter?.name) {
-      console.warn(`[OpenClaw Loader] Skill at ${filePath} has no name in frontmatter`);
+      console.warn(
+        `[OpenClaw Loader] Skill at ${filePath} has no name in frontmatter`,
+      );
       return null;
     }
 
@@ -188,7 +197,10 @@ export function loadSkillFromMarkdown(filePath: string): Skill | null {
       actions,
     };
   } catch (error) {
-    console.error(`[OpenClaw Loader] Failed to load skill from ${filePath}:`, error);
+    console.error(
+      `[OpenClaw Loader] Failed to load skill from ${filePath}:`,
+      error,
+    );
     return null;
   }
 }

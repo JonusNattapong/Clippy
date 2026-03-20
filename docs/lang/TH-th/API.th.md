@@ -17,20 +17,21 @@
 
 ### Providers ที่รองรับ
 
-| Provider | ประเภท | ต้องใช้ API Key | หมายเหตุ |
-|----------|--------|----------------|-----------|
-| Gemini | Cloud | ใช่ | AI ของ Google |
-| OpenAI | Cloud | ใช่ | โมเดล GPT |
-| Anthropic | Cloud | ใช่ | โมเดล Claude |
-| OpenRouter | Cloud | ใช่ | หลายโมเดล |
-| Ollama | Local | ไม่ | ต้องติดตั้ง Ollama |
-| **Local LLM** | Local | ไม่ | **node-llama-cpp - ใหม่!** |
+| Provider      | ประเภท | ต้องใช้ API Key | หมายเหตุ                   |
+| ------------- | ------ | --------------- | -------------------------- |
+| Gemini        | Cloud  | ใช่             | AI ของ Google              |
+| OpenAI        | Cloud  | ใช่             | โมเดล GPT                  |
+| Anthropic     | Cloud  | ใช่             | โมเดล Claude               |
+| OpenRouter    | Cloud  | ใช่             | หลายโมเดล                  |
+| Ollama        | Local  | ไม่             | ต้องติดตั้ง Ollama         |
+| **Local LLM** | Local  | ไม่             | **node-llama-cpp - ใหม่!** |
 
 ### Local LLM API (node-llama-cpp)
 
 Local LLM provider ใช้ `node-llama-cpp` ในการรันโมเดล GGUF โดยตรงในแอป
 
 **ฟังก์ชัน:**
+
 ```typescript
 // โหลดโมเดล
 await loadModel(modelName: string): Promise<void>
@@ -60,6 +61,7 @@ await downloadModel(url, filename, onProgress): Promise<string>
 ```
 
 **ตัวอย่าง:**
+
 ```typescript
 import { loadModel, generateText, isModelLoaded } from "./main/local-llm";
 

@@ -1,16 +1,10 @@
 import { app } from "electron";
 import fs from "node:fs";
 import path from "node:path";
-import {
-  getLlama,
-  LlamaModel,
-  LlamaContext,
-  LlamaChatSession,
-} from "node-llama-cpp";
 
-let currentModel: LlamaModel | null = null;
-let currentContext: LlamaContext | null = null;
-let currentSession: LlamaChatSession | null = null;
+let currentModel: any | null = null;
+let currentContext: any | null = null;
+let currentSession: any | null = null;
 let currentModelName: string = "";
 
 const MODELS_DIR = path.join(app.getPath("userData"), "models");
@@ -98,6 +92,9 @@ export async function loadModel(modelName: string): Promise<void> {
   }
 
   try {
+    // Dynamic import to avoid top-level await issues
+    const { getLlama, LlamaChatSession } = await import("node-llama-cpp");
+
     const llama = await getLlama();
     currentModel = await llama.loadModel({
       modelPath: modelPath,
@@ -175,7 +172,7 @@ export async function* generateText(
       temperature,
       topK,
       maxTokens,
-      onToken: (tokens) => {
+      onToken: (_tokens: any) => {
         if (aborted) {
           return false; // Stop generation
         }
@@ -275,10 +272,13 @@ export async function downloadModel(
 
   const chunks: Uint8Array[] = [];
 
-  while (true) {
-    const { done, value } = await reader.read();
+  let done = false;
+  while (!done) {
+    const result = await reader.read();
+    done = result.done;
+    const value = result.value;
 
-    if (done) {
+    if (done || !value) {
       break;
     }
 

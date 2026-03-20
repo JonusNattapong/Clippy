@@ -109,13 +109,19 @@ export function createFileConversionSkill(): Skill {
           const outputFormat = String(args.output_format || "")
             .trim()
             .toLowerCase() as ImageFormat;
-          const quality = Math.min(100, Math.max(1, Number(args.quality) || 85));
+          const quality = Math.min(
+            100,
+            Math.max(1, Number(args.quality) || 85),
+          );
           const outputDir = args.output_dir
             ? String(args.output_dir)
             : undefined;
 
           if (!inputPath) {
-            return { success: false, error: "Please provide an input file path" };
+            return {
+              success: false,
+              error: "Please provide an input file path",
+            };
           }
 
           if (!SUPPORTED_IMAGE_FORMATS.includes(outputFormat)) {
@@ -214,7 +220,8 @@ export function createFileConversionSkill(): Skill {
               },
               height: {
                 type: "number",
-                description: "Target height in pixels (optional, maintains aspect ratio if omitted)",
+                description:
+                  "Target height in pixels (optional, maintains aspect ratio if omitted)",
               },
               fit: {
                 type: "string",
@@ -243,7 +250,10 @@ export function createFileConversionSkill(): Skill {
             : undefined;
 
           if (!inputPath) {
-            return { success: false, error: "Please provide an input file path" };
+            return {
+              success: false,
+              error: "Please provide an input file path",
+            };
           }
 
           if (width <= 0 || width > 10000) {

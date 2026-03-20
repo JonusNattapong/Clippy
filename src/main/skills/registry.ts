@@ -354,7 +354,8 @@ class SkillRegistry {
       for (const file of files) {
         if (file.endsWith(".skill.ts") || file.endsWith(".skill.js")) {
           try {
-            const module = await import(path.join(builtinDir, file));
+            // Use require() for synchronous loading in CommonJS context
+            const module = require(path.join(builtinDir, file));
             if (module.default && typeof module.default === "function") {
               factories.push(module.default);
             } else if (
@@ -401,7 +402,8 @@ class SkillRegistry {
           const skillPath = path.join(this.skillsDir, entry.name, "index.js");
           if (fs.existsSync(skillPath)) {
             try {
-              const module = await import(skillPath);
+              // Use require() for synchronous loading in CommonJS context
+              const module = require(skillPath);
               if (module.default && typeof module.default === "function") {
                 await this.register(module.default);
               } else if (
@@ -422,9 +424,8 @@ class SkillRegistry {
           // Try loading SKILL.md format
           const skillMdPath = path.join(this.skillsDir, entry.name, "SKILL.md");
           if (fs.existsSync(skillMdPath)) {
-            const { loadSkillFromMarkdown } = await import(
-              "./skill-loader"
-            );
+            // Use require() for synchronous loading in CommonJS context
+            const { loadSkillFromMarkdown } = require("./skill-loader");
             const skill = loadSkillFromMarkdown(skillMdPath);
             if (skill) {
               await this.register(() => skill);

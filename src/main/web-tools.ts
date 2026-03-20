@@ -69,7 +69,7 @@ export async function webSearch(
     return {
       success: false,
       error:
-        "Tavily API key not configured. Please add your API key in Settings.",
+        "Tavily API key not configured. Please add your Tavily API key in Settings > Advanced, or set the TAVILY_API_KEY environment variable. Get a free key at https://tavily.com",
     };
   }
 

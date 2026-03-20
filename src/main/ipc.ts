@@ -414,7 +414,9 @@ export function setupIpcListeners() {
       const apiKey = resolveProviderApiKey(provider);
       // Allow local providers (like Ollama) to operate without an API key.
       if (provider !== "ollama" && !apiKey) {
-        throw new Error(`API key for ${provider} is missing.`);
+        throw new Error(
+          `API key for ${provider} is missing. Please add your API key in Settings > AI Provider.`,
+        );
       }
 
       const model =

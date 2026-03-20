@@ -39,7 +39,9 @@ npm test
 ## การตั้งค่า AI Provider
 
 ### Cloud Providers (Gemini, OpenAI, Anthropic, OpenRouter)
+
 เพิ่ม API keys ใน `.env`:
+
 ```
 GEMINI_API_KEY=your_key_here
 OPENAI_API_KEY=your_key_here
@@ -48,11 +50,13 @@ OPENROUTER_API_KEY=your_key_here
 ```
 
 ### Ollama (Local)
+
 1. ติดตั้ง Ollama จาก https://ollama.ai
 2. ดึงโมเดล: `ollama pull llama3.2`
 3. เลือก "Ollama" เป็น provider ใน Settings
 
 ### Local LLM (node-llama-cpp) - ใหม่!
+
 1. ไม่ต้องติดตั้งซอฟต์แวร์เพิ่ม - ใช้ได้ทันที
 2. เลือก "Local LLM (GGUF)" เป็น provider ใน Settings
 3. เลือกโมเดลแล้วคลิก Download

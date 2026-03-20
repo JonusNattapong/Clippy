@@ -5,6 +5,10 @@ import commonjs from "@rollup/plugin-commonjs";
 export default defineConfig({
   build: {
     rollupOptions: {
+      output: {
+        format: "cjs",
+        inlineDynamicImports: true,
+      },
       external: [
         "@electron/llm",
         "node-llama-cpp",
@@ -18,9 +22,12 @@ export default defineConfig({
       plugins: [
         commonjs({
           ignoreDynamicRequires: true,
+          transformMixedEsModules: true,
+          esmExternals: true,
         }),
       ],
     },
     sourcemap: true,
+    target: "node18",
   },
 });

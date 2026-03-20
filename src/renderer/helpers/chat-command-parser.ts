@@ -3,6 +3,11 @@ export type CommandHandlerResult = {
   response?: string;
 };
 
+export type CommandStreamChunk = {
+  type: "progress" | "result" | "error";
+  content: string;
+};
+
 export type CommandApi = {
   executeTool: (
     toolName: string,
@@ -257,4 +262,94 @@ export async function executeChatCommand(
   }
 
   return { handled: false };
+}
+
+export async function* executeChatCommandStreaming(
+  api: CommandApi,
+  message: string,
+): AsyncGenerator<CommandStreamChunk, CommandHandlerResult, undefined> {
+  const trimmed = message.trim();
+
+  for (const { pattern, toolName, getArgs } of desktopCommandPatterns) {
+    const match = trimmed.match(pattern);
+    if (!match) {
+      continue;
+    }
+
+    try {
+      const args = getArgs(match);
+      if (toolName === "telegram_notify_manual") {
+        yield {
+          type: "progress",
+          content: "📤 กำลังส่ง Telegram notification...",
+        };
+        const result = await api.sendTelegramNotification({
+          message: String(args.message || ""),
+          source: "manual",
+          reason: "manual_command",
+          allowDuringQuietHours: true,
+        });
+
+        const response = result.success
+          ? `✅ ${result.output || "Telegram notification sent"}`
+          : `❌ ${result.error || "Telegram notification failed"}`;
+
+        yield { type: "result", content: response };
+        return { handled: true, response };
+      }
+
+      yield { type: "progress", content: `⏳ กำลัง executes ${toolName}...` };
+      const result = await api.executeTool(toolName, args);
+      const response = result.success
+        ? `✅ ${result.output || "Done"}`
+        : `❌ ${result.error || "Error"}`;
+
+      yield { type: "result", content: response };
+      return { handled: true, response };
+    } catch (error) {
+      const response = `❌ Error: ${error instanceof Error ? error.message : String(error)}`;
+      yield { type: "error", content: response };
+      return { handled: true, response };
+    }
+  }
+
+  for (const { pattern, type, getArgs } of webCommandPatterns) {
+    const match = trimmed.match(pattern);
+    if (!match) {
+      continue;
+    }
+
+    try {
+      const args = getArgs(match);
+      if (type === "search") {
+        yield { type: "progress", content: `🔍 กำลังค้นหา: ${args.query}...` };
+        const result = await api.webSearch(String(args.query), 5);
+        const response = result.success
+          ? result.output || "Done"
+          : `❌ ${result.error || "Error"}`;
+
+        yield { type: "result", content: response };
+        return { handled: true, response };
+      } else {
+        yield {
+          type: "progress",
+          content: `🌐 กำลังดึงข้อมูลจาก: ${args.url}...`,
+        };
+        const result = await api.fetchUrl(String(args.url));
+        const response = result.success
+          ? result.output || "Done"
+          : `❌ ${result.error || "Error"}`;
+
+        yield { type: "result", content: response };
+        return { handled: true, response };
+      }
+    } catch (error) {
+      const response = `❌ Error: ${error instanceof Error ? error.message : String(error)}`;
+      yield { type: "error", content: response };
+      return { handled: true, response };
+    }
+  }
+
+  yield { type: "error", content: "❌ Command not found" };
+  return { handled: false, response: "❌ Command not found" };
 }

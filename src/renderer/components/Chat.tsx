@@ -40,14 +40,17 @@ export function Chat({ style }: ChatProps) {
     useChat();
   const { settings } = useContext(SharedStateContext);
   const t = useTranslation();
-  const { handleDesktopCommand } = useCommandParser();
+  const { handleDesktopCommand, handleDesktopCommandStreaming } =
+    useCommandParser();
   const { handleMemoryCommand } = useMemoryCommands();
 
   const [pendingChoiceFlow, setPendingChoiceFlow] = useState<ChoiceFlow | null>(
     null,
   );
   const [currentChoiceStepIndex, setCurrentChoiceStepIndex] = useState(0);
-  const [choiceAnswers, setChoiceAnswers] = useState<Record<number, string>>({});
+  const [choiceAnswers, setChoiceAnswers] = useState<Record<number, string>>(
+    {},
+  );
   const [customChoiceText, setCustomChoiceText] = useState("");
   const [showCustomChoiceInput, setShowCustomChoiceInput] = useState(false);
   const [focusedChoiceIndex, setFocusedChoiceIndex] = useState(0);
@@ -167,26 +170,42 @@ export function Chat({ style }: ChatProps) {
           return;
         }
 
-        const desktopCommandResult = await handleDesktopCommand(message);
-        if (desktopCommandResult.handled) {
+        let commandHandled = false;
+        let commandResponse = "";
+
+        for await (const chunk of handleDesktopCommandStreaming(message)) {
+          if (chunk.type === "progress") {
+            setAnimationKey("Writing");
+            setStreamingMessageContent(chunk.content);
+          } else if (chunk.type === "result") {
+            commandHandled = true;
+            commandResponse = chunk.content;
+          } else if (chunk.type === "error") {
+            commandHandled = true;
+            commandResponse = chunk.content;
+          }
+        }
+
+        if (commandHandled) {
           if (
             settings.telegramNotifyOnErrors &&
-            desktopCommandResult.response?.startsWith("❌")
+            commandResponse.startsWith("❌")
           ) {
             void clippyApi.sendTelegramNotification({
               source: "rule",
               reason: "command_error",
               message:
-                `Clippy command error: ${desktopCommandResult.response.replace(/^❌\s*/, "")}`.slice(
+                `Clippy command error: ${commandResponse.replace(/^❌\s*/, "")}`.slice(
                   0,
                   320,
                 ),
             });
           }
           setAnimationKey("Writing");
+          setStreamingMessageContent("");
           await addMessage({
             id: crypto.randomUUID(),
-            content: desktopCommandResult.response || "",
+            content: commandResponse,
             sender: "clippy",
             createdAt: Date.now(),
           });
@@ -535,7 +554,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
       setAnimationKey,
       t,
       persistTodoItems,
-      handleDesktopCommand,
+      handleDesktopCommandStreaming,
       handleMemoryCommand,
     ],
   );
@@ -637,7 +656,8 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
 
       if (
         event.target instanceof HTMLElement &&
-        (event.target.tagName === "TEXTAREA" || event.target.tagName === "INPUT")
+        (event.target.tagName === "TEXTAREA" ||
+          event.target.tagName === "INPUT")
       ) {
         return;
       }
@@ -650,24 +670,28 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
 
       if (event.key === "ArrowDown" || event.key === "ArrowRight") {
         event.preventDefault();
-        setFocusedChoiceIndex((currentValue) =>
-          (currentValue + 1) % currentChoiceStep.options.length,
+        setFocusedChoiceIndex(
+          (currentValue) =>
+            (currentValue + 1) % currentChoiceStep.options.length,
         );
         return;
       }
 
       if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
         event.preventDefault();
-        setFocusedChoiceIndex((currentValue) =>
-          (currentValue - 1 + currentChoiceStep.options.length) %
-          currentChoiceStep.options.length,
+        setFocusedChoiceIndex(
+          (currentValue) =>
+            (currentValue - 1 + currentChoiceStep.options.length) %
+            currentChoiceStep.options.length,
         );
         return;
       }
 
       if (event.key === "Enter") {
         event.preventDefault();
-        void handleChoiceSelection(currentChoiceStep.options[focusedChoiceIndex]);
+        void handleChoiceSelection(
+          currentChoiceStep.options[focusedChoiceIndex],
+        );
         return;
       }
 
@@ -727,7 +751,9 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
             <div className="choice-dialog-header">
               <div>
                 <div className="choice-dialog-title">{t.choose_one}</div>
-                <div className="choice-dialog-prompt">{currentChoiceStep.prompt}</div>
+                <div className="choice-dialog-prompt">
+                  {currentChoiceStep.prompt}
+                </div>
               </div>
               <div className="choice-dialog-progress" aria-live="polite">
                 <button
@@ -768,7 +794,7 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
 
                 return (
                   <button
-                    key={`${index}-${option}`}
+                    key={option}
                     type="button"
                     className={`choice-dialog-option${isActive ? " is-active" : ""}${isSelected ? " is-selected" : ""}`}
                     onClick={() => void handleChoiceSelection(option)}
@@ -779,9 +805,14 @@ If an external reminder or alert would be genuinely useful, you may add one tag 
                       {index + 1}
                     </span>
                     <span className="choice-dialog-option-copy">
-                      <span className="choice-dialog-option-label">{option}</span>
+                      <span className="choice-dialog-option-label">
+                        {option}
+                      </span>
                     </span>
-                    <span className="choice-dialog-option-arrow" aria-hidden="true">
+                    <span
+                      className="choice-dialog-option-arrow"
+                      aria-hidden="true"
+                    >
                       {">"}
                     </span>
                   </button>

@@ -8,18 +8,21 @@ Getting started
 ## AI Provider Selection
 
 ### Cloud Providers (Gemini, OpenAI, Anthropic, OpenRouter)
+
 1. Go to Settings > AI Provider
 2. Select your provider
 3. Enter your API key
 4. Choose a model from the dropdown
 
 ### Ollama (Local)
+
 1. Install Ollama and pull a model (see INSTALL.md)
 2. Go to Settings > AI Provider
 3. Select "Ollama"
 4. Choose a model from the list
 
 ### Local LLM (node-llama-cpp) - NEW!
+
 1. Go to Settings > AI Provider
 2. Select "Local LLM (GGUF)"
 3. Choose a model from the recommended list:

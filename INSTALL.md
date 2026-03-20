@@ -40,7 +40,9 @@ npm test
 ## AI Provider Setup
 
 ### Cloud Providers (Gemini, OpenAI, Anthropic, OpenRouter)
+
 Add your API keys to `.env`:
+
 ```
 GEMINI_API_KEY=your_key_here
 OPENAI_API_KEY=your_key_here
@@ -49,11 +51,13 @@ OPENROUTER_API_KEY=your_key_here
 ```
 
 ### Ollama (Local)
+
 1. Install Ollama from https://ollama.ai
 2. Pull a model: `ollama pull llama3.2`
 3. Select "Ollama" as provider in Settings
 
 ### Local LLM (node-llama-cpp)
+
 1. No additional software needed - works out of the box
 2. Select "Local LLM (GGUF)" as provider in Settings
 3. Choose a model and click Download

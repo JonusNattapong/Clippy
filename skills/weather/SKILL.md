@@ -50,3 +50,4 @@ Risk level: low
 /weather Bangkok
 /forecast Tokyo
 /weather "New York"
+```

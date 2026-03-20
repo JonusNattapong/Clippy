@@ -17,20 +17,21 @@ IPC channels
 
 ### Supported Providers
 
-| Provider | Type | API Key Required | Notes |
-|----------|------|------------------|-------|
-| Gemini | Cloud | Yes | Google's AI |
-| OpenAI | Cloud | Yes | GPT models |
-| Anthropic | Cloud | Yes | Claude models |
-| OpenRouter | Cloud | Yes | Multiple models |
-| Ollama | Local | No | Requires Ollama installed |
-| **Local LLM** | Local | No | **node-llama-cpp - NEW!** |
+| Provider      | Type  | API Key Required | Notes                     |
+| ------------- | ----- | ---------------- | ------------------------- |
+| Gemini        | Cloud | Yes              | Google's AI               |
+| OpenAI        | Cloud | Yes              | GPT models                |
+| Anthropic     | Cloud | Yes              | Claude models             |
+| OpenRouter    | Cloud | Yes              | Multiple models           |
+| Ollama        | Local | No               | Requires Ollama installed |
+| **Local LLM** | Local | No               | **node-llama-cpp - NEW!** |
 
 ### Local LLM API (node-llama-cpp)
 
 The Local LLM provider uses `node-llama-cpp` to run GGUF models directly in the app.
 
 **Functions:**
+
 ```typescript
 // Load a model
 await loadModel(modelName: string): Promise<void>
@@ -60,6 +61,7 @@ await downloadModel(url, filename, onProgress): Promise<string>
 ```
 
 **Example:**
+
 ```typescript
 import { loadModel, generateText, isModelLoaded } from "./main/local-llm";
 

@@ -8,8 +8,12 @@
 import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
+import { execSync, execFile } from "node:child_process";
+import { promisify } from "node:util";
 
 import type { Skill, SkillContext, SkillResult } from "./types";
+
+const execFileAsync = promisify(execFile);
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -56,10 +60,9 @@ function getDiskUsage(drivePath: string): {
   try {
     if (process.platform === "win32") {
       // Windows: use PowerShell to get disk info
-      const { execSync } = require("node:child_process");
       const driveLetter = path.parse(drivePath).root.replace("\\", "");
       const result = execSync(
-        `powershell -Command "Get-PSDrive -Name '${driveLetter.replace(":","")}' | Select-Object Used,Free | ConvertTo-Json"`,
+        `powershell -Command "Get-PSDrive -Name '${driveLetter.replace(":", "")}' | Select-Object Used,Free | ConvertTo-Json"`,
         { encoding: "utf8", timeout: 5000 },
       );
       const data = JSON.parse(result);
@@ -266,14 +269,7 @@ export function createSystemMonitorSkill(): Skill {
             const limit = Math.min(50, Math.max(1, Number(args.limit) || 10));
 
             if (process.platform === "win32") {
-              const { execFile } = require("node:child_process");
-              const { promisify } = require("node:util");
-              const execFileAsync = promisify(execFile);
-
-              const sortField =
-                sortBy === "memory"
-                  ? "WorkingSet64"
-                  : "CPU";
+              const sortField = sortBy === "memory" ? "WorkingSet64" : "CPU";
               const command = `Get-Process | Sort-Object -Property ${sortField} -Descending | Select-Object -First ${limit} Name, Id, CPU, @{Name='Memory(MB)';Expression={[math]::Round($_.WorkingSet64/1MB,1)}} | ConvertTo-Json`;
 
               const { stdout } = await execFileAsync(
@@ -303,16 +299,10 @@ export function createSystemMonitorSkill(): Skill {
 
               return { success: true, output: lines.join("\n") };
             } else {
-              const { execFile } = require("node:child_process");
-              const { promisify } = require("node:util");
-              const execFileAsync = promisify(execFile);
-
               // Use a cross-platform approach: ps aux and sort in Node
-              const { stdout } = await execFileAsync(
-                "ps",
-                ["aux"],
-                { timeout: 10000 },
-              );
+              const { stdout } = await execFileAsync("ps", ["aux"], {
+                timeout: 10000,
+              });
 
               const lines = [
                 `📋 Top ${limit} Processes (by ${sortBy})`,
@@ -375,10 +365,6 @@ export function createSystemMonitorSkill(): Skill {
         ): Promise<SkillResult> => {
           try {
             if (process.platform === "win32") {
-              const { execFile } = require("node:child_process");
-              const { promisify } = require("node:util");
-              const execFileAsync = promisify(execFile);
-
               const { stdout } = await execFileAsync(
                 "powershell.exe",
                 [
@@ -403,7 +389,8 @@ export function createSystemMonitorSkill(): Skill {
                 const total = drive.Total || 0;
                 const used = drive.Used || 0;
                 const free = drive.Free || 0;
-                const percent = total > 0 ? Math.round((used / total) * 100) : 0;
+                const percent =
+                  total > 0 ? Math.round((used / total) * 100) : 0;
 
                 lines.push(
                   `${getStatusEmoji(percent)} Drive ${drive.Name}:`,
@@ -416,7 +403,6 @@ export function createSystemMonitorSkill(): Skill {
 
               return { success: true, output: lines.join("\n") };
             } else {
-              const { execSync } = require("node:child_process");
               const output = execSync("df -h", {
                 encoding: "utf8",
                 timeout: 5000,

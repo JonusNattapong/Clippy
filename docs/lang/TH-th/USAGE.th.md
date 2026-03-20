@@ -8,18 +8,21 @@
 ## การเลือก AI Provider
 
 ### Cloud Providers (Gemini, OpenAI, Anthropic, OpenRouter)
+
 1. ไปที่ Settings > AI Provider
 2. เลือก provider ที่ต้องการ
 3. ใส่ API key
 4. เลือกโมเดลจาก dropdown
 
 ### Ollama (Local)
+
 1. ติดตั้ง Ollama และดึงโมเดล (ดู INSTALL.md)
 2. ไปที่ Settings > AI Provider
 3. เลือก "Ollama"
 4. เลือกโมเดลจากรายการ
 
 ### Local LLM (node-llama-cpp) - ใหม่!
+
 1. ไปที่ Settings > AI Provider
 2. เลือก "Local LLM (GGUF)"
 3. เลือกโมเดลจากรายการแนะนำ:

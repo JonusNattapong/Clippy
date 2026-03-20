@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 async function main() {
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -79,7 +79,7 @@ async function main() {
     }
 
     // Strip data URL prefix if present
-    const match = b64.match(/^data:([a-zA-Z0-9\/\-+.]+);base64,(.*)$/s);
+    const match = b64.match(/^data:([a-zA-Z0-9/\-+.]+);base64,(.*)$/s);
     let base64Str = b64;
     if (match) base64Str = match[2];
 

@@ -288,7 +288,8 @@ a {
   align-items: start;
   margin-top: 10px;
 }
-.installer-left {}
+.installer-left {
+}
 .installer-right {
   display: flex;
   align-items: flex-start;
@@ -312,7 +313,9 @@ a {
   grid-template-columns: 1fr;
   gap: 10px;
 }
-.shell-snippet.small { padding: 8px; }
+.shell-snippet.small {
+  padding: 8px;
+}
 
 .download-buttons .button {
   display: flex;

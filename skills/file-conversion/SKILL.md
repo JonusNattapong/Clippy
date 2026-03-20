@@ -99,3 +99,4 @@ Risk level: low
 /convert photo.png to webp
 /resize image.png 800x600
 /imginfo photo.jpg
+```
