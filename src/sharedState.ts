@@ -10,6 +10,35 @@ export type ApiProvider =
   | "local";
 export type PowerShellMode = "safe" | "full";
 
+// Permission system types
+export type PermissionLevel =
+  | "none"
+  | "read-only"
+  | "limited"
+  | "full"
+  | "unrestricted";
+
+export type PermissionCategory =
+  | "file_read"
+  | "file_write"
+  | "file_delete"
+  | "process"
+  | "system"
+  | "network"
+  | "registry"
+  | "app_control"
+  | "screenshot"
+  | "clipboard";
+
+export interface PermissionConfig {
+  globalLevel: PermissionLevel;
+  categoryOverrides: Partial<Record<PermissionCategory, PermissionLevel>>;
+  customBlockedPatterns: string[];
+  customAllowedPatterns: string[];
+  showConfirmations: boolean;
+  enableLogging: boolean;
+}
+
 export type DefaultFont =
   | "Pixelated MS Sans Serif"
   | "Comic Sans MS"
@@ -85,6 +114,7 @@ export interface SettingsState {
   clippyResponseStyle?: ClippyResponseStyle;
   clippyUserTone?: UserTone;
   powerShellMode?: PowerShellMode;
+  permissionConfig?: PermissionConfig;
   apiProvider: ApiProvider;
   apiKey: string;
   apiModel: string;
@@ -704,6 +734,14 @@ export const DEFAULT_SETTINGS: SettingsState = {
   clippyResponseStyle: "balanced",
   clippyUserTone: "neutral",
   powerShellMode: "safe",
+  permissionConfig: {
+    globalLevel: "limited",
+    categoryOverrides: {},
+    customBlockedPatterns: [],
+    customAllowedPatterns: [],
+    showConfirmations: true,
+    enableLogging: true,
+  },
   apiProvider: "gemini",
   apiKey: "",
   apiModel: API_PROVIDER_DEFAULT_MODELS.gemini,

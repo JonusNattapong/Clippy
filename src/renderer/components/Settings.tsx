@@ -12,6 +12,7 @@ import { SettingsMemory } from "./SettingsMemory";
 import { SettingsIdentity } from "./SettingsIdentity";
 import { SettingsUser } from "./SettingsUser";
 import { SettingsTTS } from "./SettingsTTS";
+import { SettingsPermissions } from "./SettingsPermissions";
 import { useTranslation } from "../contexts/SharedStateContext";
 
 export type SettingsTab =
@@ -22,6 +23,7 @@ export type SettingsTab =
   | "identity"
   | "aboutYou"
   | "tts"
+  | "permissions"
   | "advanced"
   | "about";
 
@@ -52,6 +54,11 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     { label: t.identity, key: "identity", content: <SettingsIdentity /> },
     { label: t.about_you, key: "aboutYou", content: <SettingsUser /> },
     { label: "Voice", key: "tts", content: <SettingsTTS /> },
+    {
+      label: "Permissions",
+      key: "permissions",
+      content: <SettingsPermissions />,
+    },
     { label: t.advanced, key: "advanced", content: <SettingsAdvanced /> },
     { label: t.about, key: "about", content: <SettingsAbout /> },
   ];
@@ -97,6 +104,7 @@ function bubbleViewToSettingsTab(view: BubbleView): SettingsTab {
     "identity",
     "aboutYou",
     "tts",
+    "permissions",
     "advanced",
     "about",
   ] as const;

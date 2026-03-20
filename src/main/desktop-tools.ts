@@ -6,8 +6,14 @@ import fs from "node:fs";
 import os from "node:os";
 
 import { getStateManager } from "./state";
-import { PowerShellMode } from "../sharedState";
+import { PowerShellMode, PermissionConfig } from "../sharedState";
 import { getMainWindow } from "./windows";
+import {
+  checkPermission,
+  getPermissionCategory,
+  getRiskLevelIcon,
+  DEFAULT_PERMISSION_CONFIG,
+} from "./permissions";
 
 const execFileAsync = promisify(execFile);
 
@@ -237,10 +243,33 @@ export async function runCommand(command: string): Promise<ToolResult> {
     "settings.powerShellMode",
   ) as PowerShellMode) || "safe") as PowerShellMode;
 
+  // Get permission config (with fallback to legacy powerShellMode)
+  const permissionConfig = (getStateManager().store.get(
+    "settings.permissionConfig",
+  ) as PermissionConfig) || {
+    ...DEFAULT_PERMISSION_CONFIG,
+    // Migrate from legacy powerShellMode
+    globalLevel: powerShellMode === "full" ? "full" : "limited",
+  };
+
   if (!trimmedCommand) {
     return { success: false, error: "Command is empty." };
   }
 
+  // Check permissions using new system
+  const permissionResult = checkPermission(trimmedCommand, permissionConfig);
+
+  if (!permissionResult.allowed) {
+    await appendCommandLog(trimmedCommand, powerShellMode, false, "denied");
+    return {
+      success: false,
+      error:
+        permissionResult.reason ||
+        "This command is not allowed with your current permission settings.",
+    };
+  }
+
+  // Check legacy blocked patterns (always enforced)
   const blockedPattern = BLOCKED_POWERSHELL_PATTERNS.find((pattern) =>
     pattern.test(trimmedCommand),
   );
@@ -253,7 +282,9 @@ export async function runCommand(command: string): Promise<ToolResult> {
     };
   }
 
+  // Legacy safe mode check (if not using new permission system)
   if (
+    !permissionConfig.globalLevel &&
     powerShellMode === "safe" &&
     !SAFE_POWERSHELL_PATTERNS.some((pattern) => pattern.test(trimmedCommand))
   ) {
@@ -265,17 +296,18 @@ export async function runCommand(command: string): Promise<ToolResult> {
     };
   }
 
-  if (powerShellMode === "full") {
+  // Show confirmation if required
+  if (permissionResult.requiresConfirmation) {
+    const riskIcon = getRiskLevelIcon(permissionResult.riskLevel);
     const confirmation = await dialog.showMessageBox(getMainWindow(), {
       type: "warning",
       buttons: ["Run Command", "Cancel"],
       defaultId: 1,
       cancelId: 1,
       noLink: true,
-      title: "Confirm PowerShell Command",
-      message:
-        "Full Mode is about to run this PowerShell command. Review it carefully before continuing.",
-      detail: trimmedCommand,
+      title: `${riskIcon} Confirm Command Execution`,
+      message: `This command requires confirmation (${permissionResult.category}, ${permissionResult.riskLevel} risk).`,
+      detail: `Command: ${trimmedCommand}\n\nReview carefully before continuing.`,
     });
 
     if (confirmation.response !== 0) {
