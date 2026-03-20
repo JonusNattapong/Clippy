@@ -481,6 +481,7 @@ npm run start</code></pre>
               <li><code>OPENAI_API_KEY</code> - OpenAI</li>
               <li><code>ANTHROPIC_API_KEY</code> - Anthropic Claude</li>
               <li><code>OPENROUTER_API_KEY</code> - OpenRouter</li>
+              <li><code>KILO_API_KEY</code> - Kilo AI</li>
               <li>
                 <code>TAVILY_API_KEY</code> - Tavily Search API (for Web Skills)
               </li>
@@ -595,20 +596,33 @@ npm run start</code></pre>
                 <code>/run &lt;cmd&gt;</code> - Run PowerShell command (Safe
                 mode prevents destructive commands)
               </li>
-              <li><code>/ls [path]</code> - List directory contents</li>
-              <li><code>/read &lt;file&gt;</code> - Read file content</li>
-              <li><code>/search &lt;query&gt;</code> - Search files locally</li>
+              <li>
+                <code>/ls [path]</code> or <code>/list</code> - List directory
+                contents
+              </li>
+              <li>
+                <code>/read &lt;file&gt;</code> or <code>/cat</code> - Read file
+                content
+              </li>
+              <li>
+                <code>/search &lt;query&gt;</code> or <code>/find</code> -
+                Search files locally
+              </li>
               <li><code>/sysinfo</code> - System information</li>
-              <li><code>/ps</code> - List active processes</li>
-              <li><code>/screenshot</code> - Take desktop screenshot</li>
+              <li><code>/ps [limit]</code> - List active processes</li>
+              <li><code>/screenshot [name]</code> - Take desktop screenshot</li>
               <li><code>/clipboard</code> - Read clipboard</li>
             </ul>
-            <h3 style="font-size: 16px; margin-top: 24px">Web & Skills</h3>
+            <h3 style="font-size: 16px; margin-top: 24px">Web Commands</h3>
             <ul>
               <li>
-                <code>/search &lt;query&gt;</code> - Web search via Tavily
+                <code>/search &lt;query&gt;</code> or <code>/google</code> - Web
+                search via Tavily
               </li>
-              <li><code>/fetch &lt;url&gt;</code> - Scrape webpage content</li>
+              <li>
+                <code>/fetch &lt;url&gt;</code> or <code>/curl</code> or
+                <code>/wget</code> - Scrape webpage content
+              </li>
             </ul>
             <h3 style="font-size: 16px; margin-top: 24px">
               Message Parsing Directives
@@ -726,10 +740,13 @@ npm run start</code></pre>
             <ul>
               <li>Auto cover image generation for GitHub Releases</li>
               <li>Improved provider and streaming system</li>
+              <li>Streaming support for desktop and web commands</li>
+              <li>Progress messages during command execution</li>
               <li>Skills/Plugin system with registry and status checking</li>
               <li>In-page documentation windows (iframe) instead of popups</li>
               <li>TTS/Voice improvements with voice-to-text confirmation</li>
               <li>IPC/Preload updates for Ollama and Skill status checking</li>
+              <li>Kilo AI provider support</li>
             </ul>
 
             <h3 style="font-size: 16px; margin-top: 24px">v0.4.4</h3>
