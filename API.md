@@ -85,7 +85,53 @@ const response = await callProvider({ provider: "openai", prompt: "Hello" });
 console.log(response.text);
 ```
 
-Security
+## Streaming Support
+
+All AI providers support streaming responses. Commands now also support streaming:
+
+### AI Provider Streaming
+
+```typescript
+// Streaming chat completion
+for await (const chunk of streamChatCompletion({
+  provider: "gemini",
+  apiKey: process.env.GEMINI_API_KEY,
+  model: "gemini-2.0-flash",
+  message: "Hello",
+})) {
+  process.stdout.write(chunk);
+}
+```
+
+### Command Streaming
+
+Desktop and web commands support streaming with progress messages:
+
+```typescript
+// Command streaming with progress updates
+for await (const chunk of executeChatCommandStreaming(api, "/search query")) {
+  if (chunk.type === "progress") {
+    console.log("Progress:", chunk.content);
+  } else if (chunk.type === "result") {
+    console.log("Result:", chunk.content);
+  }
+}
+```
+
+### Message Parsing Directives
+
+Clippy's AI can output special syntax:
+
+| Format                                           | Purpose                                   |
+| ------------------------------------------------ | ----------------------------------------- |
+| `[MEMORY_UPDATE:category\|content\|importance]`  | Save to memory                            |
+| `[STATS_UPDATE:{bond:±X, happiness:±Y}]`         | Update mood stats                         |
+| `[TOOL_CALL:tool_name\|arg1=value1,arg2=value2]` | Execute tools                             |
+| `[TODO_ADD:title\|note]`                         | Add todo item                             |
+| `[CHOICE:prompt\|option1\|option2\|...]`         | Show choice dialog                        |
+| `[AnimationKey]`                                 | Set animation (e.g., `[Wave]`, `[Think]`) |
+
+## Security
 
 - Store API keys in `.env` or encrypted local storage.
 - Do not send API keys to renderer directly; use main process as intermediary.

@@ -2,7 +2,7 @@
 
 Requirements
 
-- Node.js 18+
+- Node.js 20+ (Recommended: Node.js 22.12.0+)
 - npm or pnpm
 - Git
 - (macOS) Xcode command line tools for building bundles
@@ -48,7 +48,18 @@ GEMINI_API_KEY=your_key_here
 OPENAI_API_KEY=your_key_here
 ANTHROPIC_API_KEY=your_key_here
 OPENROUTER_API_KEY=your_key_here
+KILO_API_KEY=your_key_here
 ```
+
+### Web Search (Tavily)
+
+For web search functionality (`/search`, `/google` commands):
+
+```
+TAVILY_API_KEY=your_key_here
+```
+
+Get your free API key at https://tavily.com
 
 ### Ollama (Local)
 

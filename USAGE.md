@@ -36,6 +36,36 @@ Getting started
 
 **Note:** Models are stored locally and work completely offline.
 
+## Desktop Commands
+
+Use these commands in chat:
+
+| Command              | Function                 | Example                 |
+| -------------------- | ------------------------ | ----------------------- |
+| `/run <cmd>`         | Run PowerShell command   | `/run Get-Process`      |
+| `/ls [path]`         | List directory contents  | `/ls` or `/ls C:\Users` |
+| `/list <path>`       | List directory (alias)   | `/list C:\Users`        |
+| `/read <file>`       | Read file content        | `/read notes.txt`       |
+| `/cat <file>`        | Read file (alias)        | `/cat config.json`      |
+| `/search <query>`    | Search for files locally | `/search report`        |
+| `/find <query>`      | Search files (alias)     | `/find budget`          |
+| `/sysinfo`           | System information       | `/sysinfo`              |
+| `/ps [limit]`        | List processes           | `/ps 10`                |
+| `/clipboard`         | Read clipboard           | `/clipboard`            |
+| `/screenshot [name]` | Take screenshot          | `/screenshot`           |
+
+## Web Commands
+
+| Command           | Function              | Example                      |
+| ----------------- | --------------------- | ---------------------------- |
+| `/search <query>` | Web search (Tavily)   | `/search weather Bangkok`    |
+| `/google <query>` | Google search (alias) | `/google Thai food`          |
+| `/fetch <url>`    | Fetch webpage content | `/fetch https://example.com` |
+| `/curl <url>`     | Fetch URL (alias)     | `/curl https://example.com`  |
+| `/wget <url>`     | Fetch URL (alias)     | `/wget https://example.com`  |
+
+**Note:** Web search requires Tavily API key configured in Settings.
+
 Conversation and memory tags
 
 - Save a memory with:
@@ -60,7 +90,7 @@ window.api.receive("chat:reply", (reply) => console.log(reply));
 
 Model selection
 
-- Settings > Model: choose provider (Gemini/OpenAI/Anthropic/OpenRouter/Ollama/Local LLM), set temperature, max tokens.
+- Settings > Model: choose provider (Gemini/OpenAI/Anthropic/OpenRouter/Kilo/Ollama/Local LLM), set temperature, max tokens.
 
 Security
 
