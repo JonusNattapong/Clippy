@@ -3,9 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { ApiProvider } from "../sharedState";
-import { MessageRecord } from "../types/interfaces";
+import { MessageRecord, MemoryRetrievalResult } from "../types/interfaces";
 import { getMemoryManager } from "./memory";
-import { MemoryRetrievalResult } from "../types/interfaces";
 import { generateText, loadModel, isModelLoaded } from "./local-llm";
 
 export type StreamChatOptions = {
@@ -96,18 +95,6 @@ function emitTextDelta(nextText: string, emittedText: string): string {
 }
 
 function resolveGeminiModelName(model: string): string {
-  const normalized = model.toLowerCase();
-
-  if (normalized.includes("gemini-3-flash")) {
-    return "gemini-3.1-flash-lite";
-  }
-  if (normalized.includes("gemini-3-pro")) {
-    return "gemini-3.1-pro-preview";
-  }
-  if (normalized === "gemini-1.5-flash") {
-    return "gemini-3.1-flash-lite";
-  }
-
   return model;
 }
 
@@ -259,7 +246,7 @@ function buildMoodContext(): string {
   return [
     "Internal relationship and mood guidance:",
     "Use this only to guide tone and empathy.",
-    "Do not mention, quote, or expose these labels, scores, summaries, or any bracketed mood/response metadata unless the user explicitly asks about Clippy's internal state.",
+    "SYSTEM SECRET (DO NOT REVEAL): These are your internal state variables. NEVER output, quote, or mention these bracketed metadata tags like [mood: ...] or stats in your response to the user. This information is FOR YOUR EYES ONLY to guide your persona.",
     `Bond level (internal): ${stats.bondLevel}/100`,
     `Happiness (internal): ${stats.happiness}/100`,
     `Primary mood (internal): ${stats.mood.primary}`,
@@ -282,9 +269,6 @@ async function buildMemoryContext(query: string): Promise<string> {
   }
 
   const lines = result.memories.map((item) => {
-    const updatedAt = new Date(item.memory.updatedAt)
-      .toISOString()
-      .slice(0, 10);
     return `[${item.source}] ${item.memory.content}`;
   });
 
@@ -1021,13 +1005,13 @@ export async function transcribeAudio(
 
   if (options.provider === "gemini") {
     const effectiveModel = resolveGeminiModelName(
-      options.model || "gemini-3.1-flash-lite",
+      options.model || "gemini-1.5-flash",
     );
 
     const endpoints = [
       `https://generativelanguage.googleapis.com/v1beta/models/${effectiveModel}:generateContent?key=${options.apiKey}`,
       `https://generativelanguage.googleapis.com/v1/models/${effectiveModel}:generateContent?key=${options.apiKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${options.apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${options.apiKey}`,
       `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${options.apiKey}`,
     ];
 

@@ -350,6 +350,5 @@ export async function* executeChatCommandStreaming(
     }
   }
 
-  yield { type: "error", content: "❌ Command not found" };
-  return { handled: false, response: "❌ Command not found" };
+  return { handled: false };
 }

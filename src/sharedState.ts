@@ -153,12 +153,12 @@ export interface SharedState {
 
 export const ANIMATION_PROMPT = `Start your response with one of the following keywords matching the users request: [LIST OF ANIMATIONS]. Use only one of the keywords for each response. Use it only at the beginning of your response. Always start with one.`;
 export const API_PROVIDER_DEFAULT_MODELS: Record<ApiProvider, string> = {
-  gemini: "gemini-3.1-flash-lite",
-  openai: "gpt-5-mini-preview",
-  anthropic: "claude-3-sonnet-5",
+  gemini: "gemini-1.5-flash",
+  openai: "gpt-4o-mini",
+  anthropic: "claude-3-5-sonnet-latest",
   openrouter: "openai/gpt-4o-mini",
   ollama: "llama3.2:latest",
-  kilo: "anthropic/claude-sonnet-4.5",
+  kilo: "anthropic/claude-3.5-sonnet",
   local: "llama-3.2-3b-instruct",
 };
 
@@ -174,33 +174,29 @@ export const API_PROVIDER_LABELS: Record<ApiProvider, string> = {
 
 export const API_PROVIDER_MODELS: Record<ApiProvider, string[]> = {
   gemini: [
-    "gemini-3.1-pro",
-    "gemini-2.5-pro",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
-    "gemini-2.5-flash-image",
     "gemini-2.0-flash",
+    "gemini-2.0-flash-lite-preview-02-05",
+    "gemini-2.0-pro-exp-02-05",
     "gemini-1.5-pro",
     "gemini-1.5-flash",
+    "gemini-1.5-flash-8b",
   ],
   openai: [
-    "gpt-5.4",
-    "gpt-5.4-pro",
-    "gpt-5.4-mini",
-    "gpt-5.4-nano",
-    "gpt-5",
-    "gpt-5-mini",
-    "gpt-5-nano",
-    "gpt-5-codex",
-    "gpt-5.3-codex",
+    "o1",
+    "o1-mini",
+    "o3-mini",
     "gpt-4o",
     "gpt-4o-mini",
-    "o3-mini",
-    "o1-mini",
-    "o1",
+    "gpt-4-turbo",
     "gpt-3.5-turbo",
   ],
-  anthropic: ["claude-opus-4-6", "claude-sonnet-4-6", "claude-haiku-4-5"],
+  anthropic: [
+    "claude-3-5-sonnet-latest",
+    "claude-3-5-haiku-latest",
+    "claude-3-opus-latest",
+    "claude-3-sonnet-20240229",
+    "claude-3-haiku-20240307",
+  ],
   openrouter: [
     "openai/gpt-5.4",
     "openai/gpt-5.4-pro",

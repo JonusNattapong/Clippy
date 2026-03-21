@@ -1,11 +1,6 @@
 import { ANIMATION_KEYS } from "../clippy-animation-helpers";
 import { TodoItem } from "../../sharedState";
 import { Translations } from "../i18n";
-import {
-  getMoodLabel,
-  getResponseStyleLabel,
-  getUserToneLabel,
-} from "./mood-labels";
 
 export type ChoiceStep = {
   prompt: string;
@@ -91,15 +86,15 @@ function parseChoiceFlow(content: string): ChoiceFlow | null {
  */
 export function filterMessageContent(
   content: string,
-  settings: { todoItems: TodoItem[] | undefined },
-  t: Translations,
+  _settings: { todoItems: TodoItem[] | undefined },
+  _t: Translations,
 ): FilteredContent {
-  let text: string = content;
-  let animationKey: string = "";
+  let text = content;
+  let animationKey = "";
   let memoryUpdate: FilteredContent["memoryUpdate"] | undefined;
   let statsUpdate: FilteredContent["statsUpdate"] | undefined;
   let notifyTelegram: FilteredContent["notifyTelegram"] | undefined;
-  let toolCalls: FilteredContent["toolCalls"] = [];
+  const toolCalls: FilteredContent["toolCalls"] = [];
   const todoAdds: Array<{ title: string; note?: string }> = [];
   let choiceFlow: ChoiceFlow | null = null;
 
@@ -180,12 +175,13 @@ export function filterMessageContent(
   choiceFlow = parseChoiceFlow(text);
   text = text.replace(/\[CHOICE:\s*[^\]]+\]/gi, "").trim();
 
-  // 3. Clean up generic internal tags
+  // 3. Clean up generic internal tags (any bracketed content with a colon or specific keywords)
   text = text
     .replace(
-      /\[(STATS_UPDATE|MEMORY_UPDATE|TODO_ADD|CHOICE|NOTIFY_TELEGRAM).*?\]/gi,
+      /\[(STATS_UPDATE|MEMORY_UPDATE|TODO_ADD|CHOICE|NOTIFY_TELEGRAM|MOOD|RESPONSE|USERTONE|BOND|HAPPINESS).*?\]/gi,
       "",
     )
+    .replace(/\[[a-zA-Z0-9_\s]+:\s*[^\]]+\]/gi, "")
     .trim();
 
   // 4. Extract and Strip leading Animation tags with fuzzy matching

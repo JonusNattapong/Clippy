@@ -59,18 +59,6 @@ function buildHistory(
 }
 
 function resolveGeminiModelName(model: string): string {
-  const normalized = model.toLowerCase();
-
-  if (normalized.includes("gemini-3-flash")) {
-    return "gemini-3.1-flash-lite";
-  }
-  if (normalized.includes("gemini-3-pro")) {
-    return "gemini-3.1-pro-preview";
-  }
-  if (normalized === "gemini-1.5-flash") {
-    return "gemini-3.1-flash-lite";
-  }
-
   return model;
 }
 
@@ -156,30 +144,8 @@ test("buildHistory handles images in history", () => {
   assert.ok(Array.isArray(result[0].content));
 });
 
-test("resolveGeminiModelName maps gemini-3-flash variants", () => {
-  assert.equal(
-    resolveGeminiModelName("gemini-3-flash"),
-    "gemini-3.1-flash-lite",
-  );
-  assert.equal(resolveGeminiModelName("gemini-3.0-flash"), "gemini-3.0-flash");
-});
-
-test("resolveGeminiModelName maps gemini-3-pro variants", () => {
-  assert.equal(
-    resolveGeminiModelName("gemini-3-pro"),
-    "gemini-3.1-pro-preview",
-  );
-  assert.equal(resolveGeminiModelName("gemini-3.0-pro"), "gemini-3.0-pro");
-});
-
-test("resolveGeminiModelName maps gemini-1.5-flash to newer model", () => {
-  assert.equal(
-    resolveGeminiModelName("gemini-1.5-flash"),
-    "gemini-3.1-flash-lite",
-  );
-});
-
-test("resolveGeminiModelName keeps other models unchanged", () => {
+test("resolveGeminiModelName returns model name as-is", () => {
+  assert.equal(resolveGeminiModelName("gemini-1.5-flash"), "gemini-1.5-flash");
   assert.equal(resolveGeminiModelName("gemini-2.0-flash"), "gemini-2.0-flash");
   assert.equal(resolveGeminiModelName("other-model"), "other-model");
 });
