@@ -10,11 +10,19 @@ const { VitePlugin } = require("@electron-forge/plugin-vite");
 const { FusesPlugin } = require("@electron-forge/plugin-fuses");
 const { FuseV1Options, FuseVersion } = require("@electron/fuses");
 
+const { copyExternalModules } = require("./scripts/copy-native-modules");
+
 dotenv.config();
 
 const config = {
   packagerConfig: {
-    asar: true,
+    // Native modules (.node) and their companion binaries (.dll/.so/.dylib)
+    // cannot be loaded from inside an asar archive, so unpack the native
+    // module directories to app.asar.unpacked.
+    asar: {
+      unpackDir:
+        "node_modules/{onnxruntime-node,sharp,@img,node-llama-cpp,@node-llama-cpp,@reflink}",
+    },
     executableName: "clippy",
     appBundleId: "com.cliplala",
     appCategoryType: "public.app-category.productivity",
@@ -26,6 +34,19 @@ const config = {
     junk: true,
     overwrite: true,
     prune: true,
+  },
+  hooks: {
+    // Vite marks native modules as `external`, so Forge's Vite plugin leaves
+    // them out of the package. Copy them (and their dependency trees) into the
+    // packaged app's node_modules so runtime `require()` calls resolve.
+    packageAfterCopy: async (_config, buildPath) => {
+      const source = path.resolve(__dirname, "node_modules");
+      const dest = path.join(buildPath, "node_modules");
+      const { total, copied } = copyExternalModules(source, dest);
+      console.log(
+        `[copy-native-modules] copied ${copied}/${total} external modules into the package`,
+      );
+    },
   },
   makers: [
     new MakerSquirrel(

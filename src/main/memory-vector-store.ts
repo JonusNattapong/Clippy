@@ -1,9 +1,22 @@
 import { app } from "electron";
 import fs from "node:fs";
 import path from "node:path";
-import { env, pipeline } from "@huggingface/transformers";
 
 import { Memory } from "../types/interfaces";
+
+// Minimal local types for the parts of @huggingface/transformers we use.
+// Declaring them here (instead of importing from the ESM-only package) keeps
+// this CommonJS module free of ESM type-import friction and lets us load the
+// package lazily via a dynamic import.
+type FeatureExtractionPipeline = (
+  text: string,
+  options: { pooling: "mean"; normalize: boolean },
+) => Promise<{ data: Float32Array | number[] }>;
+
+type TransformersModule = {
+  env: { cacheDir: string; allowLocalModels: boolean };
+  pipeline: (task: string, model: string) => Promise<FeatureExtractionPipeline>;
+};
 
 type VectorEntry = {
   embedding: number[];
@@ -15,10 +28,6 @@ type VectorIndexFile = {
   entries: Record<string, VectorEntry>;
 };
 
-type FeatureExtractionPipeline = Awaited<
-  ReturnType<typeof pipeline<"feature-extraction">>
->;
-
 export class MemoryVectorStore {
   private indexPath = path.join(
     app.getPath("userData"),
@@ -27,10 +36,28 @@ export class MemoryVectorStore {
   );
   private entries: Record<string, VectorEntry> = this.loadFromDisk().entries;
   private extractorPromise: Promise<FeatureExtractionPipeline> | null = null;
+  private transformersPromise: Promise<TransformersModule> | null = null;
 
-  constructor() {
-    env.cacheDir = path.join(app.getPath("userData"), "models");
-    env.allowLocalModels = true;
+  // @huggingface/transformers pulls in the heavy onnxruntime-node native
+  // binary, so it is imported lazily (only when embeddings are actually
+  // computed) rather than at startup. This keeps app launch fast and avoids
+  // crashing the whole app if the native runtime fails to load.
+  private async loadTransformers(): Promise<TransformersModule> {
+    if (!this.transformersPromise) {
+      this.transformersPromise = import("@huggingface/transformers").then(
+        (module) => {
+          const transformers = module as unknown as TransformersModule;
+          transformers.env.cacheDir = path.join(
+            app.getPath("userData"),
+            "models",
+          );
+          transformers.env.allowLocalModels = true;
+          return transformers;
+        },
+      );
+    }
+
+    return this.transformersPromise;
   }
 
   public async findRelevantMemories(
@@ -114,10 +141,9 @@ export class MemoryVectorStore {
 
   private async getExtractor(): Promise<FeatureExtractionPipeline> {
     if (!this.extractorPromise) {
-      this.extractorPromise = pipeline(
-        "feature-extraction",
-        "Xenova/all-MiniLM-L6-v2",
-      ) as Promise<FeatureExtractionPipeline>;
+      this.extractorPromise = this.loadTransformers().then((transformers) =>
+        transformers.pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2"),
+      );
     }
 
     return this.extractorPromise;
