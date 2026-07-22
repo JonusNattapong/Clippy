@@ -5,6 +5,7 @@
   "description": "Clippy",
   "main": ".vite/build/main.js",
   "scripts": {
+    "postinstall": "node scripts/fix-squirrel-7z.js",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
