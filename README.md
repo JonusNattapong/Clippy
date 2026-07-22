@@ -14,6 +14,8 @@ Clippy brings back the 90s office assistant as a modern AI desktop companion.
 
 Clippy is a desktop app inspired by Microsoft Clippy, reimagined as a modern AI assistant. Built with Electron, React and TypeScript, it connects to LLM providers (Gemini, OpenAI, Anthropic, OpenRouter, Ollama, and Local LLM via node-llama-cpp) via API.
 
+> **Based on [felixrieseberg/clippy](https://github.com/felixrieseberg/clippy).** This project started as a fork of Felix Rieseberg's original Clippy app (the Electron shell, the Clippy character rendering, and the animation helpers come from there) and has since been extended with additional AI providers, a Skills system, chat history, permissions, and more. Huge thanks to [@felixrieseberg](https://github.com/felixrieseberg) and the original contributors — see [Acknowledgements](#acknowledgements).
+
 ## Features
 
 - **Local persistent memory** - Conversations and memories stored locally
@@ -288,8 +290,11 @@ Clippy's AI responses can include special commands embedded in the response:
 
 ## Acknowledgements
 
+This project is built on top of [**felixrieseberg/clippy**](https://github.com/felixrieseberg/clippy) by [Felix Rieseberg](https://github.com/felixrieseberg). The original app provided the Electron foundation, the Clippy character rendering, and the animation helpers that Clippy is built around. This project is not affiliated with or endorsed by the original author; it is an independent extension of that work.
+
 Thanks to:
 
+- [Felix Rieseberg (@felixrieseberg)](https://github.com/felixrieseberg) for the original [Clippy](https://github.com/felixrieseberg/clippy) desktop app that this project is based on.
 - I am so grateful to Microsoft - not only for everything they've done for Electron, but also for giving us one of the most iconic characters and designs of computing history.
 - [Kevan Atteberry](https://www.kevanatteberry.com/) for Clippy
 - [Jordan Scales (@jdan)](https://github.com/jdan) for the Windows 98 design
