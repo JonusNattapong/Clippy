@@ -43,19 +43,37 @@ function readPackageJson(moduleDir) {
 // when building on Linux (or vice versa), which causes issues with the strip tool.
 function filterPlatformDeps(optionalDeps) {
   const platform = process.platform; // 'linux', 'darwin', 'win32'
-  const arch = process.arch; // 'x64', 'arm64', etc.
+
+  // Map process.platform to package naming convention
+  const platformNames = {
+    linux: 'linux',
+    darwin: 'darwin',
+    win32: 'win32',
+  };
+
+  const currentPlatformName = platformNames[platform];
+  const allPlatformNames = ['linux', 'darwin', 'win32'];
 
   const filtered = {};
   for (const [name, version] of Object.entries(optionalDeps)) {
-    // Keep non-platform-specific deps
-    if (!name.includes("-")) {
-      filtered[name] = version;
-      continue;
+    // Check if this is a platform-specific package (contains platform identifier)
+    let isPlatformSpecific = false;
+    let isCurrentPlatform = false;
+
+    for (const p of allPlatformNames) {
+      if (name.includes(`-${p}`)) {
+        isPlatformSpecific = true;
+        if (p === currentPlatformName) {
+          isCurrentPlatform = true;
+        }
+        break;
+      }
     }
 
-    // Keep platform-specific deps that match current platform
-    // e.g., @img/sharp-linux-x64, onnxruntime-win32-x64, etc.
-    if (name.includes(`-${platform}`) || name.includes(`-${platform}-${arch}`)) {
+    // Include package if:
+    // 1. It's not platform-specific at all, OR
+    // 2. It's for the current platform
+    if (!isPlatformSpecific || isCurrentPlatform) {
       filtered[name] = version;
     }
   }
