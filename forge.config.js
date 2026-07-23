@@ -65,7 +65,9 @@ const config = {
       ["win32"],
     ),
     new MakerZIP({}, ["darwin", "win32"]),
-    new MakerRpm({}),
+    new MakerRpm({
+      fpmOptions: ["--rpm-no-strip"],
+    }),
     new MakerDeb({}),
   ],
   plugins: [
