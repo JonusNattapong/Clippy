@@ -38,6 +38,30 @@ function readPackageJson(moduleDir) {
   }
 }
 
+// Filter optionalDependencies to only include platform/arch-specific packages
+// relevant to the current platform. This prevents copying Windows/macOS binaries
+// when building on Linux (or vice versa), which causes issues with the strip tool.
+function filterPlatformDeps(optionalDeps) {
+  const platform = process.platform; // 'linux', 'darwin', 'win32'
+  const arch = process.arch; // 'x64', 'arm64', etc.
+
+  const filtered = {};
+  for (const [name, version] of Object.entries(optionalDeps)) {
+    // Keep non-platform-specific deps
+    if (!name.includes("-")) {
+      filtered[name] = version;
+      continue;
+    }
+
+    // Keep platform-specific deps that match current platform
+    // e.g., @img/sharp-linux-x64, onnxruntime-win32-x64, etc.
+    if (name.includes(`-${platform}`) || name.includes(`-${platform}-${arch}`)) {
+      filtered[name] = version;
+    }
+  }
+  return filtered;
+}
+
 // Resolve every module that needs copying: the seed list plus the transitive
 // closure of their `dependencies` and `optionalDependencies` (sharp pulls its
 // platform binaries in via optionalDependencies, e.g. @img/sharp-win32-x64).
@@ -61,7 +85,7 @@ function collectModules(sourceModulesDir, seeds) {
     if (!pkg) continue;
 
     for (const dep of Object.keys(pkg.dependencies || {})) queue.push(dep);
-    for (const dep of Object.keys(pkg.optionalDependencies || {}))
+    for (const dep of Object.keys(filterPlatformDeps(pkg.optionalDependencies || {})))
       queue.push(dep);
   }
 
