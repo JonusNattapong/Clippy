@@ -5,7 +5,6 @@ const dotenv = require("dotenv");
 const { MakerSquirrel } = require("@electron-forge/maker-squirrel");
 const { MakerZIP } = require("@electron-forge/maker-zip");
 const { MakerDeb } = require("@electron-forge/maker-deb");
-const { MakerRpm } = require("@electron-forge/maker-rpm");
 const { VitePlugin } = require("@electron-forge/plugin-vite");
 const { FusesPlugin } = require("@electron-forge/plugin-fuses");
 const { FuseV1Options, FuseVersion } = require("@electron/fuses");
@@ -65,9 +64,8 @@ const config = {
       ["win32"],
     ),
     new MakerZIP({}, ["darwin", "win32"]),
-    new MakerRpm({
-      fpmOptions: ["--rpm-no-strip"],
-    }),
+    // RPM builds disabled due to binary stripping issues with cross-platform modules
+    // new MakerRpm({}),
     new MakerDeb({}),
   ],
   plugins: [
